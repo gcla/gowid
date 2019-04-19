@@ -23,10 +23,9 @@ go get github.com/gcla/gowid/...
 ```
 ## Examples
 
-Make sure GOPATH is in your PATH, then tab complete "gowid-" e.g.
+Make sure `$GOPATH/bin` is in your PATH (or `~/go/bin` if `GOPATH` isn't set), then tab complete "gowid-" e.g.
 
 ```bash
-export PATH=$PATH:$GOPATH/bin/
 gowid-fib
 ```
 
