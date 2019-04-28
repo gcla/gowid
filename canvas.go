@@ -12,6 +12,7 @@ import (
 
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gdamore/tcell"
+	"github.com/mattn/go-runewidth"
 	"github.com/pkg/errors"
 )
 
@@ -764,10 +765,12 @@ func Draw(canvas IDrawCanvas, mode IColorMode, screen tcell.Screen) {
 	for y := 0; y < canvas.BoxRows(); y++ {
 		line := canvas.Line(y, LineCopy{})
 		vline := line.Line
-		for x, c := range vline {
+		for x := 0; x < len(vline); {
+			c := vline[x]
 			f, b, s := c.ForegroundColor(), c.BackgroundColor(), c.Style()
 			st := MakeCellStyle(f, b, s)
 			screen.SetContent(x, y, c.Rune(), nil, st)
+			x += runewidth.RuneWidth(c.Rune())
 
 			if x == cpos.X && y == cpos.Y {
 				screen.ShowCursor(x, y)

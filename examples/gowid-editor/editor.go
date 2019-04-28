@@ -185,7 +185,7 @@ func (w *EditWithScrollbar) Render(size gowid.IRenderSize, focus gowid.Selector,
 		w.e.SetLinesFromTop(gwutil.Max(0, w.e.LinesFromTop()+w.goUpDown+(w.pgUpDown*box.BoxRows())), app)
 		txt := w.e.MakeText()
 		layout := text.MakeTextLayout(txt.Content(), ecols, txt.Wrap(), gowid.HAlignLeft{})
-		_, y := text.GetCoordsFromCursorPos(w.e.CursorPos(), ecols, layout)
+		_, y := text.GetCoordsFromCursorPos(w.e.CursorPos(), ecols, layout, w.e)
 		if y < w.e.LinesFromTop() {
 			for i := y; i < w.e.LinesFromTop(); i++ {
 				w.e.DownLines(ebox, false, app)
