@@ -11,9 +11,21 @@ import (
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/text"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 //======================================================================
+
+func TestCanvas8(t *testing.T) {
+	widget1 := text.New("hello")
+	opts := Options{
+		Frame: FrameRunes{'你', '你', '你', '你', '-', '-', '你', '你'},
+	}
+	fwidget1 := New(widget1, opts)
+	canvas1 := fwidget1.Render(gowid.RenderFixed{}, gowid.NotSelected, gwtest.D)
+	res := strings.Join([]string{"你-----你", "你hello你", "你-----你"}, "\n")
+	assert.Equal(t, res, canvas1.String())
+}
 
 func TestCanvas9(t *testing.T) {
 	widget1 := text.New("hello transubstantiation good")
@@ -22,9 +34,7 @@ func TestCanvas9(t *testing.T) {
 	log.Infof("Widget9 is %v", fwidget1)
 	log.Infof("Canvas9 is %s", canvas1.String())
 	res := strings.Join([]string{"-----------", "|hello tra|", "|nsubstant|", "|iation go|", "|od       |", "-----------"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas10(t *testing.T) {
@@ -34,9 +44,7 @@ func TestCanvas10(t *testing.T) {
 	log.Infof("Widget10 is %v", fwidget1)
 	log.Infof("Canvas10 is %s", canvas1.String())
 	res := strings.Join([]string{"-------", "|hello|", "| tran|", "|subst|", "-------"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 //======================================================================

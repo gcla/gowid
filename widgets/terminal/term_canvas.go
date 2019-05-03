@@ -13,10 +13,12 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gdamore/tcell"
+	"github.com/mattn/go-runewidth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -356,6 +358,7 @@ type Canvas struct {
 	isRottenCursor                     bool
 	escbuf                             []byte
 	fg, bg                             gwutil.IntOption
+	utf8Buffer                         []byte
 	gowid.ICallbacks
 }
 
@@ -365,6 +368,7 @@ func NewCanvasOfSize(cols, rows int, scrollback int, widget ITerminal) *Canvas {
 		alternate:      NewViewPort(gowid.NewCanvasOfSize(cols, rows), 0, rows),
 		scrollback:     scrollback,
 		terminal:       widget,
+		utf8Buffer:     make([]byte, 0, 4),
 		ICallbacks:     gowid.NewCallbacks(),
 	}
 	res.Reset()
@@ -1174,28 +1178,29 @@ func (c *Canvas) Resize(width, height int) {
 
 func (c *Canvas) PushCursor(r rune) {
 	x, y := c.TermCursor()
+	wid := runewidth.RuneWidth(r)
 
 	if !c.terminal.Modes().DontAutoWrap {
-		if x+1 >= c.BoxColumns() && !c.isRottenCursor {
+		if x+wid == c.BoxColumns() && !c.isRottenCursor {
 			c.isRottenCursor = true
 			c.PushRune(r, x, y)
 		} else {
-			x += 1
+			x += wid
 			if x >= c.BoxColumns() {
 				if y >= c.scrollRegionEnd {
 					c.Scroll(false)
 				} else {
 					y += 1
 				}
-				x = 1
+				x = wid
 				c.SetTermCursor(gwutil.SomeInt(0), gwutil.SomeInt(y))
 			}
 			c.PushRune(r, x, y)
 			c.isRottenCursor = false
 		}
 	} else {
-		if x+1 < c.BoxColumns() {
-			x += 1
+		if x+wid < c.BoxColumns() {
+			x += wid
 		}
 		c.isRottenCursor = false
 		c.PushRune(r, x, y)
@@ -1204,6 +1209,7 @@ func (c *Canvas) PushCursor(r rune) {
 
 func (c *Canvas) PushRune(r rune, x, y int) {
 	r2 := c.charset.ApplyMapping(r)
+
 	if c.terminal.Modes().Insert {
 		c.InsertChars(gwutil.NoneInt(), gwutil.NoneInt(), 1, gwutil.SomeRune(r2))
 	} else {
@@ -1398,28 +1404,27 @@ func (c *Canvas) ParseCSI(r byte) {
 }
 
 func (c *Canvas) ProcessByte(b byte) {
-	if b <= 127 {
-		bs := []byte(string(b))
-		c.ProcessByteOrCommand(bs[0])
+	var r rune
+	if c.terminal.Modes().Charset == CharsetUTF8 {
+		c.utf8Buffer = append(c.utf8Buffer, b)
+		r, _ = utf8.DecodeRune(c.utf8Buffer)
+		if r == utf8.RuneError {
+			return
+		}
+		c.utf8Buffer = c.utf8Buffer[:0]
 	} else {
-		c.PushCursor(rune(b))
+		r = rune(b)
+	}
+
+	if r <= 127 {
+		c.ProcessByteOrCommand(r)
+	} else {
+		c.PushCursor(r)
 	}
 }
 
-func (c *Canvas) ProcessByteOrCommand(r byte) {
-	// f, err := os.OpenFile("/home/gcla/termdata", os.O_APPEND|os.O_WRONLY, 0600)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer f.Close()
-
-	// if _, err = f.WriteString(string(r)); err != nil {
-	// 	panic(err)
-	// }
-
+func (c *Canvas) ProcessByteOrCommand(r rune) {
 	x, y := c.TermCursor()
-
 	dc := c.terminal.Modes().DisplayCtrl
 
 	switch {
@@ -1449,13 +1454,13 @@ func (c *Canvas) ProcessByteOrCommand(r byte) {
 	case ((r == '\x00') || (r == '\x7f')) && !dc:
 		// Ignored
 	case c.withinEscape:
-		c.ParseEscape(r)
+		c.ParseEscape(byte(r))
 	case r == '\x9b' && !dc:
 		c.withinEscape = true
 		c.escbuf = make([]byte, 0)
 		c.parsestate = 1
 	default:
-		c.PushCursor(rune(r))
+		c.PushCursor(r)
 	}
 }
 

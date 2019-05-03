@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -26,26 +27,26 @@ func TestType1(t *testing.T) {
 	w := New(Options{Caption: "", Text: "hi: 现在 abc"})
 	sz := gowid.RenderFlowWith{C: 15}
 	c1 := w.Render(sz, gowid.Focused, gwtest.D)
-	assert.Equal(t, "hi: 现 在  abc   ", c1.String())
+	assert.Equal(t, "hi: 现在 abc   ", c1.String())
 
 	evq := tcell.NewEventKey(tcell.KeyRune, 'q', tcell.ModNone)
 
 	w.SetCursorPos(0, gwtest.D)
 	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
 	c1 = w.Render(sz, gowid.Focused, gwtest.D)
-	assert.Equal(t, "qhi: 现 在  abc  ", c1.String())
+	assert.Equal(t, "qhi: 现在 abc  ", c1.String())
 
 	w.SetCursorPos(6, gwtest.D)
 	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
 	c1 = w.Render(sz, gowid.Focused, gwtest.D)
-	assert.Equal(t, "qhi: 现 q在  abc ", c1.String())
+	assert.Equal(t, "qhi: 现q在 abc ", c1.String())
 }
 
 func TestRender1(t *testing.T) {
 	w := New(Options{Caption: "", Text: "abcde现fgh"})
 	sz := gowid.RenderFlowWith{C: 6}
 	c1 := w.Render(sz, gowid.Focused, gwtest.D)
-	assert.Equal(t, "abcde \n现 fgh ", c1.String())
+	assert.Equal(t, "abcde \n现fgh ", c1.String())
 }
 
 func TestType2(t *testing.T) {
@@ -81,10 +82,10 @@ func TestMove1(t *testing.T) {
 }
 
 func TestLong1(t *testing.T) {
-	w := New(Options{Caption: "hi: ", Text: "现在是hetimeforallgoodmentocometotheaid\n\nofthe"})
+	w := New(Options{Caption: "现: ", Text: "现在是hetimeforallgoodmentocometotheaid\n\nofthe"})
 	sz := gowid.RenderFlowWith{C: 12}
 	c1 := w.Render(sz, gowid.Focused, gwtest.D)
-	assert.Equal(t, "hi: 现 在 是 he\ntimeforallgo\nodmentocomet\notheaid     \n            \nofthe       ", c1.String())
+	assert.Equal(t, "现: 现在是he\ntimeforallgo\nodmentocomet\notheaid     \n            \nofthe       ", c1.String())
 
 	clickat := func(x, y int) {
 		w.UserInput(evclick(x, y), sz, gowid.Focused, gwtest.D)
@@ -94,11 +95,10 @@ func TestLong1(t *testing.T) {
 	}
 
 	clickat(4, 0)
-
 	assert.Equal(t, 0, w.CursorPos())
 	w.SetCursorPos(1, gwtest.D)
 	assert.Equal(t, 1, w.CursorPos())
-	x := len(w.Text())
+	x := utf8.RuneCountInString(w.Text())
 	w.SetCursorPos(500, gwtest.D)
 	assert.Equal(t, x, w.CursorPos())
 

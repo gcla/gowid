@@ -65,15 +65,15 @@ func TestCanvas19(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 	assert.Equal(t, canvas.String(), "5  \nQ2 ")
-	n, err = canvas.Write([]byte{0xe2, 0x98, 0xa0, '\n'})
+	n, err = canvas.Write([]byte{0xe4, 0xbd, 0xa0, '\n'})
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, canvas.String(), "☠  \nQ2 ")
+	assert.Equal(t, "你 \nQ2 ", canvas.String())
 
 	n, err = canvas.Write([]byte{'1', '2', '\n', 'R'})
 	assert.NoError(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, canvas.String(), "12 \nR2 ")
+	assert.Equal(t, "12 \nR2 ", canvas.String())
 }
 
 type MyString string

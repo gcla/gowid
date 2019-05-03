@@ -151,8 +151,9 @@ func TestLayout6(t *testing.T) {
 	t1 := NewContent(tm1)
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
-	assert.Equal(t, len(l1.Lines), 1)
-	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7})
+	assert.Equal(t, 2, len(l1.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7}, l1.Lines[0])
+	assert.Equal(t, LineLayout{StartWidth: 12, StartLength: 12, EndLength: 12, Clipped: false, EndWidth: 12}, l1.Lines[1])
 }
 
 func TestMultiline1(t *testing.T) {
@@ -329,7 +330,7 @@ func TestCanvas28(t *testing.T) {
 func TestTextAlign1(t *testing.T) {
 	widget1 := New("hel你o\nworld\nf你o\nba")
 	canvas1 := widget1.Render(gowid.RenderFlowWith{C: 7}, gowid.NotSelected, gwtest.D)
-	res := strings.Join([]string{"hel你 o ", "world  ", "f你 o   ", "ba     "}, "\n")
+	res := strings.Join([]string{"hel你o ", "world  ", "f你o   ", "ba     "}, "\n")
 	assert.Equal(t, res, canvas1.String())
 }
 
@@ -394,7 +395,7 @@ func TestChinese1(t *testing.T) {
 	w := New("|你|好|，|世|界|")
 	c1 := w.Render(gowid.RenderFixed{}, gowid.Focused, gwtest.D)
 	// Each width-2 rune takes up 2 screen cells
-	assert.Equal(t, "|你 |好 |， |世 |界 |", c1.String())
+	assert.Equal(t, "|你|好|，|世|界|", c1.String())
 }
 
 //======================================================================

@@ -666,10 +666,9 @@ func GetCursorPosFromCoords(ccol int, crow int, layout *TextLayout, at IChrAt) i
 
 		col := 0
 		for i := 0; i < gwutil.Min(endw-startw, ccol); {
-			col += 1
 			i += runewidth.RuneWidth(at.ChrAt(col + start))
+			col += 1
 		}
-
 		return start + col
 	}
 }
@@ -736,16 +735,13 @@ func MakeTextLayout(content IContent, width int, wrap WrapType, align gowid.IHAl
 				}
 			}
 			if !skippingToEndOfLine {
-				if indexInLineWidth > 0 {
-					// if last character is "\n", don't render a blank line below
-					lines = append(lines, LineLayout{
-						StartLength: startOfCurrentLineLength,
-						StartWidth:  startOfCurrentLineWidth,
-						EndLength:   startOfCurrentLineLength + indexInLineLength,
-						EndWidth:    startOfCurrentLineWidth + indexInLineWidth,
-						Clipped:     false,
-					})
-				}
+				lines = append(lines, LineLayout{
+					StartLength: startOfCurrentLineLength,
+					StartWidth:  startOfCurrentLineWidth,
+					EndLength:   startOfCurrentLineLength + indexInLineLength,
+					EndWidth:    startOfCurrentLineWidth + indexInLineWidth,
+					Clipped:     false,
+				})
 			}
 
 		case WrapAny:
@@ -784,15 +780,13 @@ func MakeTextLayout(content IContent, width int, wrap WrapType, align gowid.IHAl
 					indexInSegmentLength += 1
 				}
 			}
-			if indexInSegmentWidth > 0 {
-				lines = append(lines, LineLayout{
-					StartLength: startOfCurrentSegmentLength,
-					StartWidth:  startOfCurrentSegmentWidth,
-					EndLength:   startOfCurrentSegmentLength + indexInSegmentLength,
-					EndWidth:    startOfCurrentSegmentWidth + indexInSegmentWidth,
-					Clipped:     false,
-				})
-			}
+			lines = append(lines, LineLayout{
+				StartLength: startOfCurrentSegmentLength,
+				StartWidth:  startOfCurrentSegmentWidth,
+				EndLength:   startOfCurrentSegmentLength + indexInSegmentLength,
+				EndWidth:    startOfCurrentSegmentWidth + indexInSegmentWidth,
+				Clipped:     false,
+			})
 
 		default:
 			panic(fmt.Errorf("Wrap %v not supported yet", wrap))

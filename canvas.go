@@ -404,12 +404,13 @@ func WriteToCanvas(c IRangeOverCanvas, p []byte) (n int, err error) {
 				line++
 				col = 0
 			default:
-				if col == maxcol {
+				wid := runewidth.RuneWidth(chr)
+				if col+wid > maxcol {
 					col = 0
 					line++
 				}
-				c.SetCellAt(col, line, c.CellAt(col, line).WithRune(rune(chr)))
-				col++
+				c.SetCellAt(col, line, c.CellAt(col, line).WithRune(chr))
+				col += wid
 			}
 			done = i + utf8.RuneLen(chr)
 		} else {
@@ -528,9 +529,11 @@ func CanvasToString(c ICanvas) string {
 	lineStrings := make([]string, c.BoxRows())
 	for i := 0; i < c.BoxRows(); i++ {
 		line := c.Line(i, LineCopy{}).Line
-		curLine := make([]byte, 0)
-		for _, r := range line {
-			curLine = append(curLine, []byte(string(r.Rune()))...)
+		curLine := make([]rune, 0)
+		for x := 0; x < len(line); {
+			r := line[x].Rune()
+			curLine = append(curLine, r)
+			x += runewidth.RuneWidth(r)
 		}
 		lineStrings[i] = string(curLine)
 	}
