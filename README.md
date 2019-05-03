@@ -24,10 +24,9 @@ go get github.com/gcla/gowid/...
 ```
 ## Examples
 
-Make sure GOPATH is in your PATH, then tab complete "gowid-" e.g.
+Make sure `$GOPATH/bin` is in your PATH (or `~/go/bin` if `GOPATH` isn't set), then tab complete "gowid-" e.g.
 
 ```bash
-export PATH=$PATH:$GOPATH/bin/
 gowid-fib
 ```
 
@@ -124,7 +123,12 @@ Running the example above displays this:
 
 <a href="https://drive.google.com/uc?export=view&id=1P2kjWagHJmhtWLV0hPQti0fXKidr_WMB"><img src="https://drive.google.com/uc?export=view&id=1P2kjWagHJmhtWLV0hPQti0fXKidr_WMB" style="width: 500px; max-width: 100%; height: auto" title="Click for the larger version." /></a>
 
+## Documentation
 
+ - The beginnings of a [tutorial](docs/Tutorial.md)
+ - A list of most of the [widgets](docs/Widgets.md)
+ - Some [FAQs](docs/FAQ.md) (which I guessed at...)
+ 
 ## Similar Projects
 
 Gowid is late to the TUI party. There are many options from which to choose - please read https://appliedgo.net/tui/ for a nice summary for the Go language. Here is a selection:
