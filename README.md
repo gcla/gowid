@@ -16,7 +16,7 @@ Gowid is built on top of the fantastic [tcell](https://github.com/gdamore/tcell)
 
 There are many alternatives to gowid - see [Similar Projects](#similar-projects)
 
-The most developed gowid application is currently [termshark](https//termshark.io), a terminal UI for tshark.
+The most developed gowid application is currently [termshark](https://termshark.io), a terminal UI for tshark.
 ## Installation
 
 ```bash
