@@ -16,6 +16,7 @@ Gowid is built on top of the fantastic [tcell](https://github.com/gdamore/tcell)
 
 There are many alternatives to gowid - see [Similar Projects](#similar-projects)
 
+The most developed gowid application is currently [termshark](https//termshark.io), a terminal UI for tshark.
 ## Installation
 
 ```bash
@@ -42,9 +43,13 @@ And urwid's [fibonacci](https://github.com/urwid/urwid/blob/master/examples/fib.
 
 <a href="https://drive.google.com/uc?export=view&id=1fPVYOWt7EMUP18ZQL78OFY7IXwmeeqUO"><img src="https://drive.google.com/uc?export=view&id=1fPVYOWt7EMUP18ZQL78OFY7IXwmeeqUO" style="width: 500px; max-width: 100%; height: auto" title="Click for the larger version." /></a>
 
-Finally a demonstration of gowid's terminal widget, a port of urwid's [terminal widget](https://github.com/urwid/urwid/blob/master/examples/terminal.py):
+A demonstration of gowid's terminal widget, a port of urwid's [terminal widget](https://github.com/urwid/urwid/blob/master/examples/terminal.py):
 
 <a href="https://drive.google.com/uc?export=view&id=1bRtgHoXcy0UESmKZK6JID8FIlkf5T7aL"><img src="https://drive.google.com/uc?export=view&id=1bRtgHoXcy0UESmKZK6JID8FIlkf5T7aL" style="width: 500px; max-width: 100%; height: auto" title="Click for the larger version." /></a>
+
+Finally, here is an animation of termshark in action:
+
+<a href="https://drive.google.com/uc?export=view&id=1vDecxjqwJrtMGJjOObL-LLvi-1pBVByt"><img src="https://drive.google.com/uc?export=view&id=1vDecxjqwJrtMGJjOObL-LLvi-1pBVByt" style="width: 500px; max-width: 100%; height: auto" title="Click for the larger version." /></a>
 
 ## Hello World
 
