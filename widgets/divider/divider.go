@@ -21,7 +21,7 @@ var (
 
 func init() {
 	if runtime.GOOS == "windows" {
-		HorizontalLine = '―'
+		HorizontalLine = '─'
 		AltHorizontalLine = HorizontalLine
 	}
 }
