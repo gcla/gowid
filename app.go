@@ -7,7 +7,9 @@ package gowid
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -240,7 +242,15 @@ func NewApp(args AppArgs) (rapp *App, rerr error) {
 	clicks := MakeClickTargets()
 
 	if args.Log == nil {
-		args.Log = log.New()
+		logname := filepath.Base(os.Args[0])
+		logname = fmt.Sprintf("%s.log", strings.TrimSuffix(logname, filepath.Ext(logname)))
+		logfile, err := os.Create(logname)
+		if err != nil {
+			return nil, err
+		}
+		logger := log.New()
+		logger.Out = logfile
+		args.Log = logger
 	}
 
 	res := &App{
