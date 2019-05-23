@@ -497,6 +497,50 @@ func TestCanvas40(t *testing.T) {
 
 }
 
+func TestEncoded1(t *testing.T) {
+	f := FakeTerminal{modes: &Modes{}}
+	c := NewCanvasOfSize(8, 2, 100, &f)
+	f.Modes().Charset = CharsetUTF8
+
+	c.SetTermCursor(gwutil.SomeInt(0), gwutil.SomeInt(0))
+	res := strings.Join([]string{"        ", "        "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(0, 0, c, t)
+
+	_, err := io.Copy(c, strings.NewReader("\033[1;0Habc你xyz"))
+	assert.NoError(t, err)
+	res = strings.Join([]string{"abc你xyz", "        "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(7, 0, c, t)
+
+	c.CarriageReturn()
+	AssertTermPositionIs(0, 0, c, t)
+	c.LineFeed(false)
+	AssertTermPositionIs(0, 1, c, t)
+	c.PushCursor('p')
+	c.PushCursor('q')
+	res = strings.Join([]string{"abc你xyz", "pq      "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(2, 1, c, t)
+}
+
+func TestEncoded2(t *testing.T) {
+	f := FakeTerminal{modes: &Modes{}}
+	c := NewCanvasOfSize(3, 2, 100, &f)
+	f.Modes().Charset = CharsetUTF8
+
+	c.SetTermCursor(gwutil.SomeInt(0), gwutil.SomeInt(0))
+	res := strings.Join([]string{"   ", "   "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(0, 0, c, t)
+
+	_, err := io.Copy(c, strings.NewReader("\033[1;0Hab你x"))
+	assert.NoError(t, err)
+	res = strings.Join([]string{"ab ", "你x"}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(2, 1, c, t)
+}
+
 func TestCanvasVttest1(t *testing.T) {
 	f := FakeTerminal{modes: &Modes{}}
 	c := NewCanvasOfSize(80, 24, 100, &f)

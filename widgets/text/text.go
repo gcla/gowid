@@ -13,6 +13,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/mattn/go-runewidth"
 )
 
 //======================================================================
@@ -57,6 +58,7 @@ type ContentCB struct{}
 // in practise. See also TextContent.
 type IContent interface {
 	Length() int
+	Width() int
 	ChrAt(idx int) rune
 	RangeOver(start, end int, attrs gowid.IRenderContext, proc gowid.ICellProcessor)
 	AddAt(idx int, content ContentSegment)
@@ -94,7 +96,7 @@ type Content []StyledRune
 func NewContent(content []ContentSegment) *Content {
 	var length int
 	for _, m := range content {
-		length += len(m.Text) // overestimate
+		length += len(m.Text) // might be underestimate
 	}
 	res := Content(make([]StyledRune, 0, length))
 	for _, m := range content {
@@ -106,7 +108,7 @@ func NewContent(content []ContentSegment) *Content {
 // MakeAttributedRunes converts a ContentSegment into an array of AttributeRune,
 // which is used to build a Content implementing IContent.
 func MakeAttributedRunes(m ContentSegment) []StyledRune {
-	res := make([]StyledRune, 0, len(m.Text)) // overestimate
+	res := make([]StyledRune, 0, len(m.Text)) // might be underestimate
 	s := m.Text
 	for len(s) > 0 {
 		c, size := utf8.DecodeRuneInString(s)
@@ -167,6 +169,15 @@ func (h Content) ChrAt(idx int) rune {
 // Length will return the length of the content i.e. the number of runes it comprises.
 func (h Content) Length() int {
 	return len(h)
+}
+
+// Width returns the number of screen cells the content takes. Different from Length if >1-width runes are used.
+func (h Content) Width() int {
+	res := 0
+	for _, r := range h {
+		res += runewidth.RuneWidth(r.Chr)
+	}
+	return res
 }
 
 // String implements fmt.Stringer.
@@ -423,7 +434,7 @@ func CalculateTopMiddleBottom(w IWidget, size gowid.IRenderSize) (int, int, int)
 	if haveMaxRow {
 		if isFixed {
 			maxRow = 1
-			maxCol = w.Content().Length()
+			maxCol = w.Content().Width()
 		} else {
 			maxRow = box.BoxRows()
 			maxCol = box.BoxColumns()
@@ -431,7 +442,7 @@ func CalculateTopMiddleBottom(w IWidget, size gowid.IRenderSize) (int, int, int)
 	} else {
 		if !isFlow {
 			// TODO - compute content twice
-			maxCol = content.Length()
+			maxCol = content.Width()
 		} else {
 			maxCol = flow.FlowColumns()
 		}
@@ -440,7 +451,7 @@ func CalculateTopMiddleBottom(w IWidget, size gowid.IRenderSize) (int, int, int)
 	layout := MakeTextLayout(content, maxCol, w.Wrap(), w.Align())
 
 	if cursor {
-		_, crow = GetCoordsFromCursorPos(cursorPos, maxCol, layout)
+		_, crow = GetCoordsFromCursorPos(cursorPos, maxCol, layout, w.Content())
 	}
 
 	if haveMaxRow && len(layout.Lines) > maxRow {
@@ -472,7 +483,7 @@ var _ gowid.ICellProcessor = (*ContentToCellArray)(nil)
 
 func (m *ContentToCellArray) ProcessCell(cell gowid.Cell) gowid.Cell {
 	m.Cells[m.Cur] = cell
-	m.Cur++
+	m.Cur += runewidth.RuneWidth(cell.Rune())
 	return cell
 }
 
@@ -514,7 +525,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 					}
 					curcol = 0
 				} else {
-					curcol++
+					curcol += runewidth.RuneWidth(last)
 				}
 			}
 			if curcol > maxCol {
@@ -529,7 +540,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 		}
 	} else {
 		if !isFlow {
-			maxCol = content.Length()
+			maxCol = content.Width()
 		} else {
 			maxCol = flow.FlowColumns()
 		}
@@ -544,8 +555,10 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	// the layout object
 	count := 0
 	for x, segment := range layout.Lines {
-		lines[x] = make([]gowid.Cell, segment.End-segment.Start, maxCol)
-		w.Content().RangeOver(segment.Start, segment.End, app, &ContentToCellArray{Cells: lines[x]})
+		// Make enough cells to be able to render double-width runes. The second cell will be left
+		// empty.
+		lines[x] = make([]gowid.Cell, segment.EndWidth-segment.StartWidth)
+		w.Content().RangeOver(segment.StartLength, segment.EndLength, app, &ContentToCellArray{Cells: lines[x]})
 		if segment.Clipped {
 			//for i := len(w.ClipIndicator())-1; i >=0; i-- {
 			ind := w.ClipIndicator()
@@ -574,7 +587,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	}
 
 	if cursor {
-		ccol, crow = GetCoordsFromCursorPos(cursorPos, maxCol, layout)
+		ccol, crow = GetCoordsFromCursorPos(cursorPos, maxCol, layout, w.Content())
 	}
 
 	res := gowid.NewCanvasWithLines(lines)
@@ -617,15 +630,20 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	return res
 }
 
+type IChrAt interface {
+	ChrAt(i int) rune
+}
+
 // zero-based
-func GetCoordsFromCursorPos(cursorPos int, maxCol int, layout *TextLayout) (x int, y int) {
+func GetCoordsFromCursorPos(cursorPos int, maxCol int, layout *TextLayout, at IChrAt) (x int, y int) {
 	var crow, ccol int
 	for lineNumber, segment := range layout.Lines {
-		if segment.Start <= cursorPos {
+		if segment.StartLength <= cursorPos && cursorPos <= segment.EndLength {
 			crow = lineNumber
-			ccol = gwutil.Min(cursorPos-segment.Start, maxCol-1)
-			if cursorPos < segment.End {
-				break
+
+			ccol = 0
+			for i := segment.StartLength; i < gwutil.Min(segment.EndLength, cursorPos); i++ {
+				ccol += runewidth.RuneWidth(at.ChrAt(i))
 			}
 		}
 	}
@@ -634,24 +652,35 @@ func GetCoordsFromCursorPos(cursorPos int, maxCol int, layout *TextLayout) (x in
 
 // GetCursorPosFromCoords translates a (col, row) coord to a cursor position. It looks up the layout structure
 // at the right line, then adds the col to the segment start offset.
-func GetCursorPosFromCoords(ccol int, crow int, layout *TextLayout) int {
+func GetCursorPosFromCoords(ccol int, crow int, layout *TextLayout, at IChrAt) int {
 	if len(layout.Lines) == 0 {
 		return 0
 	} else if crow >= len(layout.Lines) {
-		return layout.Lines[len(layout.Lines)-1].End
+		return layout.Lines[len(layout.Lines)-1].EndWidth
 	} else {
-		start := layout.Lines[crow].Start
-		end := layout.Lines[crow].End
-		return start + gwutil.Min(end-start, ccol)
+
+		start := layout.Lines[crow].StartLength
+
+		startw := layout.Lines[crow].StartWidth
+		endw := layout.Lines[crow].EndWidth
+
+		col := 0
+		for i := 0; i < gwutil.Min(endw-startw, ccol); {
+			i += runewidth.RuneWidth(at.ChrAt(col + start))
+			col += 1
+		}
+		return start + col
 	}
 }
 
 //======================================================================
 
 type LineLayout struct {
-	Start   int
-	End     int
-	Clipped bool
+	StartLength int
+	StartWidth  int
+	EndWidth    int
+	EndLength   int
+	Clipped     bool
 }
 
 type TextLayout struct {
@@ -666,57 +695,98 @@ func MakeTextLayout(content IContent, width int, wrap WrapType, align gowid.IHAl
 	if width > 0 {
 		switch wrap {
 		case WrapClip:
-			indexInLine := 0             // current line index
+			indexInLineWidth := 0        // current line index based on screen cells
+			indexInLineLength := 0       // current line index based on runes
 			skippingToEndOfLine := false // true if we had to cut off the text and are looking for a newline
-			startOfCurrentLine := 0
-			for startOfCurrentLine+indexInLine < content.Length() {
-				if indexInLine == width { // end of space and no newline found
-					lines = append(lines, LineLayout{startOfCurrentLine, startOfCurrentLine + indexInLine, true})
+			startOfCurrentLineLength := 0
+			startOfCurrentLineWidth := 0
+			for startOfCurrentLineLength+indexInLineLength < content.Length() {
+				c := content.ChrAt(startOfCurrentLineLength + indexInLineLength)
+				wid := runewidth.RuneWidth(c)
+				if !skippingToEndOfLine && indexInLineWidth+wid > width { // end of space and no newline found
+					lines = append(lines, LineLayout{
+						StartLength: startOfCurrentLineLength,
+						StartWidth:  startOfCurrentLineWidth,
+						EndLength:   startOfCurrentLineLength + indexInLineLength,
+						EndWidth:    startOfCurrentLineWidth + indexInLineWidth,
+						Clipped:     true,
+					})
 					skippingToEndOfLine = true
-					indexInLine++
-				} else {
-					c := content.ChrAt(startOfCurrentLine + indexInLine)
-					if c == '\n' {
-						if !skippingToEndOfLine {
-							lines = append(lines, LineLayout{startOfCurrentLine, startOfCurrentLine + indexInLine, false})
-						}
-						skippingToEndOfLine = false
-						startOfCurrentLine += (indexInLine + 1)
-						indexInLine = 0
-					} else {
-						indexInLine++
+					indexInLineWidth += wid
+					indexInLineLength++
+				} else if c == '\n' {
+					if !skippingToEndOfLine {
+						lines = append(lines, LineLayout{
+							StartLength: startOfCurrentLineLength,
+							StartWidth:  startOfCurrentLineLength,
+							EndLength:   startOfCurrentLineLength + indexInLineLength,
+							EndWidth:    startOfCurrentLineWidth + indexInLineWidth,
+							Clipped:     false,
+						})
 					}
+					skippingToEndOfLine = false
+					startOfCurrentLineLength += (indexInLineLength + 1)
+					startOfCurrentLineWidth += (indexInLineWidth + 1)
+					indexInLineLength = 0
+					indexInLineWidth = 0
+				} else {
+					indexInLineWidth += wid
+					indexInLineLength += 1
 				}
 			}
 			if !skippingToEndOfLine {
-				if indexInLine > 0 {
-					// if last character is "\n", don't render a blank line below
-					lines = append(lines, LineLayout{startOfCurrentLine, startOfCurrentLine + indexInLine, false})
-				}
+				lines = append(lines, LineLayout{
+					StartLength: startOfCurrentLineLength,
+					StartWidth:  startOfCurrentLineWidth,
+					EndLength:   startOfCurrentLineLength + indexInLineLength,
+					EndWidth:    startOfCurrentLineWidth + indexInLineWidth,
+					Clipped:     false,
+				})
 			}
 
 		case WrapAny:
-			indexInSegment := 0 // current line index
-			startOfCurrentSegment := 0
-			for startOfCurrentSegment+indexInSegment < content.Length() {
-				if indexInSegment == width { // end of space and no newline found
-					lines = append(lines, LineLayout{startOfCurrentSegment, startOfCurrentSegment + indexInSegment, false})
-					startOfCurrentSegment += indexInSegment
-					indexInSegment = 0
+			indexInSegmentLength := 0 // current line index
+			indexInSegmentWidth := 0  // current line index
+			startOfCurrentSegmentLength := 0
+			startOfCurrentSegmentWidth := 0
+			for startOfCurrentSegmentLength+indexInSegmentLength < content.Length() {
+				c := content.ChrAt(startOfCurrentSegmentLength + indexInSegmentLength)
+				if indexInSegmentWidth+runewidth.RuneWidth(c) > width { // end of space and no newline found
+					lines = append(lines, LineLayout{
+						StartLength: startOfCurrentSegmentLength,
+						StartWidth:  startOfCurrentSegmentWidth,
+						EndLength:   startOfCurrentSegmentLength + indexInSegmentLength,
+						EndWidth:    startOfCurrentSegmentWidth + indexInSegmentWidth,
+						Clipped:     false,
+					})
+					startOfCurrentSegmentLength += indexInSegmentLength
+					startOfCurrentSegmentWidth += indexInSegmentWidth
+					indexInSegmentLength = 0
+					indexInSegmentWidth = 0
+				} else if c == '\n' {
+					lines = append(lines, LineLayout{
+						StartLength: startOfCurrentSegmentLength,
+						StartWidth:  startOfCurrentSegmentWidth,
+						EndLength:   startOfCurrentSegmentLength + indexInSegmentLength,
+						EndWidth:    startOfCurrentSegmentWidth + indexInSegmentWidth,
+						Clipped:     false,
+					})
+					startOfCurrentSegmentLength += (indexInSegmentLength + 1)
+					startOfCurrentSegmentWidth += (indexInSegmentWidth + 1)
+					indexInSegmentLength = 0
+					indexInSegmentWidth = 0
 				} else {
-					c := content.ChrAt(startOfCurrentSegment + indexInSegment)
-					if c == '\n' {
-						lines = append(lines, LineLayout{startOfCurrentSegment, startOfCurrentSegment + indexInSegment, false})
-						startOfCurrentSegment += (indexInSegment + 1)
-						indexInSegment = 0
-					} else {
-						indexInSegment++
-					}
+					indexInSegmentWidth += runewidth.RuneWidth(c)
+					indexInSegmentLength += 1
 				}
 			}
-			if indexInSegment > 0 {
-				lines = append(lines, LineLayout{startOfCurrentSegment, startOfCurrentSegment + indexInSegment, false})
-			}
+			lines = append(lines, LineLayout{
+				StartLength: startOfCurrentSegmentLength,
+				StartWidth:  startOfCurrentSegmentWidth,
+				EndLength:   startOfCurrentSegmentLength + indexInSegmentLength,
+				EndWidth:    startOfCurrentSegmentWidth + indexInSegmentWidth,
+				Clipped:     false,
+			})
 
 		default:
 			panic(fmt.Errorf("Wrap %v not supported yet", wrap))

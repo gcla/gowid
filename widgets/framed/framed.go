@@ -13,6 +13,7 @@ import (
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gdamore/tcell"
+	"github.com/mattn/go-runewidth"
 )
 
 //======================================================================
@@ -168,21 +169,26 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 
 //======================================================================
 
+func frameWidth(w IFramed) int {
+	return runewidth.RuneWidth(w.Opts().Frame.L) + runewidth.RuneWidth(w.Opts().Frame.R)
+}
+
 func RenderSize(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderBox {
 	ss := w.SubWidgetSize(size, focus, app)
 	sdim := w.SubWidget().RenderSize(ss, focus, app)
-	return gowid.RenderBox{C: sdim.BoxColumns() + 2, R: sdim.BoxRows() + 2}
+	return gowid.RenderBox{C: sdim.BoxColumns() + frameWidth(w), R: sdim.BoxRows() + 2}
 }
 
-func SubWidgetSize(w interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderSize {
+func SubWidgetSize(w IFramed, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderSize {
 	var newSize gowid.IRenderSize
 	switch sz := size.(type) {
 	case gowid.IRenderFixed:
 		newSize = gowid.RenderFixed{}
 	case gowid.IRenderBox:
-		newSize = gowid.RenderBox{C: gwutil.Max(sz.BoxColumns()-2, 0), R: gwutil.Max(sz.BoxRows()-2, 0)}
+		// Note - this assumes wid(Bl) == wid(L) and so on... yuck
+		newSize = gowid.RenderBox{C: gwutil.Max(sz.BoxColumns()-frameWidth(w), 0), R: gwutil.Max(sz.BoxRows()-2, 0)}
 	case gowid.IRenderFlowWith:
-		newSize = gowid.RenderFlowWith{C: gwutil.Max(sz.FlowColumns()-2, 0)}
+		newSize = gowid.RenderFlowWith{C: gwutil.Max(sz.FlowColumns()-frameWidth(w), 0)}
 	default:
 		panic(gowid.WidgetSizeError{Widget: w, Size: size})
 	}
@@ -205,6 +211,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	}
 
 	var tophor, bottomhor, leftver, rightver gowid.Cell
+	dummy := gowid.CellFromRune(' ')
 	tophor = gowid.CellFromRune(frame.T)
 	bottomhor = gowid.CellFromRune(frame.B)
 	leftver = gowid.CellFromRune(frame.L)
@@ -228,7 +235,15 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	leftverLine := make([]gowid.Cell, 0)
 	rightverLine := make([]gowid.Cell, 0)
 	leftverLine = append(leftverLine, leftver)
+	wid := runewidth.RuneWidth(leftver.Rune())
+	for i := 1; i < wid; i++ {
+		leftverLine = append(leftverLine, dummy)
+	}
 	rightverLine = append(rightverLine, rightver)
+	wid = runewidth.RuneWidth(rightver.Rune())
+	for i := 1; i < wid; i++ {
+		rightverLine = append(rightverLine, dummy)
+	}
 	for i := 0; i < innerLines; i++ {
 		leftverCanvas.AppendLine(leftverLine, false)
 		rightverCanvas.AppendLine(rightverLine, false)
@@ -237,7 +252,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 
 	tophorArr := make([]gowid.Cell, 0)
 	bottomhorArr := make([]gowid.Cell, 0)
-	for i := 0; i < maxCol+2; i++ {
+	for i := 0; i < maxCol+frameWidth(w); i++ {
 		tophorArr = append(tophorArr, tophor)
 		bottomhorArr = append(bottomhorArr, bottomhor)
 	}
@@ -251,11 +266,13 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	res.AppendLine(bottomhorArr, false)
 
 	res.Lines[0][0] = res.Lines[0][0].WithRune(frame.Tl)
-	res.Lines[0][len(res.Lines[0])-1] = res.Lines[0][len(res.Lines[0])-1].WithRune(frame.Tr)
+	wid = runewidth.RuneWidth(frame.Tr)
+	res.Lines[0][len(res.Lines[0])-wid] = res.Lines[0][len(res.Lines[0])-wid].WithRune(frame.Tr)
 
 	resl := res.BoxRows()
 	res.Lines[resl-1][0] = res.Lines[resl-1][0].WithRune(frame.Bl)
-	res.Lines[resl-1][len(res.Lines[0])-1] = res.Lines[resl-1][len(res.Lines[0])-1].WithRune(frame.Br)
+	wid = runewidth.RuneWidth(frame.Br)
+	res.Lines[resl-1][len(res.Lines[0])-wid] = res.Lines[resl-1][len(res.Lines[0])-wid].WithRune(frame.Br)
 
 	if titleWidget != nil {
 		titleCanvas := gowid.Render(titleWidget, gowid.RenderFixed{}, gowid.NotSelected, app)

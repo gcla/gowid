@@ -42,16 +42,34 @@ func TestLayout1(t *testing.T) {
 	t1 := NewContent(tm1)
 	l1 := MakeTextLayout(t1, 5, WrapClip, gowid.HAlignLeft{})
 
-	assert.Equal(t, len(l1.Lines), 1)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 5, Clipped: true})
+	assert.Equal(t, 1, len(l1.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 5, EndWidth: 5, Clipped: true}, l1.Lines[0])
 
 	t2 := NewContent(tm1)
 	l2 := MakeTextLayout(t2, 5, WrapAny, gowid.HAlignLeft{})
 
-	assert.Equal(t, len(l2.Lines), 3)
-	assert.Equal(t, l2.Lines[0], LineLayout{Start: 0, End: 5})
-	assert.Equal(t, l2.Lines[1], LineLayout{Start: 5, End: 10})
-	assert.Equal(t, l2.Lines[2], LineLayout{Start: 10, End: 11})
+	assert.Equal(t, 3, len(l2.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 5, EndWidth: 5}, l2.Lines[0])
+	assert.Equal(t, LineLayout{StartWidth: 5, StartLength: 5, EndLength: 10, EndWidth: 10}, l2.Lines[1])
+	assert.Equal(t, LineLayout{StartWidth: 10, StartLength: 10, EndLength: 11, EndWidth: 11}, l2.Lines[2])
+}
+
+func TestLayoutW1(t *testing.T) {
+	tm1 := []ContentSegment{StyledContent("hell现o world", testl)}
+
+	t1 := NewContent(tm1)
+	l1 := MakeTextLayout(t1, 5, WrapClip, gowid.HAlignLeft{})
+
+	assert.Equal(t, 1, len(l1.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 4, EndWidth: 4, Clipped: true}, l1.Lines[0])
+
+	t2 := NewContent(tm1)
+	l2 := MakeTextLayout(t2, 5, WrapAny, gowid.HAlignLeft{})
+
+	assert.Equal(t, 3, len(l2.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 4, EndWidth: 4}, l2.Lines[0])
+	assert.Equal(t, LineLayout{StartWidth: 4, StartLength: 4, EndLength: 8, EndWidth: 9}, l2.Lines[1])
+	assert.Equal(t, LineLayout{StartWidth: 9, StartLength: 8, EndLength: 12, EndWidth: 13}, l2.Lines[2])
 }
 
 func TestLayout2(t *testing.T) {
@@ -61,7 +79,7 @@ func TestLayout2(t *testing.T) {
 	l1 := MakeTextLayout(t1, 20, WrapClip, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l1.Lines), 1)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 11})
+	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 11, EndWidth: 11})
 }
 
 func TestLayout3(t *testing.T) {
@@ -71,17 +89,17 @@ func TestLayout3(t *testing.T) {
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l1.Lines), 2)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 7, Clipped: true})
-	assert.Equal(t, l1.Lines[1], LineLayout{Start: 12, End: 19, Clipped: true})
+	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7})
+	assert.Equal(t, l1.Lines[1], LineLayout{StartWidth: 12, StartLength: 12, EndLength: 19, Clipped: true, EndWidth: 19})
 
 	t2 := NewContent(tm1)
 	l2 := MakeTextLayout(t2, 7, WrapAny, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l2.Lines), 4)
-	assert.Equal(t, l2.Lines[0], LineLayout{Start: 0, End: 7})
-	assert.Equal(t, l2.Lines[1], LineLayout{Start: 7, End: 11})
-	assert.Equal(t, l2.Lines[2], LineLayout{Start: 12, End: 19})
-	assert.Equal(t, l2.Lines[3], LineLayout{Start: 19, End: 21})
+	assert.Equal(t, l2.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, EndWidth: 7})
+	assert.Equal(t, l2.Lines[1], LineLayout{StartWidth: 7, StartLength: 7, EndLength: 11, EndWidth: 11})
+	assert.Equal(t, l2.Lines[2], LineLayout{StartWidth: 12, StartLength: 12, EndLength: 19, EndWidth: 19})
+	assert.Equal(t, l2.Lines[3], LineLayout{StartWidth: 19, StartLength: 19, EndLength: 21, EndWidth: 21})
 }
 
 func TestLayout31(t *testing.T) {
@@ -91,8 +109,8 @@ func TestLayout31(t *testing.T) {
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l1.Lines), 2)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 2})
-	assert.Equal(t, l1.Lines[1], LineLayout{Start: 3, End: 10, Clipped: true})
+	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 2, EndWidth: 2})
+	assert.Equal(t, l1.Lines[1], LineLayout{StartWidth: 3, StartLength: 3, EndLength: 10, Clipped: true, EndWidth: 10})
 }
 
 func TestLayout4(t *testing.T) {
@@ -102,8 +120,8 @@ func TestLayout4(t *testing.T) {
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l1.Lines), 2)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 7, Clipped: true})
-	assert.Equal(t, l1.Lines[1], LineLayout{Start: 12, End: 16})
+	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7})
+	assert.Equal(t, l1.Lines[1], LineLayout{StartWidth: 12, StartLength: 12, EndLength: 16, EndWidth: 16})
 }
 
 func TestLayout5(t *testing.T) {
@@ -113,18 +131,18 @@ func TestLayout5(t *testing.T) {
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l1.Lines), 3)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 7, Clipped: true})
-	assert.Equal(t, l1.Lines[1], LineLayout{Start: 12, End: 12})
-	assert.Equal(t, l1.Lines[2], LineLayout{Start: 13, End: 17})
+	assert.Equal(t, l1.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7})
+	assert.Equal(t, l1.Lines[1], LineLayout{StartWidth: 12, StartLength: 12, EndLength: 12, EndWidth: 12})
+	assert.Equal(t, l1.Lines[2], LineLayout{StartWidth: 13, StartLength: 13, EndLength: 17, EndWidth: 17})
 
 	t2 := NewContent(tm1)
 	l2 := MakeTextLayout(t2, 7, WrapAny, gowid.HAlignLeft{})
 
 	assert.Equal(t, len(l2.Lines), 4)
-	assert.Equal(t, l2.Lines[0], LineLayout{Start: 0, End: 7})
-	assert.Equal(t, l2.Lines[1], LineLayout{Start: 7, End: 11})
-	assert.Equal(t, l2.Lines[2], LineLayout{Start: 12, End: 12})
-	assert.Equal(t, l2.Lines[3], LineLayout{Start: 13, End: 17})
+	assert.Equal(t, l2.Lines[0], LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, EndWidth: 7})
+	assert.Equal(t, l2.Lines[1], LineLayout{StartWidth: 7, StartLength: 7, EndLength: 11, EndWidth: 11})
+	assert.Equal(t, l2.Lines[2], LineLayout{StartWidth: 12, StartLength: 12, EndLength: 12, EndWidth: 12})
+	assert.Equal(t, l2.Lines[3], LineLayout{StartWidth: 13, StartLength: 13, EndLength: 17, EndWidth: 17})
 }
 
 func TestLayout6(t *testing.T) {
@@ -133,8 +151,9 @@ func TestLayout6(t *testing.T) {
 	t1 := NewContent(tm1)
 	l1 := MakeTextLayout(t1, 7, WrapClip, gowid.HAlignLeft{})
 
-	assert.Equal(t, len(l1.Lines), 1)
-	assert.Equal(t, l1.Lines[0], LineLayout{Start: 0, End: 7, Clipped: true})
+	assert.Equal(t, 2, len(l1.Lines))
+	assert.Equal(t, LineLayout{StartWidth: 0, StartLength: 0, EndLength: 7, Clipped: true, EndWidth: 7}, l1.Lines[0])
+	assert.Equal(t, LineLayout{StartWidth: 12, StartLength: 12, EndLength: 12, Clipped: false, EndWidth: 12}, l1.Lines[1])
 }
 
 func TestMultiline1(t *testing.T) {
@@ -155,9 +174,7 @@ cool`
 		"cool            ",
 		"                ",
 	}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas1(t *testing.T) {
@@ -166,9 +183,7 @@ func TestCanvas1(t *testing.T) {
 	log.Infof("Widget1 is %v", widget1)
 	log.Infof("Canvas1 is %s", canvas1.String())
 	res := strings.Join([]string{"hello world         "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas1b(t *testing.T) {
@@ -177,9 +192,7 @@ func TestCanvas1b(t *testing.T) {
 	log.Infof("Widget1 is %v", widget1)
 	log.Infof("Canvas1 is %s", canvas1.String())
 	res := strings.Join([]string{"hello w", "orld th", "is is a"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas2(t *testing.T) {
@@ -188,9 +201,7 @@ func TestCanvas2(t *testing.T) {
 	log.Infof("Widget2 is %v", widget1)
 	log.Infof("Canvas2 is %s", canvas1.String())
 	res := strings.Join([]string{"hello w", "orld   "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas3(t *testing.T) {
@@ -199,9 +210,7 @@ func TestCanvas3(t *testing.T) {
 	log.Infof("Widget3 is %v", widget1)
 	log.Infof("Canvas3 is %s", canvas1.String())
 	res := strings.Join([]string{"hello w", "orld   "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas4(t *testing.T) {
@@ -210,9 +219,7 @@ func TestCanvas4(t *testing.T) {
 	log.Infof("Widget4 is %v", widget1)
 	log.Infof("Canvas4 is %s", canvas1.String())
 	res := strings.Join([]string{"hello w", "orld ev", "ery day"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas5(t *testing.T) {
@@ -221,9 +228,7 @@ func TestCanvas5(t *testing.T) {
 	log.Infof("Widget5 is %v", widget1)
 	log.Infof("Canvas5 is %s", canvas1.String())
 	res := strings.Join([]string{"hel", "lo ", "wor", "ld ", "eve", "ry ", "day"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas6(t *testing.T) {
@@ -232,9 +237,7 @@ func TestCanvas6(t *testing.T) {
 	log.Infof("Widget6 is %v", widget1)
 	log.Infof("Canvas6 is %s", canvas1.String())
 	res := strings.Join([]string{"hello tr", "ansubsta", "ntiation"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas6b(t *testing.T) {
@@ -243,9 +246,7 @@ func TestCanvas6b(t *testing.T) {
 	log.Infof("Widget6 is %v", widget1)
 	log.Infof("Canvas6 is %s", canvas1.String())
 	res := strings.Join([]string{"hello tr", "ansubsta", "ntiation", " good   "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas7(t *testing.T) {
@@ -254,9 +255,7 @@ func TestCanvas7(t *testing.T) {
 	log.Infof("Widget7 is %v", widget1)
 	log.Infof("Canvas7 is %s", canvas1.String())
 	res := strings.Join([]string{"hello trans", "ubstantiati", "on good    "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas8(t *testing.T) {
@@ -265,9 +264,7 @@ func TestCanvas8(t *testing.T) {
 	log.Infof("Widget8 is %v", widget1)
 	log.Infof("Canvas8 is %s", canvas1.String())
 	res := strings.Join([]string{"hello trans", "ubstantiati", "on boy     "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas11(t *testing.T) {
@@ -277,9 +274,7 @@ func TestCanvas11(t *testing.T) {
 	log.Infof("Widget11 is %v", widget1)
 	log.Infof("Canvas11 is %s", canvas1.String())
 	res := strings.Join([]string{"hello", " tran", "subst"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas16(t *testing.T) {
@@ -288,9 +283,7 @@ func TestCanvas16(t *testing.T) {
 	log.Infof("Widget16 is %v", widget1)
 	log.Infof("Canvas16 is %s", canvas1.String())
 	res := strings.Join([]string{"line 1 l", "ine 2 li", "ne 3    "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas24(t *testing.T) {
@@ -301,9 +294,7 @@ func TestCanvas24(t *testing.T) {
 	log.Infof("Canvas18 is %v", canvas1)
 	log.Infof("Canvas18 is %s", canvas1.String())
 	res := strings.Join([]string{"line 2", "line 3"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas25(t *testing.T) {
@@ -313,9 +304,7 @@ func TestCanvas25(t *testing.T) {
 	log.Infof("Widget18 is %v", widget1)
 	log.Infof("Canvas18 is %s", canvas1.String())
 	res := strings.Join([]string{"line 1"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas27(t *testing.T) {
@@ -324,9 +313,7 @@ func TestCanvas27(t *testing.T) {
 	log.Infof("Widget is %v", widget1)
 	log.Infof("Canvas is '%s'", canvas1.String())
 	res := strings.Join([]string{""}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestCanvas28(t *testing.T) {
@@ -337,18 +324,14 @@ func TestCanvas28(t *testing.T) {
 	log.Infof("Widget is %v", widget1)
 	log.Infof("Canvas is '%s'", canvas1.String())
 	res := strings.Join([]string{"the needs ", "the needs ", "Or the one"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestTextAlign1(t *testing.T) {
-	widget1 := New("hello\nworld\nfoo\nba")
+	widget1 := New("hel你o\nworld\nf你o\nba")
 	canvas1 := widget1.Render(gowid.RenderFlowWith{C: 7}, gowid.NotSelected, gwtest.D)
-	res := strings.Join([]string{"hello  ", "world  ", "foo    ", "ba     "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	res := strings.Join([]string{"hel你o ", "world  ", "f你o   ", "ba     "}, "\n")
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestTextAlign2(t *testing.T) {
@@ -357,9 +340,7 @@ func TestTextAlign2(t *testing.T) {
 	})
 	canvas1 := widget1.Render(gowid.RenderFlowWith{C: 7}, gowid.NotSelected, gwtest.D)
 	res := strings.Join([]string{"  hello", "  world", "    foo", "     ba"}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestTextAlign3(t *testing.T) {
@@ -368,9 +349,7 @@ func TestTextAlign3(t *testing.T) {
 	})
 	canvas1 := widget1.Render(gowid.RenderFlowWith{C: 7}, gowid.NotSelected, gwtest.D)
 	res := strings.Join([]string{" hello ", " world ", "  foo  ", "  ba   "}, "\n")
-	if res != canvas1.String() {
-		t.Errorf("Failed")
-	}
+	assert.Equal(t, res, canvas1.String())
 }
 
 func TestText1(t *testing.T) {
@@ -410,6 +389,13 @@ func TestText3(t *testing.T) {
 	// TODO - make 2nd last arg 0
 	gwtest.RenderBoxManyTimes(t, w, 0, 10, 0, 10)
 	gwtest.RenderFlowManyTimes(t, w, 0, 10)
+}
+
+func TestChinese1(t *testing.T) {
+	w := New("|你|好|，|世|界|")
+	c1 := w.Render(gowid.RenderFixed{}, gowid.Focused, gwtest.D)
+	// Each width-2 rune takes up 2 screen cells
+	assert.Equal(t, "|你|好|，|世|界|", c1.String())
 }
 
 //======================================================================

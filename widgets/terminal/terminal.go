@@ -310,6 +310,9 @@ func (w *Widget) Canvas() *Canvas {
 
 func (w *Widget) SetCanvas(app gowid.IApp, c *Canvas) {
 	w.canvas = c
+	if app.GetScreen().CharacterSet() == "UTF-8" {
+		w.canvas.terminal.Modes().Charset = CharsetUTF8
+	}
 }
 
 func (w *Widget) Write(p []byte) (n int, err error) {

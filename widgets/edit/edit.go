@@ -6,14 +6,15 @@
 package edit
 
 import (
-	"errors"
 	"fmt"
 	"io"
+	"unicode/utf8"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gdamore/tcell"
+	"github.com/pkg/errors"
 )
 
 //======================================================================
@@ -61,6 +62,7 @@ func (m Mask) MaskChr() rune {
 
 type IWidget interface {
 	IEdit
+	text.IChrAt
 	LinesFromTop() int
 	SetLinesFromTop(int, gowid.IApp)
 	UpLines(size gowid.IRenderSize, doPage bool, app gowid.IApp) bool
@@ -141,10 +143,31 @@ func (w *Widget) Text() string {
 	return w.text
 }
 
+var InvalidRuneIndex error = errors.New("Invalid rune index for string")
+
+// TODO - this isn't ideal- if called in a loop, it would be quadratic.
+func (w *Widget) ChrAt(i int) rune {
+	j := 0
+	for _, char := range w.caption {
+		if j == i {
+			return char
+		}
+		j++
+	}
+	for _, char := range w.text {
+		if j == i {
+			return char
+		}
+		j++
+	}
+	panic(errors.WithStack(gowid.WithKVs(InvalidRuneIndex, map[string]interface{}{"index": i, "text": w.text})))
+}
+
 func (w *Widget) SetText(text string, app gowid.IApp) {
 	w.text = text
-	if w.cursorPos > len(w.text) {
-		w.SetCursorPos(len(w.text), app)
+	wid := utf8.RuneCountInString(w.text)
+	if w.cursorPos > wid {
+		w.SetCursorPos(wid, app)
 	}
 	gowid.RunWidgetCallbacks(w.Callbacks, Text{}, app, w)
 }
@@ -183,7 +206,7 @@ func (w *Widget) CursorPos() int {
 }
 
 func (w *Widget) SetCursorPos(pos int, app gowid.IApp) {
-	pos = gwutil.Min(pos, len(w.Text()))
+	pos = gwutil.Min(pos, utf8.RuneCountInString(w.Text()))
 	w.cursorPos = pos
 	gowid.RunWidgetCallbacks(w.Callbacks, Cursor{}, app, w)
 }
@@ -267,8 +290,7 @@ func MakeText(w IWidget) text.IWidget {
 	tw.SetLinesFromTop(w.LinesFromTop(), nil)
 
 	cu := &text.SimpleCursor{-1}
-	cu.SetCursorPos(w.CursorPos()+len(w.Caption()), nil)
-
+	cu.SetCursorPos(w.CursorPos()+utf8.RuneCountInString(w.Caption()), nil)
 	twc := &text.WidgetWithCursor{tw, cu}
 
 	return twc
@@ -284,14 +306,14 @@ func DownLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) b
 	prev := w.CursorPos()
 
 	twc := w.MakeText()
-	caplen := len(w.Caption())
+	caplen := utf8.RuneCountInString(w.Caption())
 	// This incorporates the caption too
 	cols, ok := size.(gowid.IColumns)
 	if !ok {
 		panic(gowid.WidgetSizeError{Widget: w, Size: size, Required: "gowid.IColumns"})
 	}
 	layout := text.MakeTextLayout(twc.Content(), cols.Columns(), text.WrapAny, gowid.HAlignLeft{})
-	ccol, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, cols.Columns(), layout)
+	ccol, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, cols.Columns(), layout, w)
 	offset := 1
 	if rows, ok := size.(gowid.IRows); ok && doPage {
 		if crow < w.LinesFromTop()+rows.Rows()-1 {
@@ -304,7 +326,7 @@ func DownLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) b
 	}
 
 	targetRow := crow + offset
-	newCursorPos := text.GetCursorPosFromCoords(ccol, targetRow, layout) - caplen
+	newCursorPos := text.GetCursorPosFromCoords(ccol, targetRow, layout, w) - caplen
 	if newCursorPos < 0 {
 		return false
 	} else {
@@ -321,7 +343,7 @@ func DownLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) b
 
 // Return true if done
 func UpLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) bool {
-	caplen := len(w.Caption())
+	caplen := utf8.RuneCountInString(w.Caption())
 	prev := w.CursorPos()
 	twc := w.MakeText()
 	cols, isColumns := size.(gowid.IColumns)
@@ -329,7 +351,7 @@ func UpLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) boo
 		panic(gowid.WidgetSizeError{Widget: w, Size: size, Required: "gowid.IColumns"})
 	}
 	layout := text.MakeTextLayout(twc.Content(), cols.Columns(), text.WrapAny, gowid.HAlignLeft{})
-	ccol, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, cols.Columns(), layout)
+	ccol, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, cols.Columns(), layout, w)
 
 	if crow <= 0 {
 		return false
@@ -344,7 +366,7 @@ func UpLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) boo
 		}
 		targetCol := gwutil.Max(crow-offset, 0)
 
-		newCursorPos := text.GetCursorPosFromCoords(ccol, targetCol, layout) - caplen
+		newCursorPos := text.GetCursorPosFromCoords(ccol, targetCol, layout, w) - caplen
 		if newCursorPos < 0 {
 			return false
 		} else {
@@ -379,7 +401,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			}
 			layout := text.MakeTextLayout(twc.Content(), cols.Columns(), text.WrapAny, gowid.HAlignLeft{})
 			mx, my := ev.Position()
-			cursorPos := text.GetCursorPosFromCoords(mx, my+w.LinesFromTop(), layout) - (len(w.Caption()))
+			cursorPos := text.GetCursorPosFromCoords(mx, my+w.LinesFromTop(), layout, w) - (utf8.RuneCountInString(w.Caption()))
 			if cursorPos < 0 {
 				handled = false
 			} else {
@@ -407,7 +429,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 				handled = false
 			}
 		case tcell.KeyRight, tcell.KeyCtrlF:
-			if w.CursorPos() < len(w.Text()) {
+			if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
 				w.SetCursorPos(w.CursorPos()+1, app)
 			} else {
 				handled = false
@@ -416,49 +438,88 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			if w.CursorPos() > 0 {
 				pos := w.CursorPos()
 				w.SetCursorPos(w.CursorPos()-1, app)
-				w.SetText(w.Text()[0:pos-1]+w.Text()[pos:], app)
+				r := []rune(w.Text())
+				w.SetText(string(r[0:pos-1])+string(r[pos:]), app)
 			}
 		case tcell.KeyDelete, tcell.KeyCtrlD:
-			if w.CursorPos() < len(w.Text()) {
-				w.SetText(w.Text()[0:w.CursorPos()]+w.Text()[w.CursorPos()+1:], app)
+			if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
+				r := []rune(w.Text())
+				w.SetText(string(r[0:w.CursorPos()])+string(r[w.CursorPos()+1:]), app)
 			}
-		case tcell.KeyTab:
-			w.SetText(w.Text()[0:w.CursorPos()]+string('\t')+w.Text()[w.CursorPos():], app)
-			w.SetCursorPos(w.CursorPos()+1, app)
 		case tcell.KeyEnter:
-			w.SetText(w.Text()[0:w.CursorPos()]+string('\n')+w.Text()[w.CursorPos():], app)
+			r := []rune(w.Text())
+			w.SetText(string(r[0:w.CursorPos()])+string('\n')+string(r[w.CursorPos():]), app)
 			w.SetCursorPos(w.CursorPos()+1, app)
 		case tcell.Key(' '):
-			w.SetText(w.Text()[0:w.CursorPos()]+" "+w.Text()[w.CursorPos():], app)
+			r := []rune(w.Text())
+			w.SetText(string(r[0:w.CursorPos()])+" "+string(r[w.CursorPos():]), app)
 			w.SetCursorPos(w.CursorPos()+1, app)
 		case tcell.KeyCtrlK:
-			w.SetText(w.Text()[0:w.CursorPos()], app)
+			r := []rune(w.Text())
+			w.SetText(string(r[0:w.CursorPos()]), app)
 		case tcell.KeyHome:
 			w.SetCursorPos(0, app)
 			w.SetLinesFromTop(0, app)
 		case tcell.KeyCtrlA:
 			// Would be nice to use a slice here, something that doesn't copy
+			// TODO: terrible O(n) behavior :-(
 			txt := w.Text()
-			var i int
-			for i = w.CursorPos(); i > 0 && txt[i-1] != '\n'; i -= 1 {
+
+			i := w.CursorPos()
+			j := 0
+			lastnl := false
+			curstart := 0
+
+			for _, ch := range txt {
+				if lastnl {
+					curstart = j
+				}
+				lastnl = (ch == '\n')
+
+				if i == j {
+					break
+				}
+				j += 1
 			}
-			w.SetCursorPos(i, app)
+
+			w.SetCursorPos(curstart, app)
 			recalcLinesFromTop = true
 
 		case tcell.KeyEnd:
-			w.SetCursorPos(len(w.Text()), app)
+			w.SetCursorPos(utf8.RuneCountInString(w.Text()), app)
 			recalcLinesFromTop = true
 
 		case tcell.KeyCtrlE:
+			// TODO: terrible O(n) behavior :-(
 			txt := w.Text()
-			var i int
-			for i = w.CursorPos(); i < len(txt) && txt[i] != '\n'; i += 1 {
+			i := w.CursorPos()
+			j := 0
+			checknl := false
+			for _, ch := range txt {
+				if i == j {
+					checknl = true
+				}
+				j += 1
+				if checknl {
+					if ch == '\n' {
+						break
+					}
+					i += 1
+				}
 			}
 			w.SetCursorPos(i, app)
 			recalcLinesFromTop = true
 
 		case tcell.KeyRune:
-			w.SetText(w.Text()[0:w.CursorPos()]+string(ev.Rune())+w.Text()[w.CursorPos():], app)
+			// TODO: this is lame. Inserting a character is O(n) where n is length
+			// of text. I should switch this to use the two stack model for edited
+			// text.
+			txt := w.Text()
+			r := []rune(txt)
+			cpos := w.CursorPos()
+			rhs := make([]rune, len(r)-cpos)
+			copy(rhs, r[cpos:])
+			w.SetText(string(append(append(r[:cpos], ev.Rune()), rhs...)), app)
 			w.SetCursorPos(w.CursorPos()+1, app)
 
 		default:
@@ -476,9 +537,9 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	box, ok := size.(gowid.IRenderBox)
 	if recalcLinesFromTop && ok {
 		twc := w.MakeText()
-		caplen := len(w.Caption())
+		caplen := utf8.RuneCountInString(w.Caption())
 		layout := text.MakeTextLayout(twc.Content(), box.BoxColumns(), text.WrapAny, gowid.HAlignLeft{})
-		_, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, box.BoxColumns(), layout)
+		_, crow := text.GetCoordsFromCursorPos(w.CursorPos()+caplen, box.BoxColumns(), layout, w)
 		w.SetLinesFromTop(gwutil.Max(0, crow-(box.BoxRows()-1)), app)
 	}
 

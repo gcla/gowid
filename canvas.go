@@ -12,6 +12,7 @@ import (
 
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gdamore/tcell"
+	"github.com/mattn/go-runewidth"
 	"github.com/pkg/errors"
 )
 
@@ -403,12 +404,13 @@ func WriteToCanvas(c IRangeOverCanvas, p []byte) (n int, err error) {
 				line++
 				col = 0
 			default:
-				if col == maxcol {
+				wid := runewidth.RuneWidth(chr)
+				if col+wid > maxcol {
 					col = 0
 					line++
 				}
-				c.SetCellAt(col, line, c.CellAt(col, line).WithRune(rune(chr)))
-				col++
+				c.SetCellAt(col, line, c.CellAt(col, line).WithRune(chr))
+				col += wid
 			}
 			done = i + utf8.RuneLen(chr)
 		} else {
@@ -527,9 +529,11 @@ func CanvasToString(c ICanvas) string {
 	lineStrings := make([]string, c.BoxRows())
 	for i := 0; i < c.BoxRows(); i++ {
 		line := c.Line(i, LineCopy{}).Line
-		curLine := make([]byte, 0)
-		for _, r := range line {
-			curLine = append(curLine, []byte(string(r.Rune()))...)
+		curLine := make([]rune, 0)
+		for x := 0; x < len(line); {
+			r := line[x].Rune()
+			curLine = append(curLine, r)
+			x += runewidth.RuneWidth(r)
 		}
 		lineStrings[i] = string(curLine)
 	}
@@ -764,10 +768,12 @@ func Draw(canvas IDrawCanvas, mode IColorMode, screen tcell.Screen) {
 	for y := 0; y < canvas.BoxRows(); y++ {
 		line := canvas.Line(y, LineCopy{})
 		vline := line.Line
-		for x, c := range vline {
+		for x := 0; x < len(vline); {
+			c := vline[x]
 			f, b, s := c.ForegroundColor(), c.BackgroundColor(), c.Style()
 			st := MakeCellStyle(f, b, s)
 			screen.SetContent(x, y, c.Rune(), nil, st)
+			x += runewidth.RuneWidth(c.Rune())
 
 			if x == cpos.X && y == cpos.Y {
 				screen.ShowCursor(x, y)
