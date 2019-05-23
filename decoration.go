@@ -10,6 +10,8 @@ import (
 
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gdamore/tcell"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/pkg/errors"
 )
 
@@ -263,6 +265,98 @@ var (
 	shortColorRE   = regexp.MustCompile(`^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$`)
 	grayHexColorRE = regexp.MustCompile(`^g#([0-9a-fA-F][0-9a-fA-F])$`)
 	grayDecColorRE = regexp.MustCompile(`^g(1?[0-9][0-9]?)$`)
+
+	colorfulBlack8   = colorful.Color{R: 0.0, G: 0.0, B: 0.0}
+	colorfulWhite8   = colorful.Color{R: 1.0, G: 1.0, B: 1.0}
+	colorfulRed8     = colorful.Color{R: 1.0, G: 0.0, B: 0.0}
+	colorfulGreen8   = colorful.Color{R: 0.0, G: 1.0, B: 0.0}
+	colorfulBlue8    = colorful.Color{R: 0.0, G: 0.0, B: 1.0}
+	colorfulYellow8  = colorful.Color{R: 1.0, G: 1.0, B: 1.0}
+	colorfulMagenta8 = colorful.Color{R: 1.0, G: 0.0, B: 1.0}
+	colorfulCyan8    = colorful.Color{R: 0.0, G: 1.0, B: 1.0}
+
+	colorfulBlack16         = colorful.Color{R: 0.0, G: 0.0, B: 0.0}
+	colorfulWhite16         = colorful.Color{R: 0.66, G: 0.66, B: 0.66}
+	colorfulRed16           = colorful.Color{R: 0.5, G: 0.0, B: 0.0}
+	colorfulGreen16         = colorful.Color{R: 0.0, G: 0.5, B: 0.0}
+	colorfulBlue16          = colorful.Color{R: 0.0, G: 0.0, B: 0.5}
+	colorfulYellow16        = colorful.Color{R: 0.5, G: 0.5, B: 0.5}
+	colorfulMagenta16       = colorful.Color{R: 0.5, G: 0.0, B: 0.5}
+	colorfulCyan16          = colorful.Color{R: 0.0, G: 0.5, B: 0.5}
+	colorfulBrightBlack16   = colorful.Color{R: 0.33, G: 0.33, B: 0.33}
+	colorfulBrightWhite16   = colorful.Color{R: 1.0, G: 1.0, B: 1.0}
+	colorfulBrightRed16     = colorful.Color{R: 1.0, G: 0.0, B: 0.0}
+	colorfulBrightGreen16   = colorful.Color{R: 0.0, G: 1.0, B: 0.0}
+	colorfulBrightBlue16    = colorful.Color{R: 0.0, G: 0.0, B: 1.0}
+	colorfulBrightYellow16  = colorful.Color{R: 1.0, G: 1.0, B: 1.0}
+	colorfulBrightMagenta16 = colorful.Color{R: 1.0, G: 0.0, B: 1.0}
+	colorfulBrightCyan16    = colorful.Color{R: 0.0, G: 1.0, B: 1.0}
+
+	// Used in mapping RGB colors down to 8 terminal colors.
+	colorful8 = []colorful.Color{
+		colorfulBlack8,
+		colorfulWhite8,
+		colorfulRed8,
+		colorfulGreen8,
+		colorfulBlue8,
+		colorfulYellow8,
+		colorfulMagenta8,
+		colorfulCyan8,
+	}
+
+	// Used in mapping RGB colors down to 16 terminal colors.
+	colorful16 = []colorful.Color{
+		colorfulBlack16,
+		colorfulWhite16,
+		colorfulRed16,
+		colorfulGreen16,
+		colorfulBlue16,
+		colorfulYellow16,
+		colorfulMagenta16,
+		colorfulCyan16,
+		colorfulBrightBlack16,
+		colorfulBrightWhite16,
+		colorfulBrightRed16,
+		colorfulBrightGreen16,
+		colorfulBrightBlue16,
+		colorfulBrightYellow16,
+		colorfulBrightMagenta16,
+		colorfulBrightCyan16,
+	}
+
+	term8 = []TCellColor{
+		ColorBlack,
+		ColorWhite,
+		ColorRed,
+		ColorGreen,
+		ColorBlue,
+		ColorYellow,
+		ColorMagenta,
+		ColorCyan,
+	}
+
+	term16 = []TCellColor{
+		ColorBlack,
+		ColorLightGray,
+		ColorDarkRed,
+		ColorDarkGreen,
+		ColorDarkBlue,
+		ColorYellow,
+		ColorMagenta,
+		ColorCyan,
+		ColorDarkGray,
+		ColorWhite,
+		ColorRed,
+		ColorGreen,
+		ColorBlue,
+		ColorYellow,
+		ColorMagenta,
+		ColorCyan, // TODO - figure out these colors
+	}
+
+	term2Cache  *lru.Cache
+	term8Cache  *lru.Cache
+	term16Cache *lru.Cache
 )
 
 //======================================================================
@@ -288,6 +382,14 @@ func init() {
 	}
 	for i, v := range tCellBasicColors {
 		tBasicColorsMap[v] = i
+	}
+
+	var err error
+	for _, cache := range []**lru.Cache{&term2Cache, &term8Cache, &term16Cache} {
+		*cache, err = lru.New(100)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -537,6 +639,38 @@ func MakeRGBColorExt(r, g, b int) RGBColor {
 	return res
 }
 
+// Implements golang standard library's color.Color
+func (rgb RGBColor) RGBA() (r, g, b, a uint32) {
+	r = uint32(rgb.Red << 16)
+	g = uint32(rgb.Green << 16)
+	b = uint32(rgb.Blue << 16)
+	a = 0xffff
+	return
+}
+
+func (r RGBColor) findClosest(from []colorful.Color, corresponding []TCellColor, cache *lru.Cache) TCellColor {
+	var best float64 = 100.0
+	var j int
+
+	if res, ok := cache.Get(r); ok {
+		return res.(TCellColor)
+	}
+
+	ccol, _ := colorful.MakeColor(r)
+
+	for i, c := range from {
+		x := c.DistanceLab(ccol)
+		if x < best {
+			best = x
+			j = i
+		}
+	}
+
+	cache.Add(r, corresponding[j])
+
+	return corresponding[j]
+}
+
 // ToTCellColor converts an RGBColor to a TCellColor, suitable for rendering to the screen
 // with tcell. It lets RGBColor conform to IColor.
 func (r RGBColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
@@ -556,8 +690,14 @@ func (r RGBColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 		b := cubeLookup88_16[r.Blue>>4]
 		c := tcell.Color((CubeStart + (((rd * cubeSize88) + g) * cubeSize88) + b) + 0)
 		return MakeTCellColorExt(c), true
+	case Mode16Colors:
+		return r.findClosest(colorful16, term16, term16Cache), true
+	case Mode8Colors:
+		return r.findClosest(colorful8, term8, term8Cache), true
+	case ModeMonochrome:
+		return r.findClosest(colorful8[0:1], term8[0:1], term2Cache), true
 	default:
-		panic(errors.WithStack(ColorModeMismatch{Color: r, Mode: mode}))
+		return TCellColor{}, false
 	}
 }
 
