@@ -1416,11 +1416,7 @@ func (c *Canvas) ProcessByte(b byte) {
 		r = rune(b)
 	}
 
-	if r <= 127 {
-		c.ProcessByteOrCommand(r)
-	} else {
-		c.PushCursor(r)
-	}
+	c.ProcessByteOrCommand(r)
 }
 
 func (c *Canvas) ProcessByteOrCommand(r rune) {
