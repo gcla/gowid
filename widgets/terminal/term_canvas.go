@@ -1082,11 +1082,11 @@ func (c *Canvas) SGIToAttribs(args []int, fg, bg gwutil.IntOption, styles map[st
 		case 30 <= attr && attr <= 37:
 			fg = gwutil.SomeInt(attr + 1 - 30)
 		case 90 <= attr && attr <= 97:
-			fg = gwutil.SomeInt(attr - 90 + gowid.NumOfTCellBasicColors)
+			fg = gwutil.SomeInt(attr - 91 + 8) // 8 basic colors
 		case 40 <= attr && attr <= 47:
 			bg = gwutil.SomeInt(attr + 1 - 40)
 		case 100 <= attr && attr <= 107:
-			bg = gwutil.SomeInt(attr - 100 + gowid.NumOfTCellBasicColors)
+			bg = gwutil.SomeInt(attr - 101 + 8) // 8 basic colors
 		case attr == 23:
 			// TODO vim sends this
 		case attr == 38:
