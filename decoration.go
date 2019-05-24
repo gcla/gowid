@@ -136,11 +136,16 @@ func (c ColorMode) String() string {
 const (
 	colorDefaultName      = "default"
 	colorBlackName        = "black"
+	colorRedName          = "red"
 	colorDarkRedName      = "dark red"
+	colorGreenName        = "green"
 	colorDarkGreenName    = "dark green"
 	colorBrownName        = "brown"
+	colorBlueName         = "blue"
 	colorDarkBlueName     = "dark blue"
+	colorMagentaName      = "magenta"
 	colorDarkMagentaName  = "dark magenta"
+	colorCyanName         = "cyan"
 	colorDarkCyanName     = "dark cyan"
 	colorLightGrayName    = "light gray"
 	colorDarkGrayName     = "dark gray"
@@ -151,56 +156,58 @@ const (
 	colorLightMagentaName = "light magenta"
 	colorLightCyanName    = "light cyan"
 	colorWhiteName        = "white"
-
-	tColorDefaultName = "default"
-	tColorBlackName   = "black"
-	tColorRedName     = "red"
-	tColorGreenName   = "green"
-	tColorYellowName  = "yellow"
-	tColorBlueName    = "blue"
-	tColorMagentaName = "magenta"
-	tColorCyanName    = "cyan"
-	tColorWhiteName   = "white"
 )
 
 var (
-	basicColors = []string{
-		colorDefaultName,
-		colorBlackName,
-		colorDarkRedName,
-		colorDarkGreenName,
-		colorBrownName,
-		colorDarkBlueName,
-		colorDarkMagentaName,
-		colorDarkCyanName,
-		colorLightGrayName,
-		colorDarkGrayName,
-		colorLightRedName,
-		colorLightGreenName,
-		colorYellowName,
-		colorLightBlueName,
-		colorLightMagentaName,
-		colorLightCyanName,
-		colorWhiteName,
+	basicColors = map[string]int{
+		colorDefaultName:      0,
+		colorBlackName:        1,
+		colorDarkRedName:      2,
+		colorDarkGreenName:    3,
+		colorBrownName:        4,
+		colorDarkBlueName:     5,
+		colorDarkMagentaName:  6,
+		colorDarkCyanName:     7,
+		colorLightGrayName:    8,
+		colorDarkGrayName:     9,
+		colorLightRedName:     10,
+		colorLightGreenName:   11,
+		colorYellowName:       12,
+		colorLightBlueName:    13,
+		colorLightMagentaName: 14,
+		colorLightCyanName:    15,
+		colorWhiteName:        16,
+		colorRedName:          10,
+		colorGreenName:        11,
+		colorBlueName:         13,
+		colorMagentaName:      14,
+		colorCyanName:         15,
 	}
 
-	basicColorsMap map[string]int
-
-	tCellBasicColors = []string{
-		tColorDefaultName,
-		tColorBlackName,
-		tColorRedName,
-		tColorGreenName,
-		tColorYellowName,
-		tColorBlueName,
-		tColorMagentaName,
-		tColorCyanName,
-		tColorWhiteName,
+	tBasicColors = map[string]int{
+		colorDefaultName:      0,
+		colorBlackName:        1,
+		colorDarkRedName:      2,
+		colorDarkGreenName:    3,
+		colorBrownName:        4,
+		colorDarkBlueName:     5,
+		colorDarkMagentaName:  6,
+		colorDarkCyanName:     7,
+		colorLightGrayName:    8,
+		colorDarkGrayName:     1,
+		colorLightRedName:     2,
+		colorLightGreenName:   3,
+		colorYellowName:       4,
+		colorLightBlueName:    5,
+		colorLightMagentaName: 6,
+		colorLightCyanName:    7,
+		colorWhiteName:        8,
+		colorRedName:          2,
+		colorGreenName:        3,
+		colorBlueName:         5,
+		colorMagentaName:      6,
+		colorCyanName:         7,
 	}
-
-	NumOfTCellBasicColors = len(tCellBasicColors)
-
-	tBasicColorsMap map[string]int
 
 	CubeStart    = 16 // first index of color cube
 	CubeSize256  = 6  // one side of the color cube
@@ -374,14 +381,6 @@ func init() {
 	for i := 0; i < 101; i++ {
 		grayLookup256_101[i] = grayLookup256[intScale(i, 101, 0x100)]
 		grayLookup88_101[i] = grayLookup88[intScale(i, 101, 0x100)]
-	}
-	basicColorsMap = make(map[string]int)
-	tBasicColorsMap = make(map[string]int)
-	for i, v := range basicColors {
-		basicColorsMap[v] = i
-	}
-	for i, v := range tCellBasicColors {
-		tBasicColorsMap[v] = i
 	}
 
 	var err error
@@ -756,9 +755,9 @@ func (s *UrwidColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 	idx := -1
 	switch mode {
 	case Mode24BitColors, Mode256Colors, Mode88Colors, Mode16Colors:
-		idx = posInMap(s.Id, basicColorsMap)
+		idx = posInMap(s.Id, basicColors)
 	case Mode8Colors, ModeMonochrome:
-		idx = posInMap(s.Id, tBasicColorsMap)
+		idx = posInMap(s.Id, tBasicColors)
 	default:
 		panic(errors.WithStack(ColorModeMismatch{Color: s, Mode: mode}))
 	}
