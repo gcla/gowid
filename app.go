@@ -445,7 +445,7 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 			case *tcell.EventKey, *tcell.EventMouse, *tcell.EventResize:
 				needRedraw = true
 			}
-			a.HandleTCellEvent2(ev2, unhandled, false)
+			a.handleTCellEventV1(ev2, unhandled, false)
 		}
 		if needRedraw {
 			a.RedrawTerminal()
