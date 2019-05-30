@@ -221,7 +221,7 @@ func (m MouseState) RightIsClicked() bool {
 // initialize a tcell.Screen object behind the scenes, and enable mouse support
 // meaning that tcell will receive mouse events if the terminal supports them.
 func NewApp(args AppArgs) (rapp *App, rerr error) {
-	screen, err := tcell.NewScreen()
+	screen, err := tcell.NewScreenExt()
 	if err != nil {
 		rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 		return
@@ -436,12 +436,31 @@ func (a *App) Clips() []ICopyResult {
 	return res
 }
 
+func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
+	switch ev := ev.(type) {
+	case *tcell.EventBundle:
+		needRedraw := false
+		for _, ev2 := range ev.Events() {
+			switch ev2.(type) {
+			case *tcell.EventKey, *tcell.EventMouse, *tcell.EventResize:
+				needRedraw = true
+			}
+			a.HandleTCellEvent2(ev2, unhandled, false)
+		}
+		if needRedraw {
+			a.RedrawTerminal()
+		}
+	default:
+		a.handleTCellEventV1(ev, unhandled, true)
+	}
+}
+
 // HandleTCellEvent handles an event from the underlying TCell library,
 // based on its type (key-press, error, etc.) User input events are sent
 // to onInputEvent, which will check the widget hierarchy to see if the
 // input can be processed; other events might result in gowid updating its
 // internal state, like the size of the underlying terminal.
-func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
+func (a *App) handleTCellEventV1(ev interface{}, unhandled IUnhandledInput, redraw bool) {
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
 		// This makes for a better experience on limited hardware like raspberry pi
@@ -460,7 +479,9 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 			a.handleInputEvent(CopyModeEvent{}, unhandled)
 			a.refreshCopy = false
 		}
-		a.RedrawTerminal()
+		if redraw {
+			a.RedrawTerminal()
+		}
 	case *tcell.EventMouse:
 		switch ev.Buttons() {
 		case tcell.Button1:
@@ -482,14 +503,18 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 		}
 		a.lastMouse = a.MouseState
 		a.MouseState = MouseState{}
-		a.RedrawTerminal()
+		if redraw {
+			a.RedrawTerminal()
+		}
 	case *tcell.EventResize:
 		if flog, ok := a.log.(log.FieldLogger); ok {
 			flog.WithField("event", ev).Infof("Terminal was resized")
 		} else {
 			a.log.Printf("Terminal was resized\n")
 		}
-		a.RedrawTerminal()
+		if redraw {
+			a.RedrawTerminal()
+		}
 	case *tcell.EventInterrupt:
 		if flog, ok := a.log.(log.FieldLogger); ok {
 			flog.WithField("event", ev).Infof("Interrupt event from tcell")
