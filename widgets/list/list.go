@@ -187,11 +187,15 @@ func (w *SimpleListWalker) Previous(ipos IWalkerPosition) IWalkerPosition {
 
 //======================================================================
 
-type IWidget interface {
-	gowid.IWidget
+type IListFns interface {
 	RenderSubwidgets(gowid.IRenderSize, gowid.Selector, gowid.IApp) ([]SubRenders, SubRenders, []SubRenders)
 	Walker() IWalker
 	SetWalker(IWalker, gowid.IApp)
+}
+
+type IWidget interface {
+	gowid.IWidget
+	IListFns
 }
 
 type Widget struct {
@@ -470,7 +474,7 @@ func SubWidgetSize(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app 
 	}
 }
 
-func CalculateOnScreen(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) (int, int, int, error) {
+func CalculateOnScreen(w IListFns, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) (int, int, int, error) {
 	aboveMiddle, middle, belowMiddle := w.RenderSubwidgets(size, focus, app)
 	mc := 0
 	tc := 0
