@@ -18,8 +18,8 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
-	"github.com/gdamore/tcell/terminfo"
+	"github.com/gcla/tcell"
+	"github.com/gcla/tcell/terminfo"
 	"github.com/kr/pty"
 	log "github.com/sirupsen/logrus"
 )

@@ -9,7 +9,7 @@ import (
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/columns"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/stretchr/testify/assert"
 )
 

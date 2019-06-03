@@ -10,7 +10,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 )
 
 //======================================================================

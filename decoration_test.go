@@ -6,7 +6,7 @@ package gowid
 import (
 	"testing"
 
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 )

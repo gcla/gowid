@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 )
 
 //======================================================================

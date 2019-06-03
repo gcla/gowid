@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -13,7 +13,7 @@ import (
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gcla/gowid/widgets/text"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/pkg/errors"
 )
 

@@ -13,7 +13,7 @@ import (
 	"github.com/gcla/gowid/widgets/fill"
 	"github.com/gcla/gowid/widgets/selectable"
 	"github.com/gcla/gowid/widgets/text"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/stretchr/testify/assert"
 )
 

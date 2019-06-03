@@ -11,7 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/mattn/go-runewidth"
 	"github.com/pkg/errors"
 )

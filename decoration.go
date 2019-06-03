@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/pkg/errors"
@@ -893,7 +893,7 @@ var (
 )
 
 // MakeTCellColor returns an initialized TCellColor given a string input like "yellow". The names that can be
-// used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L821.
+// used are provided here: https://github.com/gcla/tcell/blob/master/color.go#L821.
 func MakeTCellColor(val string) (TCellColor, error) {
 	if col, ok := tcell.ColorNames[val]; !ok {
 		return TCellColor{}, errors.WithStack(InvalidColor{Color: val})
@@ -903,13 +903,13 @@ func MakeTCellColor(val string) (TCellColor, error) {
 }
 
 // MakeTCellColor returns an initialized TCellColor given a tcell.Color input. The values that can be
-// used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L41.
+// used are provided here: https://github.com/gcla/tcell/blob/master/color.go#L41.
 func MakeTCellColorSafe(val tcell.Color) (TCellColor, error) {
 	return TCellColor{val + 2}, nil
 }
 
 // MakeTCellColor returns an initialized TCellColor given a tcell.Color input. The values that can be
-// used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L41.
+// used are provided here: https://github.com/gcla/tcell/blob/master/color.go#L41.
 func MakeTCellColorExt(val tcell.Color) TCellColor {
 	res, _ := MakeTCellColorSafe(val)
 	return res

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/pkg/errors"
 )
 

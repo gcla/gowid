@@ -9,8 +9,8 @@ import (
 	"fmt"
 
 	"github.com/gcla/gowid"
-	"github.com/gdamore/tcell"
-	"github.com/gdamore/tcell/terminfo"
+	"github.com/gcla/tcell"
+	"github.com/gcla/tcell/terminfo"
 	log "github.com/sirupsen/logrus"
 )
 

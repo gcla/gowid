@@ -21,7 +21,7 @@ import (
 	"github.com/gcla/gowid/widgets/styled"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gcla/gowid/widgets/tree"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	log "github.com/sirupsen/logrus"
 )
 

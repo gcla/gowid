@@ -11,7 +11,7 @@ import (
 	"github.com/gcla/gowid/examples"
 	"github.com/gcla/gowid/widgets/edit"
 	"github.com/gcla/gowid/widgets/text"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 )
 
 //======================================================================

@@ -20,7 +20,7 @@ import (
 	"github.com/gcla/gowid/widgets/shadow"
 	"github.com/gcla/gowid/widgets/styled"
 	"github.com/gcla/gowid/widgets/text"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 )
 
 //======================================================================

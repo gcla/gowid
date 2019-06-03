@@ -7,9 +7,14 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"sync"
 	"time"
+
+	"net/http"
+	_ "net/http"
+	_ "net/http/pprof"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/examples"
@@ -24,7 +29,8 @@ import (
 	"github.com/gcla/gowid/widgets/styled"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gcla/gowid/widgets/vscroll"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -211,6 +217,10 @@ func (w *EditWithScrollbar) Render(size gowid.IRenderSize, focus gowid.Selector,
 func main() {
 	var err error
 
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	kingpin.Parse()
 
 	if _, err := os.Stat(*filename); os.IsNotExist(err) {
@@ -282,10 +292,13 @@ func main() {
 		}
 	}()
 
+	logger := logrus.New()
+	logger.Out = ioutil.Discard
+
 	app, err = gowid.NewApp(gowid.AppArgs{
 		View:    viewHolder,
 		Palette: &palette,
-		Log:     log.StandardLogger(),
+		Log:     logger,
 	})
 	examples.ExitOnErr(err)
 

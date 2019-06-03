@@ -11,7 +11,7 @@ import (
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/button"
 	"github.com/gcla/gowid/widgets/text"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	"github.com/stretchr/testify/assert"
 )
 

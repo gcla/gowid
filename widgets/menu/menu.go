@@ -12,7 +12,7 @@ import (
 	"github.com/gcla/gowid/widgets/holder"
 	"github.com/gcla/gowid/widgets/null"
 	"github.com/gcla/gowid/widgets/overlay"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 )
 
 //======================================================================

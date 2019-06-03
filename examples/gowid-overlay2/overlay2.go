@@ -22,7 +22,7 @@ import (
 	"github.com/gcla/gowid/widgets/styled"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gcla/gowid/widgets/vpadding"
-	"github.com/gdamore/tcell"
+	"github.com/gcla/tcell"
 	asc "github.com/guptarohit/asciigraph"
 	log "github.com/sirupsen/logrus"
 )
