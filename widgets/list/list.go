@@ -271,6 +271,18 @@ func (w *IndexedWidget) SetWalker(l IWalker, app gowid.IApp) {
 	w.Widget.SetWalker(l, app)
 }
 
+func (w *Widget) State() interface{} {
+	return w.st
+}
+
+func (w *Widget) SetState(st interface{}, app gowid.IApp) {
+	if state, ok := st.(state); !ok {
+		panic(BadState)
+	} else {
+		w.st = state
+	}
+}
+
 func (w *Widget) GoToTop(app gowid.IApp) {
 	w.goToTop()
 }
@@ -1079,9 +1091,6 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 	}
 
 	w.Walker().SetFocus(next, app)
-	if !next.Equal(oldPos) {
-		gowid.RunWidgetCallbacks(w, gowid.FocusCB{}, app, nextw)
-	}
 
 	nextLines := gowid.RenderSize(nextw, subRenderSize, focus, app).BoxRows()
 
@@ -1098,6 +1107,11 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 			w.st.topToBottomRatioValid = true
 			w.st.topToBottomRatio = float32(computedLinesAbove) / float32(screenLines)
 		}
+	}
+
+	// Do this at the end in case the focus callback wants to save the list state too.
+	if !next.Equal(oldPos) {
+		gowid.RunWidgetCallbacks(w, gowid.FocusCB{}, app, nextw)
 	}
 
 	return true, next
@@ -1129,9 +1143,6 @@ func (w *Widget) MoveToPreviousFocus(subRenderSize gowid.IRenderSize, focus gowi
 	}
 
 	w.Walker().SetFocus(prev, app)
-	if !prev.Equal(oldpos) {
-		gowid.RunWidgetCallbacks(w, gowid.FocusCB{}, app, prevw)
-	}
 
 	prevLines := gowid.RenderSize(prevw, subRenderSize, gowid.NotSelected, app).BoxRows()
 
@@ -1149,6 +1160,11 @@ func (w *Widget) MoveToPreviousFocus(subRenderSize gowid.IRenderSize, focus gowi
 	} else {
 		w.st.topToBottomRatioValid = true
 		w.st.topToBottomRatio = float32(computedLinesAbove) / float32(screenLines)
+	}
+
+	// Do this at the end in case the focus callback wants to save the list state too.
+	if !prev.Equal(oldpos) {
+		gowid.RunWidgetCallbacks(w, gowid.FocusCB{}, app, prevw)
 	}
 
 	return true, prev
