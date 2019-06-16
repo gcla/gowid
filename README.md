@@ -128,6 +128,7 @@ Running the example above displays this:
  - The beginnings of a [tutorial](docs/Tutorial.md)
  - A list of most of the [widgets](docs/Widgets.md)
  - Some [FAQs](docs/FAQ.md) (which I guessed at...)
+ - Some gowid [programming tricks](docs/Debugging.md)
  
 ## Similar Projects
 
