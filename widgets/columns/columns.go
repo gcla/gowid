@@ -304,7 +304,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 				if mx < curX+c && mx >= curX {
 					subSize := w.SubWidgetSize(size, c, subs[i], dims[i])
 					forChild = gowid.UserInput(subs[i], gowid.TranslatedMouseEvent(ev, -curX, 0), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
-					if forChild {
+					if subs[i].Selectable() && evm.Buttons()&tcell.Button1 != 0 {
 						w.SetFocus(app, i)
 					}
 					break

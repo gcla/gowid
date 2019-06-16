@@ -654,6 +654,7 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 	}
 
 	forChild := false
+	childSelectable := false
 	curi := w.Walker().Focus()
 	position := curi
 	cur := w.Walker().At(position)
@@ -693,6 +694,7 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 				}
 				sizeForInput := userInputSize()
 				forChild = gowid.UserInputIfSelectable(widgetRender.Widget, gowid.TranslatedMouseEvent(ev, 0, -curY), sizeForInput, gowid.Focused, app)
+				childSelectable = widgetRender.Widget.Selectable()
 				break
 			}
 			curY += widgetRender.Canvas.BoxRows()
@@ -763,45 +765,49 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 			app.SetClickTarget(ev2.Buttons(), w)
 			res = true
 		case tcell.ButtonNone:
-			// tcell will report ButtonNone for mouse events which are simply pointer movements
-			// (at least in my terminal). To distinguish this from a mouse release event, we track
-			// the prior input's mouse state. If the last state was a mouse click, then this event
-			// is processed as a mouse button release.
-			if !app.GetLastMouseState().NoButtonClicked() {
-				clickit := false
-				app.ClickTarget(func(k tcell.ButtonMask, v gowid.IIdentityWidget) {
-					if v != nil && v.ID() == w.ID() {
-						clickit = true
-					}
-				})
-				if clickit {
-					curPosition := startPosition
-					saveState := w.st
+			if childSelectable {
+				// tcell will report ButtonNone for mouse events which are simply pointer movements
+				// (at least in my terminal). To distinguish this from a mouse release event, we track
+				// the prior input's mouse state. If the last state was a mouse click, then this event
+				// is processed as a mouse button release.
+				if !app.GetLastMouseState().NoButtonClicked() {
+					clickit := false
+					app.ClickTarget(func(k tcell.ButtonMask, v gowid.IIdentityWidget) {
+						if v != nil && v.ID() == w.ID() {
+							clickit = true
+						}
+					})
+					if clickit {
+						// This means the mouse button was released over widget w, after earlier having
+						// been clicked on widget w
+						curPosition := startPosition
+						saveState := w.st
 
-					for {
-						if curPosition.Equal(position) {
-							res = true
-							break
-						} else if dirMoved > 0 && curPosition.GreaterThan(position) {
-							res = false
-							w.st = saveState
-							w.Walker().SetFocus(startPosition, app)
-							break
-						} else if dirMoved < 0 && position.GreaterThan(curPosition) {
-							res = false
-							w.st = saveState
-							w.Walker().SetFocus(startPosition, app)
-							break
+						for {
+							if curPosition.Equal(position) {
+								res = true
+								break
+							} else if dirMoved > 0 && curPosition.GreaterThan(position) {
+								res = false
+								w.st = saveState
+								w.Walker().SetFocus(startPosition, app)
+								break
+							} else if dirMoved < 0 && position.GreaterThan(curPosition) {
+								res = false
+								w.st = saveState
+								w.Walker().SetFocus(startPosition, app)
+								break
+							}
+							if dirMoved > 0 {
+								_, curPosition = w.MoveToNextFocus(subRenderSize, focus, numLinesToUse, app)
+							} else if dirMoved < 0 {
+								_, curPosition = w.MoveToPreviousFocus(subRenderSize, focus, numLinesToUse, app)
+							} else {
+								panic(BadState)
+							}
 						}
-						if dirMoved > 0 {
-							_, curPosition = w.MoveToNextFocus(subRenderSize, focus, numLinesToUse, app)
-						} else if dirMoved < 0 {
-							_, curPosition = w.MoveToPreviousFocus(subRenderSize, focus, numLinesToUse, app)
-						} else {
-							panic(BadState)
-						}
+						//res = true
 					}
-					//res = true
 				}
 			}
 		}

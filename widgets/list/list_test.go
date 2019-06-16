@@ -5,13 +5,17 @@ package list
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/checkbox"
+	"github.com/gcla/gowid/widgets/disable"
 	"github.com/gcla/gowid/widgets/fixedadapter"
+	"github.com/gcla/gowid/widgets/isselected"
 	"github.com/gcla/gowid/widgets/pile"
+	"github.com/gcla/gowid/widgets/selectable"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gdamore/tcell"
 	log "github.com/sirupsen/logrus"
@@ -252,6 +256,118 @@ func TestEmptyListBox1(t *testing.T) {
 
 	f := lw.Focus()
 	assert.Equal(t, nil, lw.At(f))
+}
+
+func TestDisabled1(t *testing.T) {
+	defer gwtest.ClearTestApp()
+
+	fixed := gowid.RenderFixed{}
+
+	foc := make([]gowid.IWidget, 0)
+	notfoc := make([]gowid.IWidget, 0)
+
+	for i := 0; i < 3; i++ {
+		txtf := text.New(fmt.Sprintf("f%d", i))
+		txtn := text.New(fmt.Sprintf("a%d", i))
+		foc = append(foc, txtf)
+		notfoc = append(notfoc, txtn)
+	}
+
+	lws := make([]gowid.IWidget, 0)
+	for i := 0; i < len(foc); i++ {
+		lws = append(lws,
+			selectable.New(
+				isselected.New(notfoc[i], nil, foc[i]),
+			),
+		)
+	}
+
+	lw := NewSimpleListWalker(lws)
+	lb := New(lw)
+
+	c1 := lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"f0",
+		"a1",
+		"a2",
+	}, "\n"), c1.String())
+
+	lb.UserInput(gwtest.CursorDown(), fixed, gowid.Focused, gwtest.D)
+	c1 = lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"a0",
+		"f1",
+		"a2",
+	}, "\n"), c1.String())
+
+	dis := disable.New(text.New("dd"))
+
+	lws2 := append(lws[0:2], append([]gowid.IWidget{dis}, lws[2:]...)...)
+	lw2 := NewSimpleListWalker(lws2)
+	lb.SetWalker(lw2, gwtest.D)
+	lb.UserInput(gwtest.CursorDown(), fixed, gowid.Focused, gwtest.D)
+
+	c1 = lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"a0",
+		"f1",
+		"dd",
+		"a2",
+	}, "\n"), c1.String())
+
+	clickat := func(x, y int) {
+		evlm := tcell.NewEventMouse(x, y, tcell.Button1, 0)
+		evnone := tcell.NewEventMouse(x, y, tcell.ButtonNone, 0)
+
+		lb.UserInput(evlm, fixed, gowid.Focused, gwtest.D)
+		gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+
+		lb.UserInput(evnone, fixed, gowid.Focused, gwtest.D)
+		gwtest.D.SetLastMouseState(gowid.MouseState{})
+	}
+
+	clickat(1, 1)
+
+	c1 = lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"a0",
+		"f1",
+		"dd",
+		"a2",
+	}, "\n"), c1.String())
+
+	clickat(1, 2)
+
+	c1 = lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"a0",
+		"f1",
+		"dd",
+		"a2",
+	}, "\n"), c1.String())
+
+	clickat(1, 3)
+
+	c1 = lb.Render(fixed, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join([]string{
+		"a0",
+		"a1",
+		"dd",
+		"f2",
+	}, "\n"), c1.String())
+
+	fpos := -1
+
+	lb.OnFocusChanged(gowid.WidgetCallback{Name: "cb", WidgetChangedFunction: func(app gowid.IApp, w gowid.IWidget) {
+		fpos = lb.Walker().Focus().(ListPos).ToInt()
+	}})
+
+	clickat(1, 1)
+	assert.Equal(t, 1, fpos)
+	clickat(1, 2)
+	assert.Equal(t, 1, fpos)
+	clickat(1, 3)
+	assert.Equal(t, 3, fpos)
 }
 
 //======================================================================
