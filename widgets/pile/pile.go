@@ -285,24 +285,20 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			if subfocus == -1 {
 				break
 			}
-			// A left click sets focus if the widget is selectable and would take the mouse input; but
-			// if I don't filter by click, then moving the mouse over another widget would shift focus
-			// automatically, which is not usually what's wanted.
-			if evm.Buttons()&tcell.Button1 != 0 {
-				_, my := evm.Position()
-				curY := 0
-				for i, c := range ss {
-					if my < curY+c.BoxRows() && my >= curY {
-						subSize := ss2[i]
-						forChild = gowid.UserInput(subs[i], gowid.TranslatedMouseEvent(ev, 0, -curY), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
-						//if forChild && ev2.Buttons()&tcell.Button1|tcell.WheelUp|tcell.WheelDown != 0 {
-						if forChild {
-							w.SetFocus(app, i)
-						}
-						break
+			_, my := evm.Position()
+			curY := 0
+			for i, c := range ss {
+				if my < curY+c.BoxRows() && my >= curY {
+					subSize := ss2[i]
+					forChild = gowid.UserInput(subs[i], gowid.TranslatedMouseEvent(ev, 0, -curY), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
+					// A left click always sets focus if the widget is selectable
+					//if forChild && ev2.Buttons()&tcell.Button1|tcell.WheelUp|tcell.WheelDown != 0 {
+					if forChild && evm.Buttons()&tcell.Button1 != 0 {
+						w.SetFocus(app, i)
 					}
-					curY += c.BoxRows()
+					break
 				}
+				curY += c.BoxRows()
 			}
 		}
 	} else {
