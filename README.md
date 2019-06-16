@@ -84,7 +84,7 @@ func main() {
 
 	helloworld := styled.New(
 		text.NewFromContentExt(
-			text.NewContent([]text.TextContentSegment{
+			text.NewContent([]text.ContentSegment{
 				text.StyledContent("Hello World", gowid.MakePaletteRef("banner")),
 			}),
 			text.Options{
