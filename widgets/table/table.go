@@ -697,6 +697,18 @@ func (t *Widget) Previous(ipos list.IWalkerPosition) list.IWalkerPosition {
 	}
 }
 
+type IGoToBottom interface {
+	GoToBottom(app gowid.IApp)
+}
+
+func (t *Widget) GoToBottom(app gowid.IApp) bool {
+	if b, ok := t.listw.IWidget.(IGoToBottom); ok {
+		b.GoToBottom(app)
+		return true
+	}
+	return false
+}
+
 type Coords struct {
 	Column int
 	Row    int
