@@ -283,7 +283,7 @@ func (w *PBWidget) Text() string {
 	return fmt.Sprintf("At %d %% (%d/%d)", percent, cur, done)
 }
 
-func (w *PBWidget) Render(size gowid.IRenderSize, focus bool, app gowid.IApp) gowid.ICanvas {
+func (w *PBWidget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	return progress.Render(w, size, focus, app)
 }
 ```

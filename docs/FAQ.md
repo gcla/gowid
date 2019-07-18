@@ -72,7 +72,7 @@ When I started writing gowid, I didn't appreciate or understand the convention. 
 
 ```go
 type InputHandler interface {
-	UserInput(ev tcell.Event, size IRenderSize, focus bool, app IApp) bool
+	UserInput(ev interface{}, size IRenderSize, focus Selector, app IApp) bool
 }
 ```
 So perhaps each composite widget could store one or more `InputHandler`s, and defer input to the right child. But in figuring out which is the right child to accept the input (e.g. mouse click), a composite widget such as `columns.Widget` may need to figure out the rendered-size of each child and do some arithmetic on the input event coordinates. Now the children need to implement `RenderedSizeProvider` too. Some widgets fall back to calling `Render()` in order to compute the rendered canvas size (slower but simpler) so then they would need to also implement a `Renderer` interface. This gets the requirements close to the current `IWidget` interface. So my view has been that `IWidget` represents a reasonable interface needed to satisfy all widget processing, and it's still pretty small - only four methods.
@@ -87,7 +87,7 @@ The quick answer is you need to implement `IWidget`:
 type IWidget interface {
 	Render(size IRenderSize, focus Selector, app IApp) ICanvas
 	RenderSize(size IRenderSize, focus Selector, app IApp) IRenderBox
-	UserInput(ev tcell.Event, size IRenderSize, focus Selector, app IApp) bool
+	UserInput(ev interface{}, size IRenderSize, focus Selector, app IApp) bool
 	Selectable() bool
 }
 ```

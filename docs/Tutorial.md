@@ -46,7 +46,7 @@ import (
 
 var txt *text.Widget
 
-func unhandled(app gowid.IApp, ev tcell.Event) bool {
+func unhandled(app gowid.IApp, ev interface{}) bool {
 	if evk, ok := ev.(*tcell.EventKey); ok {
 		switch evk.Rune() {
 		case 'q', 'Q':
@@ -212,7 +212,7 @@ type QuestionBox struct {
 	gowid.IWidget
 }
 
-func (w *QuestionBox) UserInput(ev tcell.Event, size gowid.IRenderSize, focus bool, app gowid.IApp) bool {
+func (w *QuestionBox) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	res := true
 	if evk, ok := ev.(*tcell.EventKey); ok {
 		switch evk.Key() {
@@ -349,7 +349,7 @@ func NewConversationWidget() *ConversationWidget {
 	return &ConversationWidget{lb}
 }
 
-func (w *ConversationWidget) UserInput(ev tcell.Event, size gowid.IRenderSize, focus bool, app gowid.IApp) bool {
+func (w *ConversationWidget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	res := false
 	if evk, ok := ev.(*tcell.EventKey); ok && evk.Key() == tcell.KeyEnter {
 		res = true
