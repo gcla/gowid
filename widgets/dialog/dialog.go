@@ -66,6 +66,7 @@ type Options struct {
 	NoEscapeClose   bool
 	ButtonStyle     gowid.ICellStyler
 	BackgroundStyle gowid.ICellStyler
+	BorderStyle     gowid.ICellStyler
 }
 
 type Button struct {
@@ -128,7 +129,7 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 		opt = opts[0]
 	}
 
-	buttonStyle, backgroundStyle, borderStyle := opt.ButtonStyle, opt.BackgroundStyle, opt.BackgroundStyle
+	buttonStyle, backgroundStyle, borderStyle := opt.ButtonStyle, opt.BackgroundStyle, opt.BorderStyle
 
 	if buttonStyle == nil {
 		buttonStyle = gowid.MakePaletteEntry(DefaultButtonText, DefaultButton)
