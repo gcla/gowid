@@ -215,6 +215,45 @@ func (i IntOption) String() string {
 
 //======================================================================
 
+// Int64Option is intended to represent an Option[int]
+type Int64Option struct {
+	some bool
+	val  int64
+}
+
+var _ fmt.Stringer = Int64Option{}
+var _ IOption = Int64Option{}
+
+func SomeInt64(x int64) Int64Option {
+	return Int64Option{true, x}
+}
+
+func NoneInt64() Int64Option {
+	return Int64Option{}
+}
+
+func (i Int64Option) IsNone() bool {
+	return !i.some
+}
+
+func (i Int64Option) Value() interface{} {
+	return i.Val()
+}
+
+func (i Int64Option) Val() int64 {
+	if i.IsNone() {
+		panic(errors.New("Called Val on empty Int64Option"))
+	}
+	return i.val
+}
+
+// For fmt.Stringer
+func (i Int64Option) String() string {
+	return OptionString(i)
+}
+
+//======================================================================
+
 // RuneOption is intended to represent an Option[rune]
 type RuneOption struct {
 	some bool
