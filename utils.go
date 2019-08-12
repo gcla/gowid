@@ -51,7 +51,7 @@ func (e KeyValueError) Error() string {
 	for k, v := range e.KeyVals {
 		kvs = append(kvs, fmt.Sprintf("%v: %v", k, v))
 	}
-	return fmt.Sprintf("%s [%s]", e.Cause().Error(), strings.Join(kvs, ","))
+	return fmt.Sprintf("%s [%s]", e.Cause().Error(), strings.Join(kvs, ", "))
 }
 
 func (e KeyValueError) Cause() error {
