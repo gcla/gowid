@@ -103,11 +103,14 @@ type App struct {
 	log          log.StdLogger // For any application logging
 }
 
+var _ IApp = (*App)(nil)
+
 // AppArgs is a helper struct, providing arguments for the initialization of App.
 type AppArgs struct {
-	View    IWidget
-	Palette IPalette
-	Log     log.StdLogger
+	View         IWidget
+	Palette      IPalette
+	Log          log.StdLogger
+	DontActivate bool
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -217,18 +220,28 @@ func (m MouseState) RightIsClicked() bool {
 
 //======================================================================
 
+func NewApp(args AppArgs) (rapp *App, rerr error) {
+	app, err := newApp(args)
+	if err != nil {
+		return nil, err
+	}
+	return app, nil
+}
+
 // NewAppSafe returns an initialized App struct, or an error on failure. It will
 // initialize a tcell.Screen object behind the scenes, and enable mouse support
 // meaning that tcell will receive mouse events if the terminal supports them.
-func NewApp(args AppArgs) (rapp *App, rerr error) {
+func newApp(args AppArgs) (rapp *App, rerr error) {
 	screen, err := tcell.NewScreen()
 	if err != nil {
 		rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 		return
 	}
-	if err := screen.Init(); err != nil {
-		rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
-		return
+
+	if !args.DontActivate {
+		if err = screen.Init(); err != nil {
+			return nil, WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+		}
 	}
 
 	var palette IPalette = args.Palette
@@ -760,6 +773,27 @@ func (a *App) Quit() {
 
 	a.closing = true
 	close(a.AfterRenderEvents)
+}
+
+// Let screen be taken over by gowid/tcell. A new screen struct is created because
+// I can't make tcell claim and release the same screen successfully. Clients of
+// the app struct shouldn't cache the screen object returned via GetScreen().
+//
+func (a *App) ActivateScreen() error {
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+	}
+	a.screen = screen
+	if err := a.screen.Init(); err != nil {
+		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+	}
+	return nil
+}
+
+func (a *App) DeactivateScreen() {
+	a.screen.Fini()
+	a.screen = nil
 }
 
 //======================================================================
