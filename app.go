@@ -238,12 +238,6 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		return
 	}
 
-	if !args.DontActivate {
-		if err = screen.Init(); err != nil {
-			return nil, WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
-		}
-	}
-
 	var palette IPalette = args.Palette
 	if palette == nil {
 		palette = make(Palette)
@@ -279,21 +273,12 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		log:               args.Log,
 	}
 
-	defFg := ColorDefault
-	defBg := ColorDefault
-	defSt := StyleNone
-	if paletteDefault, ok := res.IPalette.CellStyler("default"); ok {
-		fgCol, bgCol, style := paletteDefault.GetStyle(res)
-		defFg = IColorToTCell(fgCol, defFg, res.GetColorMode())
-		defBg = IColorToTCell(bgCol, defBg, res.GetColorMode())
-		defSt = defSt.MergeUnder(style)
+	if !args.DontActivate {
+		if err = res.initScreen(); err != nil {
+			return nil, err
+		}
 	}
-	defStyle := tcell.Style(defSt.OnOff).Background(defBg.ToTCell()).Foreground(defFg.ToTCell())
-	// Ask TCell to set the screen's default style according to the palette's "default"
-	// config, if one is provided. This might make every screen cell underlined, for example,
-	// in the absence of overriding styling from widgets.
-	screen.SetStyle(defStyle)
-	screen.EnableMouse()
+
 	screen.Clear()
 
 	cols := screen.Colors()
@@ -785,8 +770,8 @@ func (a *App) ActivateScreen() error {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
 	a.screen = screen
-	if err := a.screen.Init(); err != nil {
-		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+	if err := a.initScreen(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -794,6 +779,30 @@ func (a *App) ActivateScreen() error {
 func (a *App) DeactivateScreen() {
 	a.screen.Fini()
 	a.screen = nil
+}
+
+func (a *App) initScreen() error {
+	if err := a.screen.Init(); err != nil {
+		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+	}
+
+	defFg := ColorDefault
+	defBg := ColorDefault
+	defSt := StyleNone
+	if paletteDefault, ok := a.IPalette.CellStyler("default"); ok {
+		fgCol, bgCol, style := paletteDefault.GetStyle(a)
+		defFg = IColorToTCell(fgCol, defFg, a.GetColorMode())
+		defBg = IColorToTCell(bgCol, defBg, a.GetColorMode())
+		defSt = defSt.MergeUnder(style)
+	}
+	defStyle := tcell.Style(defSt.OnOff).Background(defBg.ToTCell()).Foreground(defFg.ToTCell())
+	// Ask TCell to set the screen's default style according to the palette's "default"
+	// config, if one is provided. This might make every screen cell underlined, for example,
+	// in the absence of overriding styling from widgets.
+	a.screen.SetStyle(defStyle)
+	a.screen.EnableMouse()
+
+	return nil
 }
 
 //======================================================================
