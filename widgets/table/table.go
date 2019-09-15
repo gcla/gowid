@@ -15,6 +15,7 @@ import (
 	"github.com/gcla/gowid/widgets/isselected"
 	"github.com/gcla/gowid/widgets/list"
 	"github.com/gcla/gowid/widgets/pile"
+	"github.com/gdamore/tcell"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -500,6 +501,30 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 
 func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	return w.wrapper.Render(size, focus, app)
+}
+
+func (w *Widget) Up(lines int, size gowid.IRenderSize, app gowid.IApp) {
+	for i := 0; i < lines; i++ {
+		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyUp, ' ', tcell.ModNone), size, gowid.Focused, app)
+	}
+}
+
+func (w *Widget) Down(lines int, size gowid.IRenderSize, app gowid.IApp) {
+	for i := 0; i < lines; i++ {
+		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyDown, ' ', tcell.ModNone), size, gowid.Focused, app)
+	}
+}
+
+func (w *Widget) UpPage(num int, size gowid.IRenderSize, app gowid.IApp) {
+	for i := 0; i < num; i++ {
+		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyPgUp, ' ', tcell.ModNone), size, gowid.Focused, app)
+	}
+}
+
+func (w *Widget) DownPage(num int, size gowid.IRenderSize, app gowid.IApp) {
+	for i := 0; i < num; i++ {
+		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyPgDn, ' ', tcell.ModNone), size, gowid.Focused, app)
+	}
 }
 
 type IRowToWidget interface {
