@@ -401,6 +401,7 @@ func (w *Widget) CalculateOnScreen(size gowid.IRenderSize, focus gowid.Selector,
 
 func (w *Widget) SetModel(model IModel, app gowid.IApp) {
 	oldpos, olderr := w.FocusXY()
+	w.cache.Purge() // gcla later todo
 	w.update(w.listw, w.cur, model, w.opt)
 	if olderr == nil {
 		w.SetFocusXY(app, oldpos) // mght not be able to set old focus, if model shape has changed
