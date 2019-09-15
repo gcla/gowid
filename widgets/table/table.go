@@ -31,7 +31,7 @@ import (
 // cache.
 type RowId int
 
-// ITable is implemented by any type which can provide arrays of
+// IModel is implemented by any type which can provide arrays of
 // widgets for a given table row, and optionally header widgets.
 type IModel interface {
 	Columns() int

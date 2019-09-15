@@ -659,6 +659,10 @@ type IClipboard interface {
 	Clips(app IApp) []ICopyResult
 }
 
+// IClipboardSelected is implemented by widgets that support changing their
+// look when they have been "selected" in some application-level copy-mode,
+// the idea being to provide the user with the information that this widget's
+// contents will be copied.
 type IClipboardSelected interface {
 	AlterWidget(w IWidget, app IApp) IWidget
 }
