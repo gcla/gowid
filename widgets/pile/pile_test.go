@@ -4,17 +4,75 @@
 package pile
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/button"
 	"github.com/gcla/gowid/widgets/fill"
+	"github.com/gcla/gowid/widgets/framed"
+	"github.com/gcla/gowid/widgets/list"
 	"github.com/gcla/gowid/widgets/selectable"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gdamore/tcell"
 	"github.com/stretchr/testify/assert"
 )
+
+// Test that a mouse wheel down inside the region of the list within a pile
+// is correctly translated and passed to the list.
+func TestPile5(t *testing.T) {
+	bws := make([]gowid.IWidget, 50)
+	for i := 0; i < len(bws); i++ {
+		bws[i] = button.New(text.New(fmt.Sprintf("%03d", i)))
+	}
+
+	walker := list.NewSimpleListWalker(bws)
+	lb := list.New(walker)
+	// Framed is needed because it validates the mouse y coordinate before passing it on
+	// to its subwidget.
+	flb := framed.New(lb)
+
+	pws := make([]gowid.IContainerWidget, 3)
+	pws[0] = &gowid.ContainerWidget{button.New(text.New("top  ")), gowid.RenderWithUnits{U: 1}}
+	pws[1] = &gowid.ContainerWidget{flb, gowid.RenderWithWeight{W: 1}} // WEIGHT!!
+	pws[2] = &gowid.ContainerWidget{button.New(text.New("bot  ")), gowid.RenderWithUnits{U: 1}}
+
+	pl := New(pws)
+
+	sta := make([]string, 0)
+	sta = append(sta, "<top  >")
+	sta = append(sta, "-------")
+	for i := 0; i < 6; i++ {
+		sta = append(sta, fmt.Sprintf("|<%03d>|", i))
+	}
+	sta = append(sta, "-------")
+	sta = append(sta, "<bot  >")
+
+	csize := gowid.RenderBox{C: 7, R: 10}
+	c := pl.Render(csize, gowid.Focused, gwtest.D)
+	assert.Equal(t, strings.Join(sta, "\n"), c.String())
+
+	assert.Equal(t, 0, pl.Focus())
+
+	evmdown := tcell.NewEventMouse(1, 4, tcell.WheelDown, 0)
+
+	pl.UserInput(evmdown, csize, gowid.Focused, gwtest.D)
+	assert.Equal(t, 1, pl.Focus()) // Now at list widget
+	assert.Equal(t, 0, lb.Walker().Focus().(list.ListPos).ToInt())
+
+	pl.UserInput(evmdown, csize, gowid.Focused, gwtest.D)
+	assert.Equal(t, 1, pl.Focus()) // Now at list widget
+	assert.Equal(t, 1, lb.Walker().Focus().(list.ListPos).ToInt())
+
+	for i := 0; i < 40; i++ {
+		pl.UserInput(evmdown, csize, gowid.Focused, gwtest.D)
+	}
+
+	assert.Equal(t, 1, pl.Focus()) // Now at list widget
+	assert.Equal(t, 41, lb.Walker().Focus().(list.ListPos).ToInt())
+}
 
 func TestPile2(t *testing.T) {
 	btns := make([]gowid.IContainerWidget, 0)
