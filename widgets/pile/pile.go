@@ -259,11 +259,16 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	subs := w.SubWidgets()
 
 	focusEvent := func(selectable bool) {
+		srows := 0
+		for i := 0; i < subfocus; i++ {
+			srows += ss[i].BoxRows()
+		}
+
 		subSize := ss2[subfocus]
 		if selectable {
-			forChild = gowid.UserInput(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -ss[subfocus].BoxRows()), subSize, focus, app)
+			forChild = gowid.UserInput(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -srows), subSize, focus, app)
 		} else {
-			forChild = gowid.UserInputIfSelectable(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -ss[subfocus].BoxRows()), subSize, focus, app)
+			forChild = gowid.UserInputIfSelectable(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -srows), subSize, focus, app)
 		}
 	}
 
