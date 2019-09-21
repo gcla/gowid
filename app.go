@@ -96,6 +96,8 @@ type App struct {
 	copyClaimedBy     IIdentity
 	copyLevel         int
 	refreshCopy       bool
+	prevWasMouseMove  bool // True if we last processed simple mouse movement. We can optimize on slow
+	// systems by discarding subsequent mouse movement events.
 
 	lastMouse    MouseState    // So I can tell if a button was previously clicked
 	MouseState                 // Track which mouse buttons are currently down
@@ -460,27 +462,29 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 		}
 		a.RedrawTerminal()
 	case *tcell.EventMouse:
-		switch ev.Buttons() {
-		case tcell.Button1:
-			a.MouseLeftClicked = true
-		case tcell.Button2:
-			a.MouseMiddleClicked = true
-		case tcell.Button3:
-			a.MouseRightClicked = true
-		default:
+		if !a.prevWasMouseMove || ev.Modifiers() != 0 || ev.Buttons() != 0 {
+			switch ev.Buttons() {
+			case tcell.Button1:
+				a.MouseLeftClicked = true
+			case tcell.Button2:
+				a.MouseMiddleClicked = true
+			case tcell.Button3:
+				a.MouseRightClicked = true
+			default:
+			}
+			debug.SetGCPercent(-1)
+			defer debug.SetGCPercent(100)
+			a.handleInputEvent(ev, unhandled)
+			// Make sure we don't hold on to references longer than we need to
+			if ev.Buttons() == tcell.ButtonNone {
+				a.ClickTargets.DeleteClickTargets(tcell.Button1)
+				a.ClickTargets.DeleteClickTargets(tcell.Button2)
+				a.ClickTargets.DeleteClickTargets(tcell.Button3)
+			}
+			a.lastMouse = a.MouseState
+			a.MouseState = MouseState{}
+			a.RedrawTerminal()
 		}
-		debug.SetGCPercent(-1)
-		defer debug.SetGCPercent(100)
-		a.handleInputEvent(ev, unhandled)
-		// Make sure we don't hold on to references longer than we need to
-		if ev.Buttons() == tcell.ButtonNone {
-			a.ClickTargets.DeleteClickTargets(tcell.Button1)
-			a.ClickTargets.DeleteClickTargets(tcell.Button2)
-			a.ClickTargets.DeleteClickTargets(tcell.Button3)
-		}
-		a.lastMouse = a.MouseState
-		a.MouseState = MouseState{}
-		a.RedrawTerminal()
 	case *tcell.EventResize:
 		if flog, ok := a.log.(log.FieldLogger); ok {
 			flog.WithField("event", ev).Infof("Terminal was resized")
@@ -506,6 +510,12 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 		} else {
 			a.log.Printf("Unanticipated event from tcell: %v\n", ev)
 		}
+	}
+
+	if ev, ok := ev.(*tcell.EventMouse); ok && ev.Buttons() == 0 && ev.Modifiers() == 0 {
+		a.prevWasMouseMove = true
+	} else {
+		a.prevWasMouseMove = false
 	}
 }
 
