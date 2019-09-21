@@ -58,7 +58,7 @@ func (e KeyValueError) Cause() error {
 	return e.Base
 }
 
-func WithKVs(err error, kvs map[string]interface{}) error {
+func WithKVs(err error, kvs map[string]interface{}) KeyValueError {
 	return KeyValueError{
 		Base:    err,
 		KeyVals: kvs,
