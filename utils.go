@@ -45,6 +45,7 @@ type KeyValueError struct {
 }
 
 var _ error = KeyValueError{}
+var _ error = (*KeyValueError)(nil)
 
 func (e KeyValueError) Error() string {
 	kvs := make([]string, 0, len(e.KeyVals))
