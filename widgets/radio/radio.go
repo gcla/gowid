@@ -25,9 +25,9 @@ type IWidget interface {
 }
 
 type Widget struct {
-	Selected  bool
-	group     *[]IWidget
-	Callbacks *gowid.Callbacks
+	Selected bool
+	group    *[]IWidget
+	*gowid.Callbacks
 	gowid.ClickCallbacks
 	checkbox.Decoration
 	gowid.AddressProvidesID
@@ -37,14 +37,12 @@ type Widget struct {
 // If the group supplied is empty, this radio button will be marked as selected, regardless
 // of the isChecked parameter.
 func New(group *[]IWidget) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		Selected:       false,
-		group:          group,
-		Callbacks:      cb,
-		ClickCallbacks: gowid.ClickCallbacks{ICallbacks: cb},
-		Decoration:     checkbox.Decoration{button.Decoration{"(", ")"}, "X"},
+		Selected:   false,
+		group:      group,
+		Decoration: checkbox.Decoration{button.Decoration{"(", ")"}, "X"},
 	}
+	res.ClickCallbacks = gowid.ClickCallbacks{CB: &res.Callbacks}
 	res.initRadioButton(group)
 
 	var _ IWidget = res
@@ -53,14 +51,12 @@ func New(group *[]IWidget) *Widget {
 }
 
 func NewDecorated(group *[]IWidget, decoration checkbox.Decoration) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		Selected:       false,
-		group:          group,
-		Callbacks:      cb,
-		ClickCallbacks: gowid.ClickCallbacks{ICallbacks: cb},
-		Decoration:     decoration,
+		Selected:   false,
+		group:      group,
+		Decoration: decoration,
 	}
+	res.ClickCallbacks = gowid.ClickCallbacks{CB: &res.Callbacks}
 	res.initRadioButton(group)
 
 	var _ gowid.IWidget = res

@@ -31,19 +31,19 @@ type IWidget interface {
 // display
 type Widget struct {
 	gowid.IWidget
-	mod       ICellMod
-	Callbacks *gowid.Callbacks
+	mod ICellMod
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(inner gowid.IWidget, mod ICellMod) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		mod:                mod,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget: inner,
+		mod:     mod,
 	}
+
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
+
 	var _ gowid.IWidget = res
 	var _ gowid.ICompositeWidget = res
 	var _ IWidget = res

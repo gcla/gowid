@@ -41,19 +41,17 @@ type Widget struct {
 	gowid.IWidget
 	focusMap    IPaletteMapper
 	notFocusMap IPaletteMapper
-	Callbacks   *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(inner gowid.IWidget, focusMap Map, notFocusMap Map) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		focusMap:           focusMap,
-		notFocusMap:        notFocusMap,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget:     inner,
+		focusMap:    focusMap,
+		notFocusMap: notFocusMap,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	var _ gowid.ICompositeWidget = res
 	var _ IWidget = res

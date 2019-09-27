@@ -551,7 +551,7 @@ type TreeWalker struct {
 	pos       IPos
 	maker     IWidgetMaker
 	decorator IDecorator
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.FocusCallbacks
 }
 
@@ -561,13 +561,13 @@ var _ list.IWalker = (*TreeWalker)(nil)
 func NewWalker(tree IModel, pos IPos, maker IWidgetMaker, dec IDecorator) *TreeWalker {
 	cb := gowid.NewCallbacks()
 	res := &TreeWalker{
-		tree:           tree,
-		pos:            pos,
-		maker:          maker,
-		decorator:      dec,
-		Callbacks:      cb,
-		FocusCallbacks: gowid.FocusCallbacks{ICallbacks: cb},
+		tree:      tree,
+		pos:       pos,
+		maker:     maker,
+		decorator: dec,
+		Callbacks: cb,
 	}
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
 	return res
 }
 

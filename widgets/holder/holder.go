@@ -16,14 +16,15 @@ import (
 // Widget is the gowid analog of urwid's WidgetWrap.
 type Widget struct {
 	gowid.IWidget
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(w gowid.IWidget) *Widget {
 	res := &Widget{
-		IWidget:            w,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: gowid.NewCallbacks()},
+		IWidget: w,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	var _ gowid.ICompositeWidget = res
 	return res

@@ -77,15 +77,18 @@ func NewCallbacks() *Callbacks {
 // CopyOfCallbacks is used when callbacks are run - they are copied
 // so that any callers modifying the callbacks themselves can do so
 // safely with the modifications taking effect after all callbacks
-// are run.
+// are run. Can be called with a nil receiver if the widget's callback
+// object has not been initialized and e.g. RunWidgetCallbacks is called.
 func (c *Callbacks) CopyOfCallbacks(name interface{}) ([]ICallback, bool) {
-	c.Lock()
-	defer c.Unlock()
-	cbs, ok := c.callbacks[name]
-	if ok {
-		cbscopy := make([]ICallback, len(cbs))
-		copy(cbscopy, cbs)
-		return cbscopy, true
+	if c != nil {
+		c.Lock()
+		defer c.Unlock()
+		cbs, ok := c.callbacks[name]
+		if ok {
+			cbscopy := make([]ICallback, len(cbs))
+			copy(cbscopy, cbs)
+			return cbscopy, true
+		}
 	}
 	return []ICallback{}, false
 }

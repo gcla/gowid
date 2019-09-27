@@ -972,8 +972,10 @@ func (f WidgetCallback) ID() interface{} {
 }
 
 func RunWidgetCallbacks(c ICallbacks, name interface{}, app IApp, data ...interface{}) {
-	data2 := append([]interface{}{app}, data...)
-	c.RunCallbacks(name, data2...)
+	if c != nil {
+		data2 := append([]interface{}{app}, data...)
+		c.RunCallbacks(name, data2...)
+	}
 }
 
 type widgetChangedCallbackProxy struct {
@@ -1007,15 +1009,18 @@ func QuitFn(app IApp, widget IWidget) {
 // SubWidgetCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget's child is modified.
 type SubWidgetCallbacks struct {
-	ICallbacks
+	CB **Callbacks
 }
 
 func (w *SubWidgetCallbacks) OnSetSubWidget(f IWidgetChangedCallback) {
-	AddWidgetCallback(w, SubWidgetCB{}, f)
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, SubWidgetCB{}, f)
 }
 
 func (w *SubWidgetCallbacks) RemoveOnSetSubWidget(f IIdentity) {
-	RemoveWidgetCallback(w, SubWidgetCB{}, f)
+	RemoveWidgetCallback(*w.CB, SubWidgetCB{}, f)
 }
 
 //======================================================================
@@ -1023,15 +1028,18 @@ func (w *SubWidgetCallbacks) RemoveOnSetSubWidget(f IIdentity) {
 // SubWidgetsCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget's children are modified.
 type SubWidgetsCallbacks struct {
-	ICallbacks
+	CB **Callbacks
 }
 
 func (w *SubWidgetsCallbacks) OnSetSubWidgets(f IWidgetChangedCallback) {
-	AddWidgetCallback(w, SubWidgetsCB{}, f)
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, SubWidgetsCB{}, f)
 }
 
 func (w *SubWidgetsCallbacks) RemoveOnSetSubWidgets(f IIdentity) {
-	RemoveWidgetCallback(w, SubWidgetsCB{}, f)
+	RemoveWidgetCallback(*w.CB, SubWidgetsCB{}, f)
 }
 
 //======================================================================
@@ -1039,15 +1047,18 @@ func (w *SubWidgetsCallbacks) RemoveOnSetSubWidgets(f IIdentity) {
 // ClickCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget is "clicked".
 type ClickCallbacks struct {
-	ICallbacks
+	CB **Callbacks
 }
 
 func (w *ClickCallbacks) OnClick(f IWidgetChangedCallback) {
-	AddWidgetCallback(w, ClickCB{}, f)
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, ClickCB{}, f)
 }
 
 func (w *ClickCallbacks) RemoveOnClick(f IIdentity) {
-	RemoveWidgetCallback(w, ClickCB{}, f)
+	RemoveWidgetCallback(*w.CB, ClickCB{}, f)
 }
 
 //======================================================================
@@ -1055,15 +1066,18 @@ func (w *ClickCallbacks) RemoveOnClick(f IIdentity) {
 // KeyPressCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget is "clicked".
 type KeyPressCallbacks struct {
-	ICallbacks
+	CB **Callbacks
 }
 
 func (w *KeyPressCallbacks) OnKeyPress(f IWidgetChangedCallback) {
-	AddWidgetCallback(w, KeyPressCB{}, f)
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, KeyPressCB{}, f)
 }
 
 func (w *KeyPressCallbacks) RemoveOnKeyPress(f IIdentity) {
-	RemoveWidgetCallback(w, KeyPressCB{}, f)
+	RemoveWidgetCallback(*w.CB, KeyPressCB{}, f)
 }
 
 //======================================================================
@@ -1071,15 +1085,18 @@ func (w *KeyPressCallbacks) RemoveOnKeyPress(f IIdentity) {
 // FocusCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget's focus widget changes.
 type FocusCallbacks struct {
-	ICallbacks
+	CB **Callbacks
 }
 
 func (w *FocusCallbacks) OnFocusChanged(f IWidgetChangedCallback) {
-	AddWidgetCallback(w, FocusCB{}, f)
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, FocusCB{}, f)
 }
 
 func (w *FocusCallbacks) RemoveOnFocusChanged(f IIdentity) {
-	RemoveWidgetCallback(w, FocusCB{}, f)
+	RemoveWidgetCallback(*w.CB, FocusCB{}, f)
 }
 
 //======================================================================

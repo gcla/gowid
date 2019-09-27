@@ -196,7 +196,7 @@ type Widget struct {
 	flowVertDivider  *gowid.ContainerWidget
 	flowTableDivider *gowid.ContainerWidget
 	opt              Options
-	Callbacks        *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.FocusCallbacks
 	gowid.IsSelectable
 }
@@ -221,7 +221,6 @@ func New(model IModel, opts ...Options) *Widget {
 		opt = opts[0]
 	}
 
-	cb := gowid.NewCallbacks()
 	// Fill in Widget later once constructed.
 	listw := &ListWithPreferedColumn{}
 
@@ -241,12 +240,12 @@ func New(model IModel, opts ...Options) *Widget {
 
 	// res acts as a ListWalker and a widget
 	res := &Widget{
-		listw:          listw,
-		cur:            0,
-		cache:          cache,
-		Callbacks:      cb,
-		FocusCallbacks: gowid.FocusCallbacks{ICallbacks: cb},
+		listw: listw,
+		cur:   0,
+		cache: cache,
 	}
+
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
 
 	switch model.(type) {
 	case IBoundedModel:

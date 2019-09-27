@@ -29,11 +29,11 @@ type IWidget interface {
 }
 
 type Widget struct {
-	widgets   []gowid.IContainerWidget
-	focus     int // -1 means nothing selectable
-	prefCol   int // caches the last set prefered col. Passes it on if widget hasn't changed focus
-	opt       Options
-	Callbacks *gowid.Callbacks
+	widgets []gowid.IContainerWidget
+	focus   int // -1 means nothing selectable
+	prefCol int // caches the last set prefered col. Passes it on if widget hasn't changed focus
+	opt     Options
+	*gowid.Callbacks
 	gowid.SubWidgetsCallbacks
 	gowid.FocusCallbacks
 }
@@ -53,16 +53,15 @@ func New(widgets []gowid.IContainerWidget, opts ...Options) *Widget {
 			StartColumn: -1,
 		}
 	}
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		widgets:             widgets,
-		focus:               -1,
-		prefCol:             -1,
-		opt:                 opt,
-		Callbacks:           cb,
-		SubWidgetsCallbacks: gowid.SubWidgetsCallbacks{cb},
-		FocusCallbacks:      gowid.FocusCallbacks{ICallbacks: cb},
+		widgets: widgets,
+		focus:   -1,
+		prefCol: -1,
+		opt:     opt,
 	}
+	res.SubWidgetsCallbacks = gowid.SubWidgetsCallbacks{CB: &res.Callbacks}
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
+
 	if opt.StartColumn >= 0 {
 		res.focus = gwutil.Min(opt.StartColumn, len(widgets)-1)
 	} else {

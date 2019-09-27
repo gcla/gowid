@@ -46,14 +46,14 @@ type HSepCB struct{}
 
 // align sets the alignment of the group within the leftover space in the row.
 type Widget struct {
-	widgets   []gowid.IWidget
-	width     int
-	hSep      int
-	vSep      int
-	align     gowid.IHAlignment
-	focus     int // -1 means nothing selectable
-	wrap      bool
-	Callbacks *gowid.Callbacks
+	widgets []gowid.IWidget
+	width   int
+	hSep    int
+	vSep    int
+	align   gowid.IHAlignment
+	focus   int // -1 means nothing selectable
+	wrap    bool
+	*gowid.Callbacks
 	gowid.SubWidgetsCallbacks
 	gowid.FocusCallbacks
 }
@@ -72,19 +72,17 @@ func New(widgets []gowid.IWidget, width int, hSep int, vSep int, align gowid.IHA
 			StartPos: -1,
 		}
 	}
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		widgets:             widgets,
-		width:               width,
-		hSep:                hSep,
-		vSep:                vSep,
-		align:               align,
-		focus:               -1,
-		wrap:                opt.Wrap,
-		Callbacks:           cb,
-		SubWidgetsCallbacks: gowid.SubWidgetsCallbacks{cb},
-		FocusCallbacks:      gowid.FocusCallbacks{ICallbacks: cb},
+		widgets: widgets,
+		width:   width,
+		hSep:    hSep,
+		vSep:    vSep,
+		align:   align,
+		focus:   -1,
+		wrap:    opt.Wrap,
 	}
+	res.SubWidgetsCallbacks = gowid.SubWidgetsCallbacks{CB: &res.Callbacks}
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
 	if opt.StartPos >= 0 {
 		res.focus = gwutil.Min(opt.StartPos, len(widgets)-1)
 	} else {

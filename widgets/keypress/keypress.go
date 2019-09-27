@@ -57,9 +57,9 @@ type Options struct {
 }
 
 type Widget struct {
-	inner     gowid.IWidget
-	opts      Options
-	Callbacks *gowid.Callbacks
+	inner gowid.IWidget
+	opts  Options
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 	gowid.KeyPressCallbacks
 	gowid.IsSelectable
@@ -71,14 +71,13 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 		opt = opts[0]
 	}
 
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		inner:              inner,
-		opts:               opt,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
-		KeyPressCallbacks:  gowid.KeyPressCallbacks{ICallbacks: cb},
+		inner: inner,
+		opts:  opt,
 	}
+
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
+	res.KeyPressCallbacks = gowid.KeyPressCallbacks{CB: &res.Callbacks}
 
 	var _ gowid.IWidget = res
 	var _ gowid.ICompositeWidget = res

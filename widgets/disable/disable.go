@@ -18,7 +18,7 @@ import (
 //
 type Widget struct {
 	gowid.IWidget
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 	isDisabled bool
 }
@@ -36,13 +36,11 @@ func NewEnabled(w gowid.IWidget) *Widget {
 }
 
 func NewWith(w gowid.IWidget, isDisabled bool) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            w,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
-		isDisabled:         isDisabled,
+		IWidget:    w,
+		isDisabled: isDisabled,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.ICompositeWidget = res
 	return res
 }

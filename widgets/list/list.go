@@ -205,6 +205,7 @@ type Widget struct {
 	st      state
 	options Options
 	gowid.AddressProvidesID
+	*gowid.Callbacks
 	gowid.FocusCallbacks
 	gowid.IsSelectable
 }
@@ -230,10 +231,10 @@ func New(walker IWalker, opts ...Options) *Widget {
 		opt = opts[0]
 	}
 	res := &Widget{
-		walker:         walker,
-		options:        opt,
-		FocusCallbacks: gowid.FocusCallbacks{ICallbacks: gowid.NewCallbacks()},
+		walker:  walker,
+		options: opt,
 	}
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
 	res.goToTop()
 
 	var _ gowid.IWidget = res

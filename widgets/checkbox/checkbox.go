@@ -57,7 +57,7 @@ func New(isChecked bool) *Widget {
 	res := &Widget{
 		checked:        isChecked,
 		Callbacks:      cb,
-		ClickCallbacks: gowid.ClickCallbacks{ICallbacks: cb},
+		ClickCallbacks: gowid.ClickCallbacks{CB: &cb},
 		Decoration:     Decoration{button.Decoration{"[", "]"}, "X"},
 	}
 	var _ gowid.IWidget = res
@@ -69,7 +69,7 @@ func NewDecorated(isChecked bool, decoration Decoration) *Widget {
 	res := &Widget{
 		checked:        isChecked,
 		Callbacks:      cb,
-		ClickCallbacks: gowid.ClickCallbacks{ICallbacks: cb},
+		ClickCallbacks: gowid.ClickCallbacks{CB: &cb},
 		Decoration:     decoration,
 	}
 	var _ gowid.IWidget = res
@@ -90,7 +90,7 @@ func (w *Widget) SetChecked(app gowid.IApp, val bool) {
 
 func (w *Widget) setChecked(app gowid.IApp, val bool) {
 	w.checked = val
-	gowid.RunWidgetCallbacks(w, gowid.ClickCB{}, app, w)
+	gowid.RunWidgetCallbacks(*w.CB, gowid.ClickCB{}, app, w)
 }
 
 func (w *Widget) Click(app gowid.IApp) {

@@ -34,18 +34,16 @@ type Widget struct {
 	offset int // Means y offset, x is 2*y because cells are not squares -
 	// we just guess at a reasonable look for a reasonable
 	// aspect ratio
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(inner gowid.IWidget, offset int) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		offset:             offset,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget: inner,
+		offset:  offset,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.ICompositeWidget = res
 	var _ IWidget = res
 	return res

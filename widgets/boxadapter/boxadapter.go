@@ -16,8 +16,8 @@ import (
 
 type Widget struct {
 	gowid.IWidget
-	rows      int
-	Callbacks *gowid.Callbacks
+	rows int
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
@@ -31,13 +31,11 @@ type IBoxAdapterWidget interface {
 }
 
 func New(inner gowid.IWidget, rows int) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		rows:               rows,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget: inner,
+		rows:    rows,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	var _ gowid.IComposite = res
 	var _ IBoxAdapter = res

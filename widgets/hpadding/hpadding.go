@@ -29,21 +29,19 @@ type Widget struct {
 	gowid.IWidget
 	alignment gowid.IHAlignment
 	width     gowid.IWidgetDimension
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.FocusCallbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(inner gowid.IWidget, alignment gowid.IHAlignment, width gowid.IWidgetDimension) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		alignment:          alignment,
-		width:              width,
-		Callbacks:          cb,
-		FocusCallbacks:     gowid.FocusCallbacks{ICallbacks: cb},
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget:   inner,
+		alignment: alignment,
+		width:     width,
 	}
+	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	return res
 }

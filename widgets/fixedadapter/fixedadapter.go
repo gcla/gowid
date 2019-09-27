@@ -21,17 +21,15 @@ import (
 //
 type Widget struct {
 	gowid.IWidget
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
 func New(inner gowid.IWidget) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget: inner,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	var _ gowid.IComposite = res
 	return res

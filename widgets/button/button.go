@@ -82,9 +82,9 @@ type Options struct {
 }
 
 type Widget struct {
-	inner     gowid.IWidget
-	opts      Options
-	Callbacks *gowid.Callbacks
+	inner gowid.IWidget
+	opts  Options
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 	gowid.ClickCallbacks
 	*Decoration
@@ -101,14 +101,13 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 		opt.Decoration = NormalDecoration
 	}
 
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		inner:              inner,
-		opts:               opt,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
-		ClickCallbacks:     gowid.ClickCallbacks{ICallbacks: cb},
+		inner: inner,
+		opts:  opt,
 	}
+
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
+	res.ClickCallbacks = gowid.ClickCallbacks{CB: &res.Callbacks}
 
 	res.Decoration = &res.opts.Decoration
 

@@ -25,7 +25,7 @@ type Widget struct {
 	focusRange    []AttributeRange
 	notFocusRange []AttributeRange
 	options       Options
-	Callbacks     *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
@@ -73,15 +73,13 @@ func NewWithRanges(inner gowid.IWidget, notFocusRange []AttributeRange, focusRan
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            inner,
-		focusRange:         focusRange,
-		notFocusRange:      notFocusRange,
-		options:            opt,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget:       inner,
+		focusRange:    focusRange,
+		notFocusRange: notFocusRange,
+		options:       opt,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	return res
 }

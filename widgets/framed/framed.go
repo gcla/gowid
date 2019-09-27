@@ -49,7 +49,7 @@ type IWidget interface {
 type Widget struct {
 	gowid.IWidget // Embed for Selectable method
 	Params        Options
-	Callbacks     *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 }
 
@@ -64,7 +64,6 @@ type Options struct {
 type Title struct{}
 
 func New(inner gowid.IWidget, opts ...Options) *Widget {
-	cb := gowid.NewCallbacks()
 	var opt Options
 	if len(opts) == 0 {
 		opt = Options{
@@ -75,11 +74,10 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 	}
 
 	res := &Widget{
-		IWidget:            inner,
-		Params:             opt,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
+		IWidget: inner,
+		Params:  opt,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.IWidget = res
 	var _ IWidget = res
 	return res

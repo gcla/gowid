@@ -38,13 +38,12 @@ type Widget struct {
 }
 
 func New(inner gowid.IWidget) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		inner:              inner,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
-		ClickCallbacks:     gowid.ClickCallbacks{ICallbacks: cb},
+		inner: inner,
 	}
+
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
+	res.ClickCallbacks = gowid.ClickCallbacks{CB: &res.Callbacks}
 
 	var _ gowid.IWidget = res
 	var _ IWidget = res

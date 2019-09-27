@@ -18,7 +18,7 @@ import (
 //
 type Widget struct {
 	gowid.IWidget
-	Callbacks *gowid.Callbacks
+	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 	isSelectable bool
 }
@@ -36,13 +36,11 @@ func NewUnselectable(w gowid.IWidget) *Widget {
 }
 
 func NewWith(w gowid.IWidget, isSelectable bool) *Widget {
-	cb := gowid.NewCallbacks()
 	res := &Widget{
-		IWidget:            w,
-		Callbacks:          cb,
-		SubWidgetCallbacks: gowid.SubWidgetCallbacks{ICallbacks: cb},
-		isSelectable:       isSelectable,
+		IWidget:      w,
+		isSelectable: isSelectable,
 	}
+	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	var _ gowid.ICompositeWidget = res
 	return res
 }
