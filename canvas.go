@@ -258,7 +258,7 @@ func rightSizeCanvasVertically(c IRightSizeCanvas, rows int) {
 // Canvas APIs expect that each line has the same length.
 type Canvas struct {
 	Lines  [][]Cell // inner array is a line
-	Marks  map[string]CanvasPos
+	Marks  *map[string]CanvasPos
 	maxCol int
 }
 
@@ -268,7 +268,6 @@ func NewCanvas() *Canvas {
 	lines := make([][]Cell, 0, 120)
 	res := &Canvas{
 		Lines: lines[:0],
-		Marks: make(map[string]CanvasPos),
 	}
 	var _ io.Writer = res
 	return res
@@ -279,7 +278,6 @@ func NewCanvas() *Canvas {
 func NewCanvasWithLines(lines [][]Cell) *Canvas {
 	c := &Canvas{
 		Lines: lines,
-		Marks: make(map[string]CanvasPos),
 	}
 	c.AlignRight()
 	c.maxCol = c.ComputeCurrentMaxColumn()
@@ -322,8 +320,12 @@ func (c *Canvas) Duplicate() ICanvas {
 	for i := 0; i < c.BoxRows(); i++ {
 		copy(res.Lines[i], c.Lines[i])
 	}
-	for k, v := range c.Marks {
-		res.Marks[k] = v
+	if c.Marks != nil {
+		marks := make(map[string]CanvasPos)
+		res.Marks = &marks
+		for k, v := range *c.Marks {
+			(*res.Marks)[k] = v
+		}
 	}
 	return res
 }
@@ -422,26 +424,33 @@ func WriteToCanvas(c IRangeOverCanvas, p []byte) (n int, err error) {
 
 // CursorEnabled returns true if the cursor is enabled in this canvas, false otherwise.
 func (c *Canvas) CursorEnabled() bool {
-	_, ok := c.Marks["cursor"]
+	ok := false
+	if c.Marks != nil {
+		_, ok = (*c.Marks)["cursor"]
+	}
 	return ok
 }
 
 // CursorCoords returns a pair of ints representing the current cursor coordinates. Note
 // that the caller must be sure the Canvas's cursor is enabled.
 func (c *Canvas) CursorCoords() CanvasPos {
-	if pos, ok := c.Marks["cursor"]; !ok {
+	var pos CanvasPos
+	ok := false
+	if c.Marks != nil {
+		pos, ok = (*c.Marks)["cursor"]
+	}
+	if !ok {
 		// Caller must check first
 		panic(errors.New("Cursor is off!"))
-	} else {
-		return pos
 	}
+	return pos
 }
 
 // SetCursorCoords will set the Canvas's cursor coordinates. The special input of (-1,-1)
 // will disable the cursor.
 func (c *Canvas) SetCursorCoords(x, y int) {
 	if x == -1 && y == -1 {
-		delete(c.Marks, "cursor")
+		c.RemoveMark("cursor")
 	} else {
 		c.SetMark("cursor", x, y)
 	}
@@ -451,27 +460,39 @@ func (c *Canvas) SetCursorCoords(x, y int) {
 // Canvas. The menu widget uses this feature to keep track of where it should "open", acting
 // as an overlay over the widgets below.
 func (c *Canvas) SetMark(name string, x, y int) {
-	c.Marks[name] = CanvasPos{X: x, Y: y}
+	if c.Marks == nil {
+		marks := make(map[string]CanvasPos)
+		c.Marks = &marks
+	}
+	(*c.Marks)[name] = CanvasPos{X: x, Y: y}
 }
 
 // GetMark returns the position and presence/absence of the specified string identifier
 // in the Canvas.
 func (c *Canvas) GetMark(name string) (CanvasPos, bool) {
-	i, ok := c.Marks[name]
+	ok := false
+	var i CanvasPos
+	if c.Marks != nil {
+		i, ok = (*c.Marks)[name]
+	}
 	return i, ok
 }
 
 // RemoveMark removes a mark from the Canvas.
 func (c *Canvas) RemoveMark(name string) {
-	delete(c.Marks, name)
+	if c.Marks != nil {
+		delete(*c.Marks, name)
+	}
 }
 
 // RangeOverMarks applies the supplied function to each mark and position in the
 // received Canvas. If the function returns false, the loop is terminated.
 func (c *Canvas) RangeOverMarks(f func(key string, value CanvasPos) bool) {
-	for k, v := range c.Marks {
-		if !f(k, v) {
-			break
+	if c.Marks != nil {
+		for k, v := range *c.Marks {
+			if !f(k, v) {
+				break
+			}
 		}
 	}
 }
@@ -566,8 +587,10 @@ func (c *Canvas) ExtendLeft(cells []Cell) {
 			copy(cellsCopy[len(cells):], c.Lines[i])
 			c.Lines[i] = cellsCopy
 		}
-		for k, pos := range c.Marks {
-			c.Marks[k] = pos.PlusX(len(cells))
+		if c.Marks != nil {
+			for k, pos := range *c.Marks {
+				(*c.Marks)[k] = pos.PlusX(len(cells))
+			}
 		}
 		c.maxCol += len(cells)
 	}
@@ -597,7 +620,11 @@ func (c *Canvas) AppendBelow(c2 IAppendCanvas, doCursor bool, makeCopy bool) {
 	c.AlignRight()
 	c2.RangeOverMarks(func(k string, pos CanvasPos) bool {
 		if doCursor || (k != "cursor") {
-			c.Marks[k] = pos.PlusY(lenc)
+			if c.Marks == nil {
+				marks := make(map[string]CanvasPos)
+				c.Marks = &marks
+			}
+			(*c.Marks)[k] = pos.PlusY(lenc)
 		}
 		return true
 	})
@@ -616,8 +643,10 @@ func (c *Canvas) Truncate(above, below int) {
 	c.Lines = c.Lines[cutAbove:]
 	cutBelow := len(c.Lines) - gwutil.Min(len(c.Lines), below)
 	c.Lines = c.Lines[:cutBelow]
-	for k, pos := range c.Marks {
-		c.Marks[k] = pos.PlusY(-cutAbove)
+	if c.Marks != nil {
+		for k, pos := range *c.Marks {
+			(*c.Marks)[k] = pos.PlusY(-cutAbove)
+		}
 	}
 }
 
@@ -647,7 +676,11 @@ func (c *Canvas) MergeWithFunc(c2 IMergeCanvas, leftOffset, topOffset int, fn Ce
 		// Special treatment for the cursor mark - to allow widgets to display the cursor via
 		// a "lower" widget. The terminal will typically support displaying one cursor only.
 		if k != "cursor" || !bottomGetsCursor {
-			c.Marks[k] = v.PlusX(leftOffset).PlusY(topOffset)
+			if c.Marks == nil {
+				marks := make(map[string]CanvasPos)
+				c.Marks = &marks
+			}
+			(*c.Marks)[k] = v.PlusX(leftOffset).PlusY(topOffset)
 		}
 		return true
 	})
@@ -681,7 +714,11 @@ func (c *Canvas) AppendRight(c2 IMergeCanvas, useCursor bool) {
 
 	c2.RangeOverMarks(func(k string, v CanvasPos) bool {
 		if (k != "cursor") || useCursor {
-			c.Marks[k] = v.PlusX(m)
+			if c.Marks == nil {
+				marks := make(map[string]CanvasPos)
+				c.Marks = &marks
+			}
+			(*c.Marks)[k] = v.PlusX(m)
 		}
 		return true
 	})
@@ -711,8 +748,10 @@ func (c *Canvas) TrimLeft(colsToHave int) {
 			c.Lines[i] = c.Lines[i][colsToTrim:]
 		}
 	}
-	for k, v := range c.Marks {
-		c.Marks[k] = v.PlusX(-colsToTrim)
+	if c.Marks != nil {
+		for k, v := range *c.Marks {
+			(*c.Marks)[k] = v.PlusX(-colsToTrim)
+		}
 	}
 }
 
