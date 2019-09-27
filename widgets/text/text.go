@@ -691,7 +691,7 @@ type TextLayout struct {
 // text wrapping and alignment options. The line layouts can then be used to index the IContent
 // in order to build a canvas for rendering.
 func MakeTextLayout(content IContent, width int, wrap WrapType, align gowid.IHAlignment) *TextLayout {
-	lines := make([]LineLayout, 0)
+	lines := make([]LineLayout, 0, 16)
 	if width > 0 {
 		switch wrap {
 		case WrapClip:
