@@ -984,7 +984,8 @@ type widgetChangedCallbackProxy struct {
 
 func (p widgetChangedCallbackProxy) Call(args ...interface{}) {
 	t := args[0].(IApp)
-	w := args[1].(IWidget)
+	var w IWidget
+	w, _ = args[1].(IWidget)
 	p.IWidgetChangedCallback.Changed(t, w, args[2:]...)
 }
 
