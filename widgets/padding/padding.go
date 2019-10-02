@@ -191,7 +191,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 
 	subSize := w.SubWidgetSize(size, focus, app)
 
-	subWidgetCanvas := gowid.Render(w.SubWidget(), subSize, focus, app)
+	subWidgetCanvas := w.SubWidget().Render(subSize, focus, app)
 	subWidgetMaxColumn := subWidgetCanvas.BoxColumns()
 
 	var myCols int
@@ -259,7 +259,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	switch al := w.VAlign().(type) {
 	case gowid.VAlignBottom:
 		if rowsToUseInResult > subWidgetRows {
-			fc := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: rowsToUseInResult - subWidgetRows}, gowid.NotSelected, app)
+			fc := fill.Render(gowid.RenderBox{C: maxCol, R: rowsToUseInResult - subWidgetRows}, gowid.NotSelected, app)
 			fc.AppendBelow(subWidgetCanvas, true, false)
 			subWidgetCanvas = fc
 		} else {
@@ -269,8 +269,8 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 		if rowsToUseInResult > subWidgetRows {
 			topl := (rowsToUseInResult - subWidgetRows) / 2
 			bottoml := rowsToUseInResult - (topl + subWidgetRows)
-			fc1 := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
-			fc2 := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			fc2 := fill.Render(gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
 
 			fc1.AppendBelow(subWidgetCanvas, true, false)
 			subWidgetCanvas = fc1
@@ -284,8 +284,8 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 		if rowsToUseInResult > subWidgetRows+al.Margin {
 			topl := al.Margin
 			bottoml := rowsToUseInResult - (topl + subWidgetRows)
-			fc1 := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
-			fc2 := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			fc2 := fill.Render(gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
 			fc1.AppendBelow(subWidgetCanvas, true, false)
 			subWidgetCanvas = fc1
 			subWidgetCanvas.AppendBelow(fc2, false, false)
@@ -295,12 +295,12 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 			bottoml := subWidgetRows - (rowsToUseInResult - al.Margin)
 
 			subWidgetCanvas.Truncate(0, bottoml)
-			fc1 := gowid.Render(fill, gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
 			fc1.AppendBelow(subWidgetCanvas, true, false)
 			subWidgetCanvas = fc1
 		} else {
 			topl := rowsToUseInResult
-			subWidgetCanvas = gowid.Render(fill, gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			subWidgetCanvas = fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
 		}
 
 	default:

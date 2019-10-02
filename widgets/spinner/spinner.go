@@ -156,13 +156,13 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 			wi = 0
 		}
 	}
-	barCanvas := gowid.Render(
+	barCanvas :=
 		styled.New(
 			text.New(string(display)),
 			w.Styler(),
-		),
-		gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app,
-	)
+		).Render(
+
+			gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app)
 
 	return barCanvas
 }

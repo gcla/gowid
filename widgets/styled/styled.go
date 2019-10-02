@@ -110,7 +110,7 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 }
 
 func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	canvas := gowid.Render(w.SubWidget(), size, focus, app)
+	canvas := w.SubWidget().Render(size, focus, app)
 
 	cols := canvas.BoxColumns()
 

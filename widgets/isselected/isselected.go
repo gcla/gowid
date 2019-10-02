@@ -52,11 +52,11 @@ func (w *Widget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app go
 }
 
 func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	return gowid.Render(w.pick(focus), size, focus, app)
+	return w.pick(focus).Render(size, focus, app)
 }
 
 func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
-	return gowid.UserInput(w.pick(focus), ev, size, focus, app)
+	return w.pick(focus).UserInput(ev, size, focus, app)
 }
 
 // TODO - this isn't right. Should Selectable be conditioned on focus?

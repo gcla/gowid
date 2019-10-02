@@ -96,7 +96,7 @@ func Render(w IAsciiGraph, size gowid.IRenderSize, focus gowid.Selector, app gow
 	}
 
 	blank := fill.NewEmpty()
-	res := gowid.Render(blank, gowid.RenderBox{C: cols, R: rows}, gowid.NotSelected, app)
+	res := blank.Render(gowid.RenderBox{C: cols, R: rows}, gowid.NotSelected, app)
 
 	for y := 0; y < gwutil.Min(len(grender), res.BoxRows()); y++ {
 		x := 0

@@ -421,7 +421,7 @@ type ISelectChild interface {
 // focus - it might be given focus if there is no other option (no other
 // selectable widgets in the container, for example).
 //
-// UserEvent() is provided the TCell event (mouse or keyboard action),
+// UserInput() is provided the TCell event (mouse or keyboard action),
 // the size spec that would be given to Render(), whether or not the widget
 // has focus, and access to the application, useful for effecting changes
 // like changing colors, running a function, or quitting. The render size is
@@ -775,22 +775,10 @@ func CalculateRenderSizeFallback(w IWidget, size IRenderSize, focus Selector, ap
 		res.R = sz.BoxRows()
 		res.C = sz.BoxColumns()
 	default:
-		c := Render(w, size, focus, app)
+		c := w.Render(size, focus, app)
 		res.R = c.BoxRows()
 		res.C = c.BoxColumns()
 	}
-	return res
-}
-
-// Render currently passes control through to the widget's Render method. Having
-// this function allows for easier instrumentation of the Render path. The function
-// returns a canvas representing the rendered widget.
-func Render(w IWidget, size IRenderSize, focus Selector, app IApp) ICanvas {
-	res := w.Render(size, focus, app)
-
-	// Enable when debugging
-	// PanicIfCanvasNotRightSize(res, size)
-
 	return res
 }
 
@@ -799,22 +787,10 @@ func Render(w IWidget, size IRenderSize, focus Selector, app IApp) ICanvas {
 func UserInputIfSelectable(w IWidget, ev interface{}, size IRenderSize, focus Selector, app IApp) bool {
 	res := false
 	if w.Selectable() {
-		res = UserInput(w, ev, size, focus, app)
+		res = w.UserInput(ev, size, focus, app)
 	}
 
 	return res
-}
-
-// UserInput currently passes control through to the widget's UserInput method. Having
-// this function allows for easier instrumentation of the UserInput path. UserInput
-// should return true if this widget "handles" the provided input, and false
-// otherwise. This return value can guide parent widgets and help them determine
-// whether or not they should then consume the input event. Note that returning
-// true does not guarantee no other widget will also handle the event - for example
-// the ListBox widget may handle a mouse click by changing the focus widget, but
-// also allow the child widget at focus to receive the click too.
-func UserInput(w IWidget, ev interface{}, size IRenderSize, focus Selector, app IApp) bool {
-	return w.UserInput(ev, size, focus, app)
 }
 
 // RenderSize currently passes control through to the widget's RenderSize
@@ -843,7 +819,7 @@ func SubWidgetSize(w ICompositeWidget, size IRenderSize, focus Selector, app IAp
 // with an IRenderBox size argument equal to the size of the current terminal.
 func RenderRoot(w IWidget, t *App) {
 	maxX, maxY := t.TerminalSize()
-	canvas := Render(w, RenderBox{C: maxX, R: maxY}, Focused, t)
+	canvas := w.Render(RenderBox{C: maxX, R: maxY}, Focused, t)
 
 	// tcell will apply its default style to empty cells. But because gowid's model
 	// is to layer styles, here we explicitly merge each canvas cell on top of a cell
@@ -1699,7 +1675,7 @@ func CopyModeUserInput(w ICopyModeWidget, ev interface{}, size IRenderSize, focu
 		} else {
 			cl := app.CopyLevel()
 			app.CopyLevel(cl + lvls) // this is how many levels hexdumper will support
-			res = UserInput(w.SubWidget(), ev, size, focus, app)
+			res = w.SubWidget().UserInput(ev, size, focus, app)
 			app.CopyLevel(cl)
 
 			if !res {
@@ -1711,7 +1687,7 @@ func CopyModeUserInput(w ICopyModeWidget, ev interface{}, size IRenderSize, focu
 		evc.Action.Collect(w.Clips(app))
 		res = true
 	} else {
-		res = UserInput(w.SubWidget(), ev, size, focus, app)
+		res = w.SubWidget().UserInput(ev, size, focus, app)
 	}
 	return res
 }

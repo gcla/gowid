@@ -261,7 +261,7 @@ func UserInput(w IClickableIdentityWidget, ev interface{}, size gowid.IRenderSiz
 		}
 	default:
 		if wc, ok := w.(gowid.IComposite); ok {
-			res = gowid.UserInput(wc.SubWidget(), ev, size, focus, app)
+			res = wc.SubWidget().UserInput(ev, size, focus, app)
 		}
 	}
 	return res
@@ -270,7 +270,7 @@ func UserInput(w IClickableIdentityWidget, ev interface{}, size gowid.IRenderSiz
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	newSize := w.SubWidgetSize(size, focus, app)
 
-	res := gowid.Render(w.SubWidget(), newSize, focus, app)
+	res := w.SubWidget().Render(newSize, focus, app)
 	leftClicker := gowid.CellsFromString(w.LeftDec())
 	rightClicker := gowid.CellsFromString(w.RightDec())
 	res.ExtendLeft(leftClicker)

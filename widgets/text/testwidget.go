@@ -28,9 +28,9 @@ func (w *Widget1) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app g
 
 func (w *Widget1) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	if focus.Focus {
-		return gowid.Render(New(fmt.Sprintf("%df", w.I)), size, focus, app)
+		return New(fmt.Sprintf("%df", w.I)).Render(size, focus, app)
 	} else {
-		return gowid.Render(New(fmt.Sprintf("%d ", w.I)), size, focus, app)
+		return New(fmt.Sprintf("%d ", w.I)).Render(size, focus, app)
 	}
 }
 
@@ -39,9 +39,9 @@ func (w *Widget1) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
 		if focus.Focus {
-			return gowid.UserInput(New(fmt.Sprintf("%df", w.I)), ev, size, focus, app)
+			return New(fmt.Sprintf("%df", w.I)).UserInput(ev, size, focus, app)
 		} else {
-			return gowid.UserInput(New(fmt.Sprintf("%d ", w.I)), ev, size, focus, app)
+			return New(fmt.Sprintf("%d ", w.I)).UserInput(ev, size, focus, app)
 		}
 	case *tcell.EventMouse:
 		// Take all mouse input so I can test clicking in different columns changing the focus

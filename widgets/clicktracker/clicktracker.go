@@ -110,11 +110,11 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		}
 	}
 	// Never handle the input, always pass it on
-	return gowid.UserInput(w.SubWidget(), ev, size, focus, app)
+	return w.SubWidget().UserInput(ev, size, focus, app)
 }
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	res := gowid.Render(w.SubWidget(), gowid.SubWidgetSize(w, size, focus, app), focus, app)
+	res := w.SubWidget().Render(gowid.SubWidgetSize(w, size, focus, app), focus, app)
 
 	if w.ClickPending() {
 		gowid.RangeOverCanvas(res, gowid.CellRangeFunc(func(c gowid.Cell) gowid.Cell {

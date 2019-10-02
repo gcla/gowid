@@ -139,17 +139,17 @@ func (w *focusWidget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, a
 
 func (w *focusWidget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	if focus.Focus {
-		return gowid.Render(w.focus, size, focus, app)
+		return w.focus.Render(size, focus, app)
 	} else {
-		return gowid.Render(w.notfocus, size, focus, app)
+		return w.notfocus.Render(size, focus, app)
 	}
 }
 
 func (w *focusWidget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	if focus.Focus {
-		return gowid.UserInput(w.focus, ev, size, focus, app)
+		return w.focus.UserInput(ev, size, focus, app)
 	} else {
-		return gowid.UserInput(w.notfocus, ev, size, focus, app)
+		return w.notfocus.UserInput(ev, size, focus, app)
 	}
 }
 

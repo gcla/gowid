@@ -61,7 +61,7 @@ func (w *ConversationWidget) UserInput(ev interface{}, size gowid.IRenderSize, f
 		walker.SetFocus(nextPos, app)
 		w.Widget.GoToBottom(app)
 	} else {
-		res = gowid.UserInput(w.Widget, ev, size, focus, app)
+		res = w.Widget.UserInput(ev, size, focus, app)
 	}
 	return res
 }

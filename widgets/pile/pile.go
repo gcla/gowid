@@ -264,7 +264,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 
 		subSize := ss2[subfocus]
 		if selectable {
-			forChild = gowid.UserInput(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -srows), subSize, focus, app)
+			forChild = subs[subfocus].UserInput(gowid.TranslatedMouseEvent(ev, 0, -srows), subSize, focus, app)
 		} else {
 			forChild = gowid.UserInputIfSelectable(subs[subfocus], gowid.TranslatedMouseEvent(ev, 0, -srows), subSize, focus, app)
 		}
@@ -296,7 +296,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			for i, c := range ss {
 				if my < curY+c.BoxRows() && my >= curY {
 					subSize := ss2[i]
-					forChild = gowid.UserInput(subs[i], gowid.TranslatedMouseEvent(ev, 0, -curY), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
+					forChild = subs[i].UserInput(gowid.TranslatedMouseEvent(ev, 0, -curY), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
 					//if forChild && ev2.Buttons()&tcell.Button1|tcell.WheelUp|tcell.WheelDown != 0 {
 
 					// The child gets focus if (a) it is selectable (designed to take focus) and
@@ -458,7 +458,7 @@ func RenderedChildrenSizes(w IWidget, size gowid.IRenderSize, focus gowid.Select
 
 func RenderSubwidgets(w IWidget, size gowid.IRenderSize, focus gowid.Selector, focusIdx int, app gowid.IApp) []gowid.ICanvas {
 	fn1 := BoxMakerFunc(func(w gowid.IWidget, subSize gowid.IRenderSize, focus gowid.Selector, subApp gowid.IApp) gowid.IRenderBox {
-		return gowid.Render(w, subSize, focus, subApp)
+		return w.Render(subSize, focus, subApp)
 	})
 
 	canvases, _ := w.RenderBoxMaker(size, focus, focusIdx, app, fn1)

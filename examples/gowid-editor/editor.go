@@ -201,7 +201,7 @@ func (w *EditWithScrollbar) Render(size gowid.IRenderSize, focus gowid.Selector,
 	w.pgUpDown = 0
 	w.sb.Top, w.sb.Middle, w.sb.Bottom = w.e.CalculateTopMiddleBottom(ebox)
 
-	canvas := gowid.Render(w.Widget, size, focus, app)
+	canvas := w.Widget.Render(size, focus, app)
 
 	return canvas
 }

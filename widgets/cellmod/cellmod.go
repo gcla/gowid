@@ -104,7 +104,7 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	c := gowid.Render(w.SubWidget(), size, focus, app)
+	c := w.SubWidget().Render(size, focus, app)
 
 	gowid.RangeOverCanvas(c, gowid.CellRangeFunc(func(cell gowid.Cell) gowid.Cell {
 		return w.Transform(cell, focus)

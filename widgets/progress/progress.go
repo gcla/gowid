@@ -154,13 +154,13 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	}
 	cols := flow.FlowColumns()
 
-	barCanvas := gowid.Render(
+	barCanvas :=
 		styled.New(
 			text.New(gwutil.StringOfLength(' ', cols)),
 			w.Normal(),
-		),
-		gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app,
-	)
+		).Render(
+
+			gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app)
 
 	fnorm, _, _ := w.Normal().GetStyle(app)
 	percentStyle := gowid.MakePaletteEntry(fnorm, gowid.NoColor{})
@@ -187,7 +187,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 		),
 		gowid.HAlignMiddle{}, gowid.RenderFixed{},
 	)
-	percentCanvas := gowid.Render(percent, gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app)
+	percentCanvas := percent.Render(gowid.RenderBox{C: cols, R: 1}, gowid.NotSelected, app)
 	barCanvas.MergeUnder(percentCanvas, 0, 0, false)
 
 	return barCanvas

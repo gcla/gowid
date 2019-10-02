@@ -134,7 +134,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 
 	subSize := w.SubWidgetSize(size, focus, app)
 
-	c := gowid.Render(w.SubWidget(), subSize, focus, app)
+	c := w.SubWidget().Render(subSize, focus, app)
 	subWidgetMaxColumn := c.BoxColumns()
 
 	var myCols int

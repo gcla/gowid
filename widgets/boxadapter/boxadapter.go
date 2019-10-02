@@ -102,7 +102,7 @@ func RenderSize(w IBoxAdapter, size gowid.IRenderSize, focus gowid.Selector, app
 
 func Render(w IBoxAdapterWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	rsize := RenderSize(w, size, focus, app)
-	res := gowid.Render(w.SubWidget(), rsize, focus, app)
+	res := w.SubWidget().Render(rsize, focus, app)
 
 	return res
 }

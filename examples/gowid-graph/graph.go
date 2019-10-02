@@ -186,7 +186,7 @@ func (g *GraphView) Selectable() bool {
 }
 
 func (g *GraphView) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
-	return gowid.UserInput(g.Widget, ev, size, focus, app)
+	return g.Widget.UserInput(ev, size, focus, app)
 }
 
 func MakeBarGraph() *bargraph.Widget {

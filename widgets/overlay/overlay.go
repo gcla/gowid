@@ -249,13 +249,13 @@ func Render(w IOverlay, size gowid.IRenderSize, focus gowid.Selector, app gowid.
 	bfocus := focus.And(w.BottomGetsFocus())
 	tfocus := focus.And(w.TopGetsFocus())
 
-	bottomC := gowid.Render(w.Bottom(), size, bfocus, app)
+	bottomC := w.Bottom().Render(size, bfocus, app)
 	if w.Top() == nil {
 		return bottomC
 	} else {
 		bottomC2 := bottomC.Duplicate()
 		p2 := padding.New(w.Top(), w.VAlign(), w.Height(), w.HAlign(), w.Width())
-		topC := gowid.Render(p2, size, tfocus, app)
+		topC := p2.Render(size, tfocus, app)
 		bottomC2.MergeUnder(topC, 0, 0, w.BottomGetsCursor())
 		return bottomC2
 	}

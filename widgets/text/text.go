@@ -844,7 +844,7 @@ func (w *CopyableWidget) Render(size gowid.IRenderSize, focus gowid.Selector, ap
 		w2 := w.AlterWidget(w.Widget, app)
 		return w2.Render(size, focus, app)
 	} else {
-		return gowid.Render(w.Widget, size, focus, app)
+		return w.Widget.Render(size, focus, app)
 	}
 }
 

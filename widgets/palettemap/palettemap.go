@@ -122,7 +122,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	})
 	override := NewOverride(app, &newAttrs)
 
-	res := gowid.Render(w.SubWidget(), size, focus, override)
+	res := w.SubWidget().Render(size, focus, override)
 	return res
 }
 

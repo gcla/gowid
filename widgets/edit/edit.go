@@ -267,7 +267,7 @@ func (w *Widget) CalculateTopMiddleBottom(size gowid.IRenderSize) (int, int, int
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	twc := w.MakeText()
-	c := gowid.Render(twc, size, focus, app)
+	c := twc.Render(size, focus, app)
 	return c
 }
 

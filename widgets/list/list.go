@@ -377,10 +377,10 @@ func (w *Widget) RenderSubwidgets(size gowid.IRenderSize, focus gowid.Selector, 
 		var curToRender gowid.IWidget = curWidget
 		if haveCols {
 			//c = gowid.Render(curWidget, gowid.RenderFlowWith{C: cols.Columns()}, focus, app)
-			c = gowid.Render(curToRender, gowid.RenderFlowWith{C: cols.Columns()}, focus, app)
+			c = curToRender.Render(gowid.RenderFlowWith{C: cols.Columns()}, focus, app)
 		} else {
 			//c = gowid.Render(curWidget, gowid.RenderFixed{}, focus, app)
-			c = gowid.Render(curToRender, gowid.RenderFixed{}, focus, app)
+			c = curToRender.Render(gowid.RenderFixed{}, focus, app)
 		}
 		creallines := c.BoxRows()
 		middle = SubRenders{curWidget, curPos, c, creallines}
@@ -429,9 +429,9 @@ func (w *Widget) RenderSubwidgets(size gowid.IRenderSize, focus gowid.Selector, 
 				} else {
 					var upC gowid.ICanvas
 					if haveCols {
-						upC = gowid.Render(upWidget, gowid.RenderFlowWith{C: cols.Columns()}, gowid.NotSelected, app)
+						upC = upWidget.Render(gowid.RenderFlowWith{C: cols.Columns()}, gowid.NotSelected, app)
 					} else {
-						upC = gowid.Render(upWidget, gowid.RenderFixed{}, gowid.NotSelected, app)
+						upC = upWidget.Render(gowid.RenderFixed{}, gowid.NotSelected, app)
 					}
 					upreallines := upC.BoxRows()
 					if haveLinesNeeded {
@@ -457,9 +457,9 @@ func (w *Widget) RenderSubwidgets(size gowid.IRenderSize, focus gowid.Selector, 
 				} else {
 					var downC gowid.ICanvas
 					if haveCols {
-						downC = gowid.Render(downWidget, gowid.RenderFlowWith{C: cols.Columns()}, gowid.NotSelected, app)
+						downC = downWidget.Render(gowid.RenderFlowWith{C: cols.Columns()}, gowid.NotSelected, app)
 					} else {
-						downC = gowid.Render(downWidget, gowid.RenderFixed{}, gowid.NotSelected, app)
+						downC = downWidget.Render(gowid.RenderFixed{}, gowid.NotSelected, app)
 					}
 					downreallines := downC.BoxRows()
 					if haveLinesNeeded {

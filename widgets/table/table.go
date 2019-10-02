@@ -490,7 +490,7 @@ func (w *Widget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app go
 
 func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	oldpos, olderr := w.FocusXY()
-	res := gowid.UserInput(w.wrapper, ev, size, focus, app)
+	res := w.wrapper.UserInput(ev, size, focus, app)
 	newpos, newerr := w.FocusXY()
 	if olderr != newerr || oldpos != newpos {
 		gowid.RunWidgetCallbacks(w.Callbacks, gowid.FocusCB{}, app, w)
@@ -504,25 +504,25 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 
 func (w *Widget) Up(lines int, size gowid.IRenderSize, app gowid.IApp) {
 	for i := 0; i < lines; i++ {
-		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyUp, ' ', tcell.ModNone), size, gowid.Focused, app)
+		w.wrapper.UserInput(tcell.NewEventKey(tcell.KeyUp, ' ', tcell.ModNone), size, gowid.Focused, app)
 	}
 }
 
 func (w *Widget) Down(lines int, size gowid.IRenderSize, app gowid.IApp) {
 	for i := 0; i < lines; i++ {
-		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyDown, ' ', tcell.ModNone), size, gowid.Focused, app)
+		w.wrapper.UserInput(tcell.NewEventKey(tcell.KeyDown, ' ', tcell.ModNone), size, gowid.Focused, app)
 	}
 }
 
 func (w *Widget) UpPage(num int, size gowid.IRenderSize, app gowid.IApp) {
 	for i := 0; i < num; i++ {
-		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyPgUp, ' ', tcell.ModNone), size, gowid.Focused, app)
+		w.wrapper.UserInput(tcell.NewEventKey(tcell.KeyPgUp, ' ', tcell.ModNone), size, gowid.Focused, app)
 	}
 }
 
 func (w *Widget) DownPage(num int, size gowid.IRenderSize, app gowid.IApp) {
 	for i := 0; i < num; i++ {
-		gowid.UserInput(w.wrapper, tcell.NewEventKey(tcell.KeyPgDn, ' ', tcell.ModNone), size, gowid.Focused, app)
+		w.wrapper.UserInput(tcell.NewEventKey(tcell.KeyPgDn, ' ', tcell.ModNone), size, gowid.Focused, app)
 	}
 }
 

@@ -75,7 +75,7 @@ func SubWidgetSize(w interface{}, size gowid.IRenderSize, focus gowid.Selector, 
 }
 
 func Render(w gowid.IComposite, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	res := gowid.Render(w.SubWidget(), SubWidgetSize(w, size, focus, app), focus, app)
+	res := w.SubWidget().Render(SubWidgetSize(w, size, focus, app), focus, app)
 
 	cols, ok := size.(gowid.IColumns)
 	if !ok {

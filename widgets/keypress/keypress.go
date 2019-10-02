@@ -159,14 +159,14 @@ func UserInput(w IKeyPresser, ev interface{}, size gowid.IRenderSize, focus gowi
 		}
 	}
 	if !res {
-		res = gowid.UserInput(w.SubWidget(), ev, size, focus, app)
+		res = w.SubWidget().UserInput(ev, size, focus, app)
 	}
 
 	return res
 }
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	return gowid.Render(w.SubWidget(), size, focus, app)
+	return w.SubWidget().Render(size, focus, app)
 }
 
 //======================================================================

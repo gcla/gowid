@@ -141,7 +141,7 @@ func Render(w IBarGraph, size gowid.IRenderSize, focus gowid.Selector, app gowid
 		)
 	}
 
-	return gowid.Render(res, size, focus, app)
+	return res.Render(size, focus, app)
 }
 
 //======================================================================

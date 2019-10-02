@@ -82,7 +82,7 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 	if w.isDisabled {
 		return false
 	}
-	return gowid.UserInput(w.SubWidget(), ev, size, focus, app)
+	return w.SubWidget().UserInput(ev, size, focus, app)
 }
 
 //======================================================================

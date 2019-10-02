@@ -105,7 +105,7 @@ func UserInput(w gowid.ICompositeWidget, ev interface{}, size gowid.IRenderSize,
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	newSize := w.SubWidgetSize(size, focus, app)
-	innerCanvas := gowid.Render(w.SubWidget(), newSize, focus, app)
+	innerCanvas := w.SubWidget().Render(newSize, focus, app)
 
 	shadowCanvas := gowid.NewCanvasOfSizeExt(innerCanvas.BoxColumns(), innerCanvas.BoxRows(),
 		gowid.MakeCell(' ', gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.MakeTCellColorExt(tcell.ColorBlack), gowid.StyleNone))

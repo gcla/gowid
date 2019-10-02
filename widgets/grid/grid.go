@@ -200,7 +200,7 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	pile, _ := w.GenerateWidgets(size, app)
-	res := gowid.Render(pile, size, focus, app)
+	res := pile.Render(size, focus, app)
 	return res
 }
 

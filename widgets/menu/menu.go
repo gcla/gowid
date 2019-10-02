@@ -227,7 +227,7 @@ func (w *rejectKeyInput) UserInput(ev interface{}, size gowid.IRenderSize, focus
 	if _, ok := ev.(*tcell.EventKey); ok && w.on {
 		return false
 	}
-	return gowid.UserInput(w.IWidget, ev, size, focus, app)
+	return w.IWidget.UserInput(ev, size, focus, app)
 }
 
 //======================================================================
@@ -263,7 +263,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	bfocus := focus.And(w.Overlay().BottomGetsFocus())
 
-	bottomC := gowid.Render(w.Overlay().Bottom(), size, bfocus, app)
+	bottomC := w.Overlay().Bottom().Render(size, bfocus, app)
 
 	off, ok := bottomC.GetMark(w.Name())
 	if !ok {
@@ -277,7 +277,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	// So we don't need to render the bottom canvas twice
 	fakeOverlay := &CachedOverlay{w.Overlay(), bottomC}
 
-	return gowid.Render(fakeOverlay, size, focus, app)
+	return fakeOverlay.Render(size, focus, app)
 }
 
 //======================================================================
@@ -331,7 +331,7 @@ func (w *SiteWidget) SetNamer(m ISiteName, app gowid.IApp) {
 }
 
 func (w *SiteWidget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-	res := gowid.Render(w.IWidget, size, focus, app)
+	res := w.IWidget.Render(size, focus, app)
 	if w.Options.Namer != nil {
 		res.SetMark(w.Options.Namer.Name(), w.Options.XOffset, w.Options.YOffset)
 	}
@@ -353,7 +353,7 @@ type AutoCloserWidget struct {
 
 func (w *AutoCloserWidget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	wasOpen := w.menu.IsOpen()
-	res := gowid.UserInput(w.IWidget, ev, size, focus, app)
+	res := w.IWidget.UserInput(ev, size, focus, app)
 
 	// Close the menu if it was open prior to this input operation (i.e. not just opened) and
 	// if the non-menu part of the UI took the current input - but only if the input was mouse.
@@ -388,7 +388,7 @@ func (w *NavWrapperWidget) UserInput(ev interface{}, size gowid.IRenderSize, foc
 	// }
 
 	// Test the subwidget first. It might want to capture certain keys
-	res = gowid.UserInput(w.IWidget, ev, size, focus, app)
+	res = w.IWidget.UserInput(ev, size, focus, app)
 
 	// If the submenu itself didn't claim the input, check the close keys
 	if !res {

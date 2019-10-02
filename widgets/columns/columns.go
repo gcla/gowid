@@ -302,7 +302,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			for i, c := range subSizes {
 				if mx < curX+c && mx >= curX {
 					subSize := w.SubWidgetSize(size, c, subs[i], dims[i])
-					forChild = gowid.UserInput(subs[i], gowid.TranslatedMouseEvent(ev, -curX, 0), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
+					forChild = subs[i].UserInput(gowid.TranslatedMouseEvent(ev, -curX, 0), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
 					if subs[i].Selectable() && evm.Buttons()&tcell.Button1 != 0 {
 						w.SetFocus(app, i)
 					}
@@ -523,11 +523,11 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 		diff := res.BoxRows() - canvases[i].BoxRows()
 		if diff > 0 {
 			fill := fill.NewEmpty()
-			fc := gowid.Render(fill, gowid.RenderBox{canvases[i].BoxColumns(), diff}, gowid.NotSelected, app)
+			fc := fill.Render(gowid.RenderBox{canvases[i].BoxColumns(), diff}, gowid.NotSelected, app)
 			canvases[i].AppendBelow(fc, false, false)
 		} else if diff < 0 {
 			fill := fill.NewEmpty()
-			fc := gowid.Render(fill, gowid.RenderBox{res.BoxColumns(), -diff}, gowid.NotSelected, app)
+			fc := fill.Render(gowid.RenderBox{res.BoxColumns(), -diff}, gowid.NotSelected, app)
 			res.AppendBelow(fc, false, false)
 		}
 		res.AppendRight(canvases[i], i == subfocus)
@@ -571,7 +571,7 @@ func RenderSubWidgets(w IWidget, size gowid.IRenderSize, focus gowid.Selector, f
 			maxes = append(maxes, i)
 			ssizes = append(ssizes, subSize)
 		} else {
-			canvases[i] = gowid.Render(subs[i], subSize, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
+			canvases[i] = subs[i].Render(subSize, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
 			if canvases[i].BoxRows() > curMax {
 				curMax = canvases[i].BoxRows()
 			}
@@ -592,7 +592,7 @@ func RenderSubWidgets(w IWidget, size gowid.IRenderSize, focus gowid.Selector, f
 			mss = gowid.MakeRenderBox(css.BoxColumns(), curMax)
 		default:
 		}
-		canvases[i] = gowid.Render(subs[i], mss, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
+		canvases[i] = subs[i].Render(mss, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
 	}
 
 	return canvases

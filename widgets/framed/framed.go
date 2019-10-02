@@ -198,7 +198,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	tmp := gowid.NewCanvas()
 	newSize := w.SubWidgetSize(size, focus, app)
 
-	innerCanvas := gowid.Render(w.SubWidget(), newSize, focus, app)
+	innerCanvas := w.SubWidget().Render(newSize, focus, app)
 	innerLines := innerCanvas.BoxRows()
 	maxCol := innerCanvas.BoxColumns()
 
@@ -273,7 +273,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	res.Lines[resl-1][len(res.Lines[0])-wid] = res.Lines[resl-1][len(res.Lines[0])-wid].WithRune(frame.Br)
 
 	if titleWidget != nil {
-		titleCanvas := gowid.Render(titleWidget, gowid.RenderFixed{}, gowid.NotSelected, app)
+		titleCanvas := titleWidget.Render(gowid.RenderFixed{}, gowid.NotSelected, app)
 		res.MergeUnder(titleCanvas, 2, 0, false)
 	}
 
