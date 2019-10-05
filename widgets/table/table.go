@@ -390,6 +390,10 @@ func (w *BoundedWidget) Last() list.IWalkerPosition {
 	}
 }
 
+func (w *BoundedWidget) BoundedWalker() list.IBoundedWalker {
+	return w.listw.Walker().(list.IBoundedWalker)
+}
+
 func (w *BoundedWidget) Length() int {
 	//return w.listw.IWidget.(*list.IndexedWidget).Walker().(list.IBoundedWalker).Length()
 	return w.Model().(IBoundedModel).Rows()
