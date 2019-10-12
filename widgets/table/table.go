@@ -738,6 +738,18 @@ func (t *Widget) GoToBottom(app gowid.IApp) bool {
 	return false
 }
 
+type IGoToMiddle interface {
+	GoToMiddle(app gowid.IApp)
+}
+
+func (t *Widget) GoToMiddle(app gowid.IApp) bool {
+	if b, ok := t.listw.IWidget.(IGoToMiddle); ok {
+		b.GoToMiddle(app)
+		return true
+	}
+	return false
+}
+
 type Coords struct {
 	Column int
 	Row    int
