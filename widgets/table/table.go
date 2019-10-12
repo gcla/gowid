@@ -394,6 +394,10 @@ func (w *BoundedWidget) BoundedWalker() list.IBoundedWalker {
 	return w.listw.Walker().(list.IBoundedWalker)
 }
 
+func (w *BoundedWidget) Pos() int {
+	return w.listw.Walker().(list.IBoundedWalker).Focus().(list.IBoundedWalkerPosition).ToInt()
+}
+
 func (w *BoundedWidget) Length() int {
 	//return w.listw.IWidget.(*list.IndexedWidget).Walker().(list.IBoundedWalker).Length()
 	return w.Model().(IBoundedModel).Rows()
@@ -490,6 +494,17 @@ func (w *Widget) String() string {
 
 func (w *Widget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderBox {
 	return gowid.CalculateRenderSizeFallback(w, size, focus, app)
+}
+
+func (w *Widget) SetFocusOnHeader(app gowid.IApp) {
+	w.wrapper.SetFocus(app, 0)
+}
+
+// SetFocusOnData returns true if there is data to focus on
+func (w *Widget) SetFocusOnData(app gowid.IApp) bool {
+	cur := w.wrapper.Focus()
+	w.wrapper.SetFocus(app, 1)
+	return cur != w.wrapper.Focus()
 }
 
 func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
