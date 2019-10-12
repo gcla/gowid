@@ -330,6 +330,9 @@ func TestTable2(t *testing.T) {
 |2  |b  |3.4|
 `[1:], "\n"), c1.String())
 
+	assert.Equal(t, []int{0, 1, 2}, t1.SortOrder)
+	assert.Equal(t, []int{0, 1, 2}, t1.InvSortOrder)
+
 	logrus.Infof("cols is %d", t1.Columns())
 	logrus.Infof("rows is %d", len(t1.Data))
 	logrus.Infof("sort order is %v", t1.SortOrder)
@@ -349,6 +352,9 @@ func TestTable2(t *testing.T) {
 |3  |a  |1.2|
 `[1:], "\n"), c1.String())
 
+	assert.Equal(t, []int{0, 2, 1}, t1.SortOrder)
+	assert.Equal(t, []int{0, 2, 1}, t1.InvSortOrder)
+
 	t1.Comparators[2] = FloatCompare{}
 	sorter = &SimpleTableByColumn{
 		SimpleModel: t1,
@@ -364,6 +370,9 @@ func TestTable2(t *testing.T) {
 |2  |b  |3.4|
 `[1:], "\n"), c1.String())
 
+	assert.Equal(t, []int{0, 1, 2}, t1.SortOrder)
+	assert.Equal(t, []int{0, 1, 2}, t1.InvSortOrder)
+
 	sort.Sort(sort.Reverse(sorter))
 
 	c1 = w1.Render(sz, gowid.Focused, gwtest.D)
@@ -373,6 +382,9 @@ func TestTable2(t *testing.T) {
 |3  |a  |1.2|
 |1  |c  |-2 |
 `[1:], "\n"), c1.String())
+
+	assert.Equal(t, []int{2, 1, 0}, t1.SortOrder)
+	assert.Equal(t, []int{2, 1, 0}, t1.InvSortOrder)
 
 	t1.Layout.Widths = []gowid.IWidgetDimension{
 		gowid.RenderWithUnits{1},

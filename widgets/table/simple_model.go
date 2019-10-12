@@ -56,12 +56,13 @@ type SimpleOptions struct {
 // and provide any styling needed. The resulting struct can then be rendered
 // as a table.
 type SimpleModel struct {
-	Headers     []string
-	Data        [][]string
-	Comparators []ICompare
-	SortOrder   []int
-	Style       StyleOptions
-	Layout      LayoutOptions
+	Headers      []string
+	Data         [][]string
+	Comparators  []ICompare
+	SortOrder    []int // table row order as displayed -> table row identifier (RowId)
+	InvSortOrder []int // table row identifier (RowId) -> table row order as displayed
+	Style        StyleOptions
+	Layout       LayoutOptions
 }
 
 var _ IBoundedModel = (*SimpleModel)(nil)
@@ -113,13 +114,16 @@ func NewSimpleModel(headers []string, res [][]string, opts ...SimpleOptions) *Si
 	}
 
 	sortOrder := make([]int, len(res))
+	invSortOrder := make([]int, len(res))
 	for i := 0; i < len(sortOrder); i++ {
 		sortOrder[i] = i
+		invSortOrder[i] = i
 	}
 	tbl := &SimpleModel{
-		Headers:   headers,
-		Data:      res,
-		SortOrder: sortOrder,
+		Headers:      headers,
+		Data:         res,
+		SortOrder:    sortOrder,
+		InvSortOrder: invSortOrder,
 	}
 	sorters := opt.Comparators
 	if sorters == nil {
@@ -299,8 +303,8 @@ func SimpleCellWidgets(c ISimpleDataProvider, row2 RowId) []gowid.IWidget {
 	return nil
 }
 
-func (c *SimpleModel) CellWidgets(row2 RowId) []gowid.IWidget {
-	return SimpleCellWidgets(c, row2)
+func (c *SimpleModel) CellWidgets(rowid RowId) []gowid.IWidget {
+	return SimpleCellWidgets(c, rowid)
 }
 
 func (c *SimpleModel) RowIdentifier(row int) (RowId, bool) {
@@ -308,6 +312,14 @@ func (c *SimpleModel) RowIdentifier(row int) (RowId, bool) {
 		return RowId(-1), false
 	} else {
 		return RowId(c.SortOrder[row]), true
+	}
+}
+
+func (c *SimpleModel) IdentifierToRow(rowid RowId) (int, bool) {
+	if rowid < 0 || int(rowid) >= len(c.InvSortOrder) {
+		return -1, false
+	} else {
+		return c.InvSortOrder[rowid], true
 	}
 }
 
@@ -345,7 +357,9 @@ func (m *SimpleTableByColumn) Less(i, j int) bool {
 }
 
 func (m *SimpleTableByColumn) Swap(i, j int) {
+	invi, invj := m.SortOrder[i], m.SortOrder[j]
 	m.SortOrder[i], m.SortOrder[j] = m.SortOrder[j], m.SortOrder[i]
+	m.InvSortOrder[invi], m.InvSortOrder[invj] = m.InvSortOrder[invj], m.InvSortOrder[invi]
 }
 
 var _ sort.Interface = (*SimpleTableByColumn)(nil)

@@ -45,6 +45,10 @@ type IModel interface {
 	Widths() []gowid.IWidgetDimension
 }
 
+type IInvertible interface {
+	IdentifierToRow(rowid RowId) (int, bool)
+}
+
 type IMakeHeader interface {
 	HeaderWidget([]gowid.IWidget, int) gowid.IWidget
 }
