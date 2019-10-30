@@ -24,10 +24,11 @@ type FrameRunes struct {
 }
 
 var (
-	AsciiFrame      = FrameRunes{'-', '-', '-', '-', '-', '-', '|', '|'}
-	UnicodeFrame    = FrameRunes{'┏', '┓', '┗', '┛', '━', '━', '┃', '┃'}
-	UnicodeAltFrame = FrameRunes{'▛', '▜', '▙', '▟', '▀', '▄', '▌', '▐'}
-	SpaceFrame      = FrameRunes{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+	AsciiFrame       = FrameRunes{'-', '-', '-', '-', '-', '-', '|', '|'}
+	UnicodeFrame     = FrameRunes{'┏', '┓', '┗', '┛', '━', '━', '┃', '┃'}
+	UnicodeAltFrame  = FrameRunes{'▛', '▜', '▙', '▟', '▀', '▄', '▌', '▐'}
+	UnicodeAlt2Frame = FrameRunes{'╔', '╗', '╚', '╝', '═', '═', '║', '║'}
+	SpaceFrame       = FrameRunes{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
 )
 
 func init() {
@@ -93,6 +94,13 @@ func NewUnicode(inner gowid.IWidget) *Widget {
 func NewUnicodeAlt(inner gowid.IWidget) *Widget {
 	params := Options{
 		Frame: UnicodeAltFrame,
+	}
+	return New(inner, params)
+}
+
+func NewUnicodeAlt2(inner gowid.IWidget) *Widget {
+	params := Options{
+		Frame: UnicodeAlt2Frame,
 	}
 	return New(inner, params)
 }
