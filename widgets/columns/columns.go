@@ -256,7 +256,12 @@ func SubWidgetSize(size gowid.IRenderSize, newX int, dim gowid.IWidgetDimension)
 
 	switch sz := size.(type) {
 	case gowid.IRenderFixed:
-		subSize = gowid.RenderFixed{}
+		switch dim.(type) {
+		case gowid.IRenderBox:
+			subSize = dim
+		default:
+			subSize = gowid.RenderFixed{}
+		}
 	case gowid.IRenderBox:
 		switch dim.(type) {
 		case gowid.IRenderFixed:
@@ -403,6 +408,11 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 		case gowid.IRenderFixed:
 			c := gowid.RenderSize(subs[i], gowid.RenderFixed{}, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
 			res[i] = c.BoxColumns()
+			trunc(&res[i])
+			colsUsed += res[i]
+			helper[i] = true
+		case gowid.IRenderBox:
+			res[i] = w2.BoxColumns()
 			trunc(&res[i])
 			colsUsed += res[i]
 			helper[i] = true
