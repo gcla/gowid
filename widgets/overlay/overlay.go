@@ -219,6 +219,22 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 	return Render(w, size, focus, app)
 }
 
+func (w *Widget) SubWidget() gowid.IWidget {
+	if w.opts.BottomGetsFocus {
+		return w.bottom
+	} else {
+		return w.top
+	}
+}
+
+func (w *Widget) SetSubWidget(inner gowid.IWidget, app gowid.IApp) {
+	if w.opts.BottomGetsFocus {
+		w.bottom = inner
+	} else {
+		w.top = inner
+	}
+}
+
 //======================================================================
 
 func UserInput(w IOverlay, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
