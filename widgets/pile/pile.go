@@ -23,6 +23,7 @@ type IWidget interface {
 	gowid.IFindNextSelectable
 	gowid.IPreferedPosition
 	gowid.ISelectChild
+	gowid.IIdentity
 	RenderBoxMaker(size gowid.IRenderSize, focus gowid.Selector, focusIdx int, app gowid.IApp, fn IPileBoxMaker) ([]gowid.IRenderBox, []gowid.IRenderSize)
 	Wrap() bool
 }
@@ -33,6 +34,7 @@ type Widget struct {
 	prefRow int // caches the last set prefered row. Passes it on if widget hasn't changed focus
 	opt     Options
 	*gowid.Callbacks
+	gowid.AddressProvidesID
 	gowid.FocusCallbacks
 	gowid.SubWidgetsCallbacks
 }
@@ -288,25 +290,39 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			if subfocus == -1 {
 				break
 			}
+
 			// A left click sets focus if the widget is selectable and would take the mouse input; but
 			// if I don't filter by click, then moving the mouse over another widget would shift focus
 			// automatically, which is not usually what's wanted.
 			_, my := evm.Position()
 			curY := 0
+		Loop:
 			for i, c := range ss {
 				if my < curY+c.BoxRows() && my >= curY {
 					subSize := ss2[i]
 					forChild = subs[i].UserInput(gowid.TranslatedMouseEvent(ev, 0, -curY), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
-					//if forChild && ev2.Buttons()&tcell.Button1|tcell.WheelUp|tcell.WheelDown != 0 {
 
-					// The child gets focus if (a) it is selectable (designed to take focus) and
-					// (b) the event is a left mouse click. You can see this in action in the
-					// fib.go example. Note that this used to depend on whether or not the child
-					// took the input event - UserInput(child) - but that's incorrect
-					if subs[i].Selectable() && evm.Buttons()&tcell.Button1 != 0 {
-						w.SetFocus(app, i)
+					// Give the child focus if (a) it's selectable, and (b) if this is the click up corresponding
+					// to a previous click down on this pile widget.
+					switch evm.Buttons() {
+					case tcell.Button1, tcell.Button2, tcell.Button3:
+						app.SetClickTarget(evm.Buttons(), w)
+					case tcell.ButtonNone:
+						if !app.GetLastMouseState().NoButtonClicked() {
+							if subs[i].Selectable() {
+								clickit := false
+								app.ClickTarget(func(k tcell.ButtonMask, v gowid.IIdentityWidget) {
+									if v != nil && v.ID() == w.ID() {
+										clickit = true
+									}
+								})
+								if clickit {
+									w.SetFocus(app, i)
+								}
+							}
+						}
+						break Loop
 					}
-					break
 				}
 				curY += c.BoxRows()
 			}

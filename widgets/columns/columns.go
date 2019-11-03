@@ -24,6 +24,7 @@ type IWidget interface {
 	gowid.IFindNextSelectable
 	gowid.IPreferedPosition
 	gowid.ISelectChild
+	gowid.IIdentity
 	WidgetWidths(size gowid.IRenderSize, focus gowid.Selector, focusIdx int, app gowid.IApp) []int
 	Wrap() bool
 }
@@ -34,6 +35,7 @@ type Widget struct {
 	prefCol int // caches the last set prefered col. Passes it on if widget hasn't changed focus
 	opt     Options
 	*gowid.Callbacks
+	gowid.AddressProvidesID
 	gowid.SubWidgetsCallbacks
 	gowid.FocusCallbacks
 }
@@ -304,12 +306,32 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		if evm, ok := ev.(*tcell.EventMouse); ok {
 			curX := 0
 			mx, _ := evm.Position()
+		Loop:
 			for i, c := range subSizes {
 				if mx < curX+c && mx >= curX {
 					subSize := w.SubWidgetSize(size, c, subs[i], dims[i])
 					forChild = subs[i].UserInput(gowid.TranslatedMouseEvent(ev, -curX, 0), subSize, focus.SelectIf(w.SelectChild(focus) && i == subfocus), app)
-					if subs[i].Selectable() && evm.Buttons()&tcell.Button1 != 0 {
-						w.SetFocus(app, i)
+
+					// Give the child focus if (a) it's selectable, and (b) if this is the click up corresponding
+					// to a previous click down on this columns widget.
+					switch evm.Buttons() {
+					case tcell.Button1, tcell.Button2, tcell.Button3:
+						app.SetClickTarget(evm.Buttons(), w)
+					case tcell.ButtonNone:
+						if !app.GetLastMouseState().NoButtonClicked() {
+							if subs[i].Selectable() {
+								clickit := false
+								app.ClickTarget(func(k tcell.ButtonMask, v gowid.IIdentityWidget) {
+									if v != nil && v.ID() == w.ID() {
+										clickit = true
+									}
+								})
+								if clickit {
+									w.SetFocus(app, i)
+								}
+							}
+						}
+						break Loop
 					}
 					break
 				}
