@@ -66,6 +66,10 @@ type IContent interface {
 	fmt.Stringer
 }
 
+type ICloneContent interface {
+	Clone() IContent
+}
+
 // ContentSegment represents some text each character of which is styled the same
 // way.
 type ContentSegment struct {
@@ -92,6 +96,9 @@ type StyledRune struct {
 // Content is an array of AttributedRune and implements IContent.
 type Content []StyledRune
 
+var _ IContent = (*Content)(nil)
+var _ ICloneContent = (*Content)(nil)
+
 // NewContent constructs Content suitable for initializing a text Widget.
 func NewContent(content []ContentSegment) *Content {
 	var length int
@@ -116,6 +123,13 @@ func MakeAttributedRunes(m ContentSegment) []StyledRune {
 		s = s[size:]
 	}
 	return res
+}
+
+func (h *Content) Clone() IContent {
+	runes := make([]StyledRune, len(*h))
+	copy(runes, *h)
+	res := Content(runes)
+	return &res
 }
 
 // AddAt will insert the supplied ContentSegment at index idx.
