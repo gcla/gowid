@@ -182,7 +182,14 @@ func frameWidth(w IFramed) int {
 func RenderSize(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderBox {
 	ss := w.SubWidgetSize(size, focus, app)
 	sdim := w.SubWidget().RenderSize(ss, focus, app)
-	return gowid.RenderBox{C: sdim.BoxColumns() + frameWidth(w), R: sdim.BoxRows() + 2}
+	extraRows := 0
+	if w.Opts().Frame.T != 0 {
+		extraRows++
+	}
+	if w.Opts().Frame.B != 0 {
+		extraRows++
+	}
+	return gowid.RenderBox{C: sdim.BoxColumns() + frameWidth(w), R: sdim.BoxRows() + extraRows}
 }
 
 func SubWidgetSize(w IFramed, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderSize {
@@ -267,22 +274,30 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	tmp.AppendRight(innerCanvas, true)
 	tmp.AppendRight(rightverCanvas, false)
 
-	res.AppendLine(tophorArr, false)
+	if w.Opts().Frame.T != 0 {
+		res.AppendLine(tophorArr, false)
+	}
 	res.AppendBelow(tmp, true, false)
-	res.AppendLine(bottomhorArr, false)
+	if w.Opts().Frame.B != 0 {
+		res.AppendLine(bottomhorArr, false)
+	}
 
-	res.Lines[0][0] = res.Lines[0][0].WithRune(frame.Tl)
-	wid = runewidth.RuneWidth(frame.Tr)
-	res.Lines[0][len(res.Lines[0])-wid] = res.Lines[0][len(res.Lines[0])-wid].WithRune(frame.Tr)
+	if w.Opts().Frame.T != 0 {
+		res.Lines[0][0] = res.Lines[0][0].WithRune(frame.Tl)
+		wid = runewidth.RuneWidth(frame.Tr)
+		res.Lines[0][len(res.Lines[0])-wid] = res.Lines[0][len(res.Lines[0])-wid].WithRune(frame.Tr)
+	}
 
-	resl := res.BoxRows()
-	res.Lines[resl-1][0] = res.Lines[resl-1][0].WithRune(frame.Bl)
-	wid = runewidth.RuneWidth(frame.Br)
-	res.Lines[resl-1][len(res.Lines[0])-wid] = res.Lines[resl-1][len(res.Lines[0])-wid].WithRune(frame.Br)
+	if w.Opts().Frame.B != 0 {
+		resl := res.BoxRows()
+		res.Lines[resl-1][0] = res.Lines[resl-1][0].WithRune(frame.Bl)
+		wid = runewidth.RuneWidth(frame.Br)
+		res.Lines[resl-1][len(res.Lines[0])-wid] = res.Lines[resl-1][len(res.Lines[0])-wid].WithRune(frame.Br)
 
-	if titleWidget != nil {
-		titleCanvas := titleWidget.Render(gowid.RenderFixed{}, gowid.NotSelected, app)
-		res.MergeUnder(titleCanvas, 2, 0, false)
+		if titleWidget != nil {
+			titleCanvas := titleWidget.Render(gowid.RenderFixed{}, gowid.NotSelected, app)
+			res.MergeUnder(titleCanvas, 2, 0, false)
+		}
 	}
 
 	return res
