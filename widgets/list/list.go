@@ -1078,7 +1078,7 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 		return false, cur
 	}
 	oldPos := cur
-	curLines := gowid.RenderSize(curw, subRenderSize, gowid.NotSelected, app).BoxRows()
+	curLinesNoFocus := gowid.RenderSize(curw, subRenderSize, gowid.NotSelected, app).BoxRows()
 
 	// from that, get the next widget and next position. The nextw is used to run callbacks.
 	var next IWalkerPosition
@@ -1092,7 +1092,7 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 		if nextw.Selectable() {
 			break
 		}
-		curLines += gowid.RenderSize(nextw, subRenderSize, gowid.NotSelected, app).BoxRows()
+		curLinesNoFocus += gowid.RenderSize(nextw, subRenderSize, gowid.NotSelected, app).BoxRows()
 		cur = next
 	}
 
@@ -1105,7 +1105,7 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 	var computedLinesAbove, computedLinesBelow int
 	if !w.AtBottom() {
 		computedLinesAbove = gwutil.RoundFloatToInt(float32(gwutil.Max(0, screenLines)) * w.st.topToBottomRatio)
-		computedLinesAbove += curLines
+		computedLinesAbove += curLinesNoFocus
 		computedLinesBelow = screenLines - (computedLinesAbove + nextLines)
 		if computedLinesBelow <= 0 {
 			w.GoToBottom(app)
@@ -1160,9 +1160,11 @@ func (w *Widget) MoveToPreviousFocus(subRenderSize gowid.IRenderSize, focus gowi
 	if wasAtBottom {
 		computedLinesAbove = gwutil.Max(0, screenLines) - (curLinesFocus + betweenNoFocus + prevLinesNoFocus)
 	} else {
-		curLinesNoFocus := gowid.RenderSize(curw, subRenderSize, gowid.NotSelected, app).BoxRows()
 		computedLinesAbove = gwutil.RoundFloatToInt(float32(gwutil.Max(0, screenLines)) * w.st.topToBottomRatio)
-		computedLinesAbove -= (prevLinesNoFocus + curLinesFocus + betweenNoFocus - curLinesNoFocus)
+		// Preserve lines *above* focus - it feels the most natural when scrolling. So if the
+		// previous widget (below) takes 3 lines to render with focus, but only 1 without, then add just
+		// one because that widget will only contribute 1 when it's no longer current.
+		computedLinesAbove -= (prevLinesNoFocus + betweenNoFocus)
 	}
 	if computedLinesAbove <= 0 {
 		prevLinesFocus := gowid.RenderSize(prevw, subRenderSize, focus, app).BoxRows()
