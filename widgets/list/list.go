@@ -220,7 +220,7 @@ type IndexedWidget struct {
 }
 
 type state struct {
-	linesOffTop           int
+	linesOffTop           int // used only if focus widget has more lines than can be displayed
 	topToBottomRatio      float32
 	topToBottomRatioValid bool // Means denominator is 0 if true i.e. at the bottom
 }
@@ -437,7 +437,6 @@ func (w *Widget) RenderSubwidgets(size gowid.IRenderSize, focus gowid.Selector, 
 					if haveLinesNeeded {
 						if upreallines > topLinesNeeded {
 							upC.Truncate(upreallines-topLinesNeeded, 0)
-							w.st.linesOffTop = upreallines - topLinesNeeded
 						}
 						topLinesNeeded -= upC.BoxRows()
 					}
@@ -1102,7 +1101,7 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 	nextLines := gowid.RenderSize(nextw, subRenderSize, focus, app).BoxRows()
 
 	// curWidgetLines has the number of lines used by the current focus widget when rendered. Compute how
-	// many lines should be above it, and how many below it.
+	// many line)s should be above it, and how many below it.
 	var computedLinesAbove, computedLinesBelow int
 	if !w.AtBottom() {
 		computedLinesAbove = gwutil.RoundFloatToInt(float32(gwutil.Max(0, screenLines)) * w.st.topToBottomRatio)
@@ -1115,6 +1114,7 @@ func (w *Widget) MoveToNextFocus(subRenderSize gowid.IRenderSize, focus gowid.Se
 			w.st.topToBottomRatio = float32(computedLinesAbove) / float32(screenLines)
 		}
 	}
+	w.st.linesOffTop = 0
 
 	// Do this at the end in case the focus callback wants to save the list state too.
 	if !next.Equal(oldPos) {
@@ -1131,7 +1131,8 @@ func (w *Widget) MoveToPreviousFocus(subRenderSize gowid.IRenderSize, focus gowi
 	cur := w.Walker().Focus()
 	curw := w.Walker().At(cur)
 	oldpos := cur
-	curLines := gowid.RenderSize(curw, subRenderSize, focus, app).BoxRows()
+	curLinesFocus := gowid.RenderSize(curw, subRenderSize, focus, app).BoxRows()
+	betweenNoFocus := 0
 
 	// from that, get the next widget and next position. The nextw is used to run callbacks.
 	var prev IWalkerPosition
@@ -1145,25 +1146,28 @@ func (w *Widget) MoveToPreviousFocus(subRenderSize gowid.IRenderSize, focus gowi
 		if prevw.Selectable() {
 			break
 		}
-		curLines += gowid.RenderSize(prevw, subRenderSize, gowid.NotSelected, app).BoxRows()
+		betweenNoFocus += gowid.RenderSize(prevw, subRenderSize, gowid.NotSelected, app).BoxRows()
 		cur = prev
 	}
 
 	w.Walker().SetFocus(prev, app)
 
-	prevLines := gowid.RenderSize(prevw, subRenderSize, gowid.NotSelected, app).BoxRows()
+	prevLinesNoFocus := gowid.RenderSize(prevw, subRenderSize, gowid.NotSelected, app).BoxRows()
 
 	// curWidgetLines has the number of lines used by the current focus widget when rendered. Compute how
 	// many lines should be above it, and how many below it.
 	var computedLinesAbove int
 	if wasAtBottom {
-		computedLinesAbove = gwutil.Max(0, screenLines) - curLines
+		computedLinesAbove = gwutil.Max(0, screenLines) - (curLinesFocus + betweenNoFocus + prevLinesNoFocus)
 	} else {
+		curLinesNoFocus := gowid.RenderSize(curw, subRenderSize, gowid.NotSelected, app).BoxRows()
 		computedLinesAbove = gwutil.RoundFloatToInt(float32(gwutil.Max(0, screenLines)) * w.st.topToBottomRatio)
+		computedLinesAbove -= (prevLinesNoFocus + curLinesFocus + betweenNoFocus - curLinesNoFocus)
 	}
-	computedLinesAbove -= prevLines
 	if computedLinesAbove <= 0 {
-		w.GoToTop(app)
+		prevLinesFocus := gowid.RenderSize(prevw, subRenderSize, focus, app).BoxRows()
+		w.GoToTop(app)                                               // widget is logically top, but might have lines cut if too big (see next line)
+		w.st.linesOffTop = gwutil.Max(0, prevLinesFocus-screenLines) // in case prev doesn't fit, start at bottom
 	} else {
 		w.st.topToBottomRatioValid = true
 		w.st.topToBottomRatio = float32(computedLinesAbove) / float32(screenLines)
