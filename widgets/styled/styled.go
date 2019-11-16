@@ -115,6 +115,8 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 	cols := canvas.BoxColumns()
 
 	var attrSpecs []AttributeRange
+	var f1 gowid.TCellColor
+	var b1 gowid.TCellColor
 
 	if focus.Focus {
 		attrSpecs = w.focusRange
@@ -140,15 +142,22 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 					}
 					col, row := i%cols, i/cols
 
-					f1 := gowid.IColorToTCell(f, gowid.ColorNone, app.GetColorMode())
-					b1 := gowid.IColorToTCell(b, gowid.ColorNone, app.GetColorMode())
-
 					c := canvas.CellAt(col, row)
+					c2 := c
+
+					if f != nil {
+						f1 = gowid.IColorToTCell(f, gowid.ColorNone, app.GetColorMode())
+						c = c.WithForegroundColor(f1)
+					}
+					if b != nil {
+						b1 = gowid.IColorToTCell(b, gowid.ColorNone, app.GetColorMode())
+						c = c.WithBackgroundColor(b1)
+					}
 
 					if !w.options.OverWrite {
-						c = c.WithForegroundColor(f1).WithBackgroundColor(b1).WithStyle(s).MergeDisplayAttrsUnder(c)
+						c = c.WithStyle(s).MergeDisplayAttrsUnder(c2)
 					} else {
-						c = c.MergeDisplayAttrsUnder(c.WithForegroundColor(f1).WithBackgroundColor(b1).WithStyle(s))
+						c = c2.MergeDisplayAttrsUnder(c.WithStyle(s))
 					}
 					canvas.SetCellAt(col, row, c)
 				}
