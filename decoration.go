@@ -640,9 +640,9 @@ func MakeRGBColorExt(r, g, b int) RGBColor {
 
 // Implements golang standard library's color.Color
 func (rgb RGBColor) RGBA() (r, g, b, a uint32) {
-	r = uint32(rgb.Red << 16)
-	g = uint32(rgb.Green << 16)
-	b = uint32(rgb.Blue << 16)
+	r = uint32(rgb.Red << 8)
+	g = uint32(rgb.Green << 8)
+	b = uint32(rgb.Blue << 8)
 	a = 0xffff
 	return
 }
