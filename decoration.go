@@ -278,7 +278,7 @@ var (
 	colorfulRed8     = colorful.Color{R: 1.0, G: 0.0, B: 0.0}
 	colorfulGreen8   = colorful.Color{R: 0.0, G: 1.0, B: 0.0}
 	colorfulBlue8    = colorful.Color{R: 0.0, G: 0.0, B: 1.0}
-	colorfulYellow8  = colorful.Color{R: 1.0, G: 1.0, B: 1.0}
+	colorfulYellow8  = colorful.Color{R: 1.0, G: 1.0, B: 0.0}
 	colorfulMagenta8 = colorful.Color{R: 1.0, G: 0.0, B: 1.0}
 	colorfulCyan8    = colorful.Color{R: 0.0, G: 1.0, B: 1.0}
 
