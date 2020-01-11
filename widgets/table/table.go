@@ -402,8 +402,11 @@ func (w *BoundedWidget) Pos() int {
 	return w.listw.Walker().(list.IBoundedWalker).Focus().(list.IBoundedWalkerPosition).ToInt()
 }
 
+func (w *BoundedWidget) SetPos(pos list.IBoundedWalkerPosition, app gowid.IApp) {
+	w.listw.Walker().(list.IBoundedWalker).SetFocus(pos, app)
+}
+
 func (w *BoundedWidget) Length() int {
-	//return w.listw.IWidget.(*list.IndexedWidget).Walker().(list.IBoundedWalker).Length()
 	return w.Model().(IBoundedModel).Rows()
 }
 
