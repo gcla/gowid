@@ -928,6 +928,12 @@ func (f WidgetChangedFunction) Changed(app IApp, widget IWidget, data ...interfa
 	f(app, widget)
 }
 
+type WidgetChangedFunctionExt func(app IApp, widget IWidget, data ...interface{})
+
+func (f WidgetChangedFunctionExt) Changed(app IApp, widget IWidget, data ...interface{}) {
+	f(app, widget, data...)
+}
+
 // WidgetCallback is a simple struct with a name field for IIdentity and
 // that embeds a WidgetChangedFunction to be issued as a callback when a widget
 // property changes.
@@ -944,6 +950,25 @@ func MakeWidgetCallback(name interface{}, fn WidgetChangedFunction) WidgetCallba
 }
 
 func (f WidgetCallback) ID() interface{} {
+	return f.Name
+}
+
+// WidgetCallbackExt is a simple struct with a name field for IIdentity and
+// that embeds a WidgetChangedFunction to be issued as a callback when a widget
+// property changes.
+type WidgetCallbackExt struct {
+	Name interface{}
+	WidgetChangedFunctionExt
+}
+
+func MakeWidgetCallbackExt(name interface{}, fn WidgetChangedFunctionExt) WidgetCallbackExt {
+	return WidgetCallbackExt{
+		Name:                     name,
+		WidgetChangedFunctionExt: fn,
+	}
+}
+
+func (f WidgetCallbackExt) ID() interface{} {
 	return f.Name
 }
 
