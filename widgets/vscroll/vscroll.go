@@ -31,6 +31,7 @@ type ClickUp struct{}
 type ClickDown struct{}
 type ClickAbove struct{}
 type ClickBelow struct{}
+type RightClick struct{}
 
 //======================================================================
 
@@ -43,6 +44,10 @@ type IVerticalScrollbar interface {
 	ClickAbove(app gowid.IApp)
 	ClickBelow(app gowid.IApp)
 	GetRunes() VerticalScrollbarRunes
+}
+
+type IRightMouseClick interface {
+	RightClick(frac float32, app gowid.IApp)
 }
 
 type IWidget interface {
@@ -113,6 +118,14 @@ func (w *Widget) RemoveOnClickAbove(f gowid.IIdentity) {
 	gowid.RemoveWidgetCallback(w.Callbacks, ClickAbove{}, f)
 }
 
+func (w *Widget) OnRightClick(f gowid.IWidgetChangedCallback) {
+	gowid.AddWidgetCallback(w.Callbacks, RightClick{}, f)
+}
+
+func (w *Widget) RemoveOnRightClick(f gowid.IIdentity) {
+	gowid.RemoveWidgetCallback(w.Callbacks, RightClick{}, f)
+}
+
 func (w *Widget) OnClickDownArrow(f gowid.IWidgetChangedCallback) {
 	gowid.AddWidgetCallback(w.Callbacks, ClickDown{}, f)
 }
@@ -161,6 +174,10 @@ func (w *Widget) ClickBelow(app gowid.IApp) {
 	gowid.RunWidgetCallbacks(w.Callbacks, ClickBelow{}, app, w)
 }
 
+func (w *Widget) RightClick(frac float32, app gowid.IApp) {
+	gowid.RunWidgetCallbacks(w.Callbacks, RightClick{}, app, w, frac)
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func RenderSize(w interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderBox {
@@ -179,7 +196,8 @@ func RenderSize(w interface{}, size gowid.IRenderSize, focus gowid.Selector, app
 func UserInput(w IVerticalScrollbar, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	if ev2, ok := ev.(*tcell.EventMouse); ok {
 		switch ev2.Buttons() {
-		case tcell.Button1:
+		case tcell.Button1, tcell.Button3:
+			b3 := (ev2.Buttons() == tcell.Button3)
 			t, m, b := w.GetTop(), w.GetMiddle(), w.GetBottom()
 			rows := 1
 			if box, ok := size.(gowid.IRenderBox); ok {
@@ -200,18 +218,42 @@ func UserInput(w IVerticalScrollbar, ev interface{}, size gowid.IRenderSize, foc
 				fixSplit(2, 0, 1, &splits)
 			}
 			_, y := ev2.Position()
-			switch {
-			case y == 0:
-				w.ClickUp(app)
-			case y <= splits[0]:
-				w.ClickAbove(app)
-			case y <= splits[1]+splits[0]:
-			case y <= splits[2]+splits[1]+splits[0]:
-				w.ClickBelow(app)
-			default:
-				w.ClickDown(app)
+			res := false
+			switch b3 {
+			case true:
+				if w, ok := w.(IRightMouseClick); ok {
+					var frac float32
+					switch {
+					case y == 0:
+						frac = 0.0
+					case y <= splits[2]+splits[1]+splits[0]:
+						if rows > 2 {
+							frac = float32(y-1) / float32(rows-2)
+						}
+					default:
+						frac = 1.0
+					}
+					w.RightClick(frac, app)
+					res = true
+				}
+			case false:
+				switch {
+				case y == 0:
+					w.ClickUp(app)
+					res = true
+				case y <= splits[0]:
+					w.ClickAbove(app)
+					res = true
+				case y <= splits[1]+splits[0]:
+				case y <= splits[2]+splits[1]+splits[0]:
+					w.ClickBelow(app)
+					res = true
+				default:
+					w.ClickDown(app)
+					res = true
+				}
 			}
-			return true
+			return res
 		default:
 			return false
 		}
