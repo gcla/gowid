@@ -643,7 +643,6 @@ func findTerminfo(name string) (*terminfo.Terminfo, error) {
 	cachedTerminfoMutex.Lock()
 	if ti, ok := cachedTerminfo[name]; ok {
 		cachedTerminfoMutex.Unlock()
-		fmt.Fprintf(os.Stderr, "GCLA: FOUND %s in cache\n", name)
 		return ti, nil
 	}
 	ti, _, e := dynamic.LoadTerminfo(name)
