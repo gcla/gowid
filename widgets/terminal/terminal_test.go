@@ -541,6 +541,23 @@ func TestEncoded2(t *testing.T) {
 	AssertTermPositionIs(2, 1, c, t)
 }
 
+func TestPrivacy1(t *testing.T) {
+	f := FakeTerminal{modes: &Modes{}}
+	c := NewCanvasOfSize(8, 2, 100, &f)
+	f.Modes().Charset = CharsetUTF8
+
+	c.SetTermCursor(gwutil.SomeInt(0), gwutil.SomeInt(0))
+	res := strings.Join([]string{"        ", "        "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(0, 0, c, t)
+
+	_, err := io.Copy(c, strings.NewReader("ab\033^foobar\033\\c"))
+	assert.NoError(t, err)
+	res = strings.Join([]string{"abc     ", "        "}, "\n")
+	assert.Equal(t, res, c.String(), "Failed")
+	AssertTermPositionIs(3, 0, c, t)
+}
+
 func TestCanvasVttest1(t *testing.T) {
 	f := FakeTerminal{modes: &Modes{}}
 	c := NewCanvasOfSize(80, 24, 100, &f)

@@ -337,13 +337,42 @@ func (c *ViewPortCanvas) String() string {
 
 //======================================================================
 
+type parseState int
+
+const (
+	defaultState parseState = iota
+	csiState
+	oscState
+	nonCsiState
+	privacyState
+)
+
+func (p parseState) String() string {
+	switch p {
+	case defaultState:
+		return "default"
+	case csiState:
+		return "csi"
+	case oscState:
+		return "osc"
+	case nonCsiState:
+		return "noncsi"
+	case privacyState:
+		return "privacy"
+	default:
+		panic(fmt.Errorf("Invalid parse state: %d", int(p)))
+	}
+}
+
+//======================================================================
+
 // Canvas implements gowid.ICanvas and stores the state of the terminal drawing area
 // associated with a terminal (and TerminalWidget).
 type Canvas struct {
 	*ViewPortCanvas
 	alternate                          *ViewPortCanvas
 	alternateActive                    bool
-	parsestate                         int
+	parsestate                         parseState
 	scrollback                         int
 	withinEscape                       bool
 	savedx, savedy                     gwutil.IntOption
@@ -392,7 +421,7 @@ func (c *Canvas) Reset() {
 	c.alternateActive = false
 	c.escbuf = make([]byte, 0)
 	c.charset = NewTerminalCharset()
-	c.parsestate = 0
+	c.parsestate = defaultState
 	c.withinEscape = false
 	c.savedx = gwutil.NoneInt()
 	c.savedy = gwutil.NoneInt()
@@ -1253,56 +1282,64 @@ func (c *Canvas) SetRuneAt(x, y int, r rune) {
 	c.SetCellAt(x, y, c.MakeCellFrom(r))
 }
 
-func (c *Canvas) LeaveEscape() {
+func (c *Canvas) leaveEscapeOnly() {
 	c.withinEscape = false
-	c.parsestate = 0
 	c.escbuf = make([]byte, 0)
+}
+
+func (c *Canvas) LeaveEscapeResetState() {
+	c.leaveEscapeOnly()
+	c.parsestate = defaultState
 }
 
 // TODO am I always guaranteed to have something in escbuf?
 func (c *Canvas) ParseEscape(r byte) {
 	leaveEscape := true
 	switch {
-	case c.parsestate == 1:
+	case c.parsestate == csiState:
 		if _, ok := csiMap[r]; ok {
 			c.ParseCSI(r)
-			c.parsestate = 0
+			c.parsestate = defaultState
 		} else if ((r == '-') || (r == '0') || (r == '1') || (r == '2') || (r == '3') || (r == '4') || (r == '5') || (r == '6') || (r == '7') || (r == '8') || (r == '9') || (r == ';')) || (len(c.escbuf) == 0 && r == '?') {
 			c.escbuf = append(c.escbuf, r)
 			leaveEscape = false
 		}
-	case c.parsestate == 0 && r == ']':
+	case c.parsestate == defaultState && r == ']':
 		c.escbuf = make([]byte, 0)
-		c.parsestate = 2
+		c.parsestate = oscState
 		leaveEscape = false
-	case c.parsestate == 2 && r == '\x07':
+	case c.parsestate == oscState && r == '\x07':
 		c.ParseOSC(gwutil.LStripByte(c.escbuf, '0'))
-	case c.parsestate == 2 && len(c.escbuf) > 0 && c.escbuf[len(c.escbuf)-1] == EscByte && r == '\\':
+	case c.parsestate == oscState && len(c.escbuf) > 0 && c.escbuf[len(c.escbuf)-1] == EscByte && r == '\\':
 		c.ParseOSC(gwutil.LStripByte(c.escbuf[0:len(c.escbuf)-1], '0'))
-	case c.parsestate == 2 && len(c.escbuf) > 0 && c.escbuf[0] == 'P' && len(c.escbuf) == 8:
+	case c.parsestate == oscState && len(c.escbuf) > 0 && c.escbuf[0] == 'P' && len(c.escbuf) == 8:
 		// TODO Palette (ESC]Pnrrggbb)
-	case c.parsestate == 2 && len(c.escbuf) == 0 && r == 'R':
+	case c.parsestate == oscState && len(c.escbuf) == 0 && r == 'R':
 		// TODO Reset Palette
-	case c.parsestate == 2:
+	case c.parsestate == oscState:
 		c.escbuf = append(c.escbuf, r)
 		leaveEscape = false
-	case c.parsestate == 0 && r == '[':
+	case c.parsestate == defaultState && r == '[':
 		c.escbuf = make([]byte, 0)
-		c.parsestate = 1
+		c.parsestate = csiState
 		leaveEscape = false
-	case c.parsestate == 0 && ((r == '%') || (r == '#') || (r == '(') || (r == ')')):
+	case c.parsestate == defaultState && ((r == '%') || (r == '#') || (r == '(') || (r == ')')):
 		c.escbuf = make([]byte, 1)
 		c.escbuf[0] = r
-		c.parsestate = 3
+		c.parsestate = nonCsiState
 		leaveEscape = false
-	case c.parsestate == 3:
+	case c.parsestate == defaultState && r == '^':
+		c.parsestate = privacyState
+		leaveEscape = false
+		c.leaveEscapeOnly()
+	case c.parsestate == nonCsiState:
 		c.ParseNonCSI(r, c.escbuf[0])
 	case ((r == 'c') || (r == 'D') || (r == 'E') || (r == 'H') || (r == 'M') || (r == 'Z') || (r == '7') || (r == '8') || (r == '>') || (r == '=')):
 		c.ParseNonCSI(r, 0)
 	}
 
 	if leaveEscape {
-		c.LeaveEscape()
+		c.LeaveEscapeResetState()
 	}
 }
 
@@ -1424,8 +1461,12 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 	dc := c.terminal.Modes().DisplayCtrl
 
 	switch {
-	case r == '\x1b' && c.parsestate != 2:
+	case r == '\x1b' && c.parsestate != oscState:
 		c.withinEscape = true
+	case r == '\\' && c.parsestate == privacyState && c.withinEscape:
+		c.LeaveEscapeResetState()
+	case c.parsestate == privacyState:
+		// discard
 	case r == '\x0d' && !dc:
 		c.CarriageReturn()
 	case r == '\x0f' && !dc:
@@ -1443,10 +1484,10 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 		if x > 0 {
 			c.SetTermCursor(gwutil.SomeInt(x-1), gwutil.SomeInt(y))
 		}
-	case r == '\x07' && c.parsestate != 2 && !dc:
+	case r == '\x07' && c.parsestate != oscState && !dc:
 		c.RunCallbacks(Bell{})
 	case ((r == '\x18') || (r == '\x1a')) && !dc:
-		c.LeaveEscape()
+		c.LeaveEscapeResetState()
 	case ((r == '\x00') || (r == '\x7f')) && !dc:
 		// Ignored
 	case c.withinEscape:
@@ -1454,7 +1495,7 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 	case r == '\x9b' && !dc:
 		c.withinEscape = true
 		c.escbuf = make([]byte, 0)
-		c.parsestate = 1
+		c.parsestate = csiState
 	default:
 		c.PushCursor(r)
 	}
