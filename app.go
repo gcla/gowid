@@ -377,6 +377,21 @@ func (a *App) GetColorMode() ColorMode {
 // TerminalSize returns the terminal's size.
 func (a *App) TerminalSize() (x, y int) {
 	x, y = a.screen.Size()
+	if x == 0 && y == 0 {
+		// vim uses the following rules (https://github.com/vim/vim/blob/master/runtime/doc/term.txt#L629)
+		// - an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
+		// - the environment variables "LINES" and "COLUMNS"
+		// - from the termcap entries "li" and "co"
+		//
+		// If tcell still reports (0,0) after following these rules, fall
+		// back to a default like vim does:
+		//
+		// https://github.com/vim/vim/blob/master/runtime/doc/term.txt#L642
+		// "If everything fails a default size of 24 lines and 80 columns is assumed."
+		//
+		x = 80
+		y = 24
+	}
 	return
 }
 
