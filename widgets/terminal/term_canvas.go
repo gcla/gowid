@@ -344,7 +344,7 @@ const (
 	csiState
 	oscState
 	nonCsiState
-	privacyState
+	ignoreState
 )
 
 func (p parseState) String() string {
@@ -357,8 +357,8 @@ func (p parseState) String() string {
 		return "osc"
 	case nonCsiState:
 		return "noncsi"
-	case privacyState:
-		return "privacy"
+	case ignoreState:
+		return "ignore"
 	default:
 		panic(fmt.Errorf("Invalid parse state: %d", int(p)))
 	}
@@ -1328,8 +1328,8 @@ func (c *Canvas) ParseEscape(r byte) {
 		c.escbuf[0] = r
 		c.parsestate = nonCsiState
 		leaveEscape = false
-	case c.parsestate == defaultState && r == '^':
-		c.parsestate = privacyState
+	case c.parsestate == defaultState && (r == '^' || r == 'P'):
+		c.parsestate = ignoreState
 		leaveEscape = false
 		c.leaveEscapeOnly()
 	case c.parsestate == nonCsiState:
@@ -1463,9 +1463,9 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 	switch {
 	case r == '\x1b' && c.parsestate != oscState:
 		c.withinEscape = true
-	case r == '\\' && c.parsestate == privacyState && c.withinEscape:
+	case r == '\\' && c.parsestate == ignoreState && c.withinEscape:
 		c.LeaveEscapeResetState()
-	case c.parsestate == privacyState:
+	case c.parsestate == ignoreState:
 		// discard
 	case r == '\x0d' && !dc:
 		c.CarriageReturn()
