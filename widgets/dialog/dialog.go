@@ -42,6 +42,12 @@ type IWidget interface {
 	SetHeight(gowid.IWidgetDimension, gowid.IApp)
 }
 
+type IMaximizer interface {
+	IsMaxed() bool
+	Maximize(gowid.IApp)
+	Unmaximize(gowid.IApp)
+}
+
 // Widget - represents a modal dialog. The bottom widget is rendered
 // without the focus at full size. The bottom widget is rendered between a
 // horizontal and vertical padding widget set up with the sizes provided.
@@ -53,12 +59,14 @@ type Widget struct {
 	savedContainer       gowid.ISettableComposite
 	contentWrapper       *gowid.ContainerWidget
 	open                 bool
+	maxer                Maximizer
 	NoFunction           gowid.IWidgetChangedCallback
 	Callbacks            *gowid.Callbacks
 }
 
 var _ gowid.IWidget = (*Widget)(nil)
 var _ IWidget = (*Widget)(nil)
+var _ IMaximizer = (*Widget)(nil)
 
 type Options struct {
 	Buttons         []Button
@@ -245,6 +253,18 @@ func (w *Widget) SetOpen(open bool, app gowid.IApp) {
 	}
 }
 
+func (w *Widget) IsMaxed() bool {
+	return w.maxer.Maxed
+}
+
+func (w *Widget) Maximize(app gowid.IApp) {
+	w.maxer.Maximize(w, app)
+}
+
+func (w *Widget) Unmaximize(app gowid.IApp) {
+	w.maxer.Unmaximize(w, app)
+}
+
 func (w *Widget) SavedSubWidget() gowid.IWidget {
 	return w.savedSubWidgetWidget
 }
@@ -348,9 +368,26 @@ func OpenExt(w IOpenExt, container gowid.ISettableComposite, width gowid.IWidget
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	var res bool
 	if w.IsOpen() {
-		if evk, ok := ev.(*tcell.EventKey); ok && (evk.Key() == tcell.KeyCtrlC || evk.Key() == tcell.KeyEsc) && w.EscapeCloses() {
-			w.GetNoFunction().Changed(app, w)
-		} else {
+		handled := false
+		if evk, ok := ev.(*tcell.EventKey); ok {
+			switch {
+			case evk.Key() == tcell.KeyCtrlC || evk.Key() == tcell.KeyEsc:
+				if w.EscapeCloses() {
+					w.GetNoFunction().Changed(app, w)
+					handled = true
+				}
+			case evk.Rune() == 'z':
+				if w, ok := w.(IMaximizer); ok {
+					if w.IsMaxed() {
+						w.Unmaximize(app)
+					} else {
+						w.Maximize(app)
+					}
+					handled = true
+				}
+			}
+		}
+		if !handled {
 			// discard result, we always handle it
 			gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
 		}
