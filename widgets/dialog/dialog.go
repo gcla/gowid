@@ -75,6 +75,7 @@ type Options struct {
 	ButtonStyle     gowid.ICellStyler
 	BackgroundStyle gowid.ICellStyler
 	BorderStyle     gowid.ICellStyler
+	FocusOnWidget   bool
 }
 
 type Button struct {
@@ -191,6 +192,9 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 	}
 
 	dialogContent := pile.NewFlow(pileW...)
+	if !opt.FocusOnWidget {
+		dialogContent.SetFocus(nil, len(pileW)-1)
+	}
 
 	frameOpts := framed.Options{
 		Frame: framed.UnicodeAltFrame,
