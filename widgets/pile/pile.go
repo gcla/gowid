@@ -543,6 +543,8 @@ func RenderBoxMaker(w IWidget, size gowid.IRenderSize, focus gowid.Selector, foc
 				// only do if subsize is fixed
 				resSS[i] = subSize
 				res[i] = fn.MakeBox(subs[i], subSize, focus.SelectIf(w.SelectChild(focus) && i == focusIdx), app)
+				heights[i] = res[i].BoxRows()
+				rowsUsed += heights[i]
 				if res[i].BoxColumns() > maxcol {
 					maxcol = res[i].BoxColumns()
 				}

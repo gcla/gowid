@@ -273,6 +273,22 @@ z`[1:], c.String())
 
 }
 
+func TestPile6(t *testing.T) {
+	subs := []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("foo"), gowid.RenderFixed{}},
+		&gowid.ContainerWidget{text.New("bar"), gowid.RenderWithWeight{W: 1}},
+		&gowid.ContainerWidget{text.New("baz"), gowid.RenderFixed{}},
+	}
+	w := New(subs)
+	c := w.Render(gowid.RenderBox{C: 3, R: 5}, gowid.Focused, gwtest.D)
+	assert.Equal(t, `
+foo
+bar
+   
+   
+baz`[1:], c.String())
+}
+
 //======================================================================
 // Local Variables:
 // mode: Go
