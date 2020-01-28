@@ -189,71 +189,76 @@ func (c *SimpleModel) HeaderWidget(ws []gowid.IWidget, focus int) gowid.IWidget 
 }
 
 func (c *SimpleModel) HeaderWidgets() []gowid.IWidget {
+	if c.Headers == nil || len(c.Headers) == 0 {
+		return nil
+	}
+
 	var res []gowid.IWidget
-	if c.Headers != nil {
-		rbgroup := make([]radio.IWidget, 0, len(c.Headers)*2)
+	rbgroup := make([]radio.IWidget, 0, len(c.Headers)*2)
 
-		res = make([]gowid.IWidget, 0, len(c.Headers))
-		for i, s := range c.Headers {
-			i2 := i
-			var all, label gowid.IWidget
-			label = text.New(s + " ")
-			label = button.NewBare(label)
+	res = make([]gowid.IWidget, 0, len(c.Headers))
+	for i, s := range c.Headers {
+		i2 := i
+		var all, label gowid.IWidget
+		label = text.New(s + " ")
+		label = button.NewBare(label)
 
-			sorters := c.Comparators
-			if sorters != nil {
-				sorteri := sorters[i2]
-				if sorteri != nil {
-					rb1 := radio.New(&rbgroup)
-					rb1.Decoration.Right = "/"
+		sorters := c.Comparators
+		if sorters != nil {
+			sorteri := sorters[i2]
+			if sorteri != nil {
+				rb1 := radio.New(&rbgroup)
+				rb1.Decoration.Right = "/"
 
-					rb1.OnClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, widget gowid.IWidget) {
-						sorter := &SimpleTableByColumn{
-							SimpleModel: c,
-							Column:      i2,
-						}
-						sort.Sort(sorter)
-					}})
+				rb1.OnClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, widget gowid.IWidget) {
+					sorter := &SimpleTableByColumn{
+						SimpleModel: c,
+						Column:      i2,
+					}
+					sort.Sort(sorter)
+				}})
 
-					rb2 := radio.New(&rbgroup)
-					rb2.Decoration.Left = ""
+				rb2 := radio.New(&rbgroup)
+				rb2.Decoration.Left = ""
 
-					rb2.OnClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, widget gowid.IWidget) {
-						sorter := &SimpleTableByColumn{
-							SimpleModel: c,
-							Column:      i2,
-						}
-						sort.Sort(sort.Reverse(sorter))
-					}})
+				rb2.OnClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, widget gowid.IWidget) {
+					sorter := &SimpleTableByColumn{
+						SimpleModel: c,
+						Column:      i2,
+					}
+					sort.Sort(sort.Reverse(sorter))
+				}})
 
-					all = columns.NewFixed(label, rb1, rb2)
-				}
+				all = columns.NewFixed(label, rb1, rb2)
 			}
-			var w gowid.IWidget
-			if c.Style.HeaderStyleProvided {
-				w = isselected.New(
-					styled.New(
-						all,
-						c.GetStyle().HeaderStyleNoFocus,
-					),
-					styled.New(
-						all,
-						c.GetStyle().HeaderStyleSelected,
-					),
-					styled.New(
-						all,
-						c.GetStyle().HeaderStyleFocus,
-					),
-				)
-			} else {
-				w = styled.NewExt(
-					all,
-					nil,
-					gowid.MakeStyledAs(gowid.StyleReverse),
-				)
-			}
-			res = append(res, w)
 		}
+		if all == nil {
+			all = text.New(s)
+		}
+		var w gowid.IWidget
+		if c.Style.HeaderStyleProvided {
+			w = isselected.New(
+				styled.New(
+					all,
+					c.GetStyle().HeaderStyleNoFocus,
+				),
+				styled.New(
+					all,
+					c.GetStyle().HeaderStyleSelected,
+				),
+				styled.New(
+					all,
+					c.GetStyle().HeaderStyleFocus,
+				),
+			)
+		} else {
+			w = styled.NewExt(
+				all,
+				nil,
+				gowid.MakeStyledAs(gowid.StyleReverse),
+			)
+		}
+		res = append(res, w)
 	}
 	return res
 }
