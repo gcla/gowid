@@ -764,12 +764,10 @@ type IGoToMiddle interface {
 	GoToMiddle(app gowid.IApp)
 }
 
-func (t *Widget) GoToMiddle(app gowid.IApp) bool {
+func (t *Widget) GoToMiddle(app gowid.IApp) {
 	if b, ok := t.listw.IWidget.(IGoToMiddle); ok {
 		b.GoToMiddle(app)
-		return true
 	}
-	return false
 }
 
 type Coords struct {
