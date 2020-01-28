@@ -163,7 +163,7 @@ var widthOneHeightMax RenderWithUnitsMax = RenderWithUnitsMax{
 func (c *SimpleModel) HeaderWidget(ws []gowid.IWidget, focus int) gowid.IWidget {
 	var flowVertDivider *gowid.ContainerWidget
 	if c.VerticalSeparator() != nil {
-		flowVertDivider = &gowid.ContainerWidget{c.VerticalSeparator(), widthOneHeightMax}
+		flowVertDivider = &gowid.ContainerWidget{IWidget: c.VerticalSeparator(), D: widthOneHeightMax}
 	}
 
 	cws := make([]gowid.IContainerWidget, 0)
@@ -172,11 +172,11 @@ func (c *SimpleModel) HeaderWidget(ws []gowid.IWidget, focus int) gowid.IWidget 
 	}
 
 	for i, w := range ws {
-		var dim gowid.IWidgetDimension = gowid.RenderWithWeight{1}
+		var dim gowid.IWidgetDimension = gowid.RenderWithWeight{W: 1}
 		if c.Widths() != nil && i < len(c.Widths()) {
 			dim = c.Widths()[i]
 		}
-		cws = append(cws, &gowid.ContainerWidget{w, dim})
+		cws = append(cws, &gowid.ContainerWidget{IWidget: w, D: dim})
 		if flowVertDivider != nil {
 			cws = append(cws, flowVertDivider)
 		}
