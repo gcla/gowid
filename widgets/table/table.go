@@ -312,9 +312,6 @@ func (w *Widget) update(listw *ListWithPreferedColumn, row int, model IModel, op
 		flowTableDivider = &gowid.ContainerWidget{model.HeaderSeparator(), gowid.RenderFlow{}}
 	}
 
-	if flowTableDivider != nil {
-		pileWidgets = append(pileWidgets, flowTableDivider)
-	}
 	hws := model.HeaderWidgets() // widgets
 	var hw *columns.Widget
 	if hws != nil && len(hws) > 0 {
