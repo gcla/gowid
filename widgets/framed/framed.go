@@ -199,7 +199,14 @@ func SubWidgetSize(w IFramed, size gowid.IRenderSize, focus gowid.Selector, app 
 		newSize = gowid.RenderFixed{}
 	case gowid.IRenderBox:
 		// Note - this assumes wid(Bl) == wid(L) and so on... yuck
-		newSize = gowid.RenderBox{C: gwutil.Max(sz.BoxColumns()-frameWidth(w), 0), R: gwutil.Max(sz.BoxRows()-2, 0)}
+		extraRows := 0
+		if w.Opts().Frame.T != 0 {
+			extraRows++
+		}
+		if w.Opts().Frame.B != 0 {
+			extraRows++
+		}
+		newSize = gowid.RenderBox{C: gwutil.Max(sz.BoxColumns()-frameWidth(w), 0), R: gwutil.Max(sz.BoxRows()-extraRows, 0)}
 	case gowid.IRenderFlowWith:
 		newSize = gowid.RenderFlowWith{C: gwutil.Max(sz.FlowColumns()-frameWidth(w), 0)}
 	default:
