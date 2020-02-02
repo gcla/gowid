@@ -20,8 +20,11 @@ var (
 )
 
 func init() {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		HorizontalLine = '─'
+		AltHorizontalLine = HorizontalLine
+	case "darwin":
 		AltHorizontalLine = HorizontalLine
 	}
 }

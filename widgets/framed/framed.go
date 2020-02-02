@@ -32,8 +32,11 @@ var (
 )
 
 func init() {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		UnicodeFrame = FrameRunes{'┌', '┐', '└', '┘', '─', '─', '│', '│'}
+		UnicodeAltFrame = UnicodeFrame
+	case "darwin":
 		UnicodeAltFrame = UnicodeFrame
 	}
 }
