@@ -751,7 +751,9 @@ func (h HAlignLeft) ImplementsHAlignment()   {}
 type IVAlignment interface {
 	ImplementsVAlignment()
 }
-type VAlignBottom struct{}
+type VAlignBottom struct {
+	Margin int
+}
 type VAlignMiddle struct{}
 type VAlignTop struct {
 	Margin int

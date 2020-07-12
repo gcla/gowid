@@ -258,12 +258,26 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 
 	switch al := w.VAlign().(type) {
 	case gowid.VAlignBottom:
-		if rowsToUseInResult > subWidgetRows {
-			fc := fill.Render(gowid.RenderBox{C: maxCol, R: rowsToUseInResult - subWidgetRows}, gowid.NotSelected, app)
-			fc.AppendBelow(subWidgetCanvas, true, false)
-			subWidgetCanvas = fc
+		if rowsToUseInResult > subWidgetRows+al.Margin {
+			bottoml := al.Margin
+			topl := rowsToUseInResult - (bottoml + subWidgetRows)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			fc2 := fill.Render(gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
+			fc1.AppendBelow(subWidgetCanvas, true, false)
+			subWidgetCanvas = fc1
+			subWidgetCanvas.AppendBelow(fc2, false, false)
+
+		} else if rowsToUseInResult > al.Margin {
+			bottoml := al.Margin
+			topl := subWidgetRows - (rowsToUseInResult - bottoml)
+
+			subWidgetCanvas.Truncate(0, bottoml)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			fc1.AppendBelow(subWidgetCanvas, true, false)
+			subWidgetCanvas = fc1
+
 		} else {
-			subWidgetCanvas.Truncate(rowsToUseInResult-subWidgetRows, 0)
+			subWidgetCanvas = fill.Render(gowid.RenderBox{C: maxCol, R: rowsToUseInResult}, gowid.NotSelected, app)
 		}
 	case gowid.VAlignMiddle:
 		if rowsToUseInResult > subWidgetRows {
