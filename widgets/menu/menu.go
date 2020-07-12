@@ -114,7 +114,7 @@ func New(name string, menuw gowid.IWidget, width gowid.IWidgetDimension, opts ..
 	ov := overlay.New(
 		nil, base,
 		gowid.VAlignTop{0}, gowid.RenderFixed{}, //gowid.RenderWithRatio{1.0},
-		gowid.HAlignLeft{Margin: 0}, width,
+		gowid.HAlignLeft{}, width,
 		overlay.Options{
 			BottomGetsFocus: true,
 		},
@@ -272,7 +272,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 	}
 
 	w.Overlay().SetVAlign(gowid.VAlignTop{off.Y}, app)
-	w.Overlay().SetHAlign(gowid.HAlignLeft{off.X}, app)
+	w.Overlay().SetHAlign(gowid.HAlignLeft{Margin: off.X}, app)
 
 	// So we don't need to render the bottom canvas twice
 	fakeOverlay := &CachedOverlay{w.Overlay(), bottomC}
