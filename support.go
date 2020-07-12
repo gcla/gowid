@@ -741,7 +741,8 @@ type IHAlignment interface {
 type HAlignRight struct{}
 type HAlignMiddle struct{}
 type HAlignLeft struct {
-	Margin int
+	Margin      int
+	MarginRight int
 }
 
 func (h HAlignRight) ImplementsHAlignment()  {}

@@ -142,9 +142,9 @@ func (w *Widget) SubWidgetSize(size gowid.IRenderSize, focus gowid.Selector, app
 	case gowid.HAlignLeft:
 		switch s := size.(type) {
 		case gowid.IRenderBox:
-			size2 = gowid.RenderBox{C: s.BoxColumns() - al.Margin, R: s.BoxRows()}
+			size2 = gowid.RenderBox{C: s.BoxColumns() - (al.Margin + al.MarginRight), R: s.BoxRows()}
 		case gowid.IRenderFlowWith:
-			size2 = gowid.RenderFlowWith{C: s.FlowColumns() - al.Margin}
+			size2 = gowid.RenderFlowWith{C: s.FlowColumns() - (al.Margin + al.MarginRight)}
 		default:
 		}
 	default:
