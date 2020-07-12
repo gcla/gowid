@@ -76,6 +76,7 @@ type Options struct {
 	BackgroundStyle gowid.ICellStyler
 	BorderStyle     gowid.ICellStyler
 	FocusOnWidget   bool
+	NoFrame         bool
 }
 
 type Button struct {
@@ -196,14 +197,18 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 		dialogContent.SetFocus(nil, len(pileW)-1)
 	}
 
-	frameOpts := framed.Options{
-		Frame: framed.UnicodeAltFrame,
-		Style: borderStyle,
+	var d gowid.IWidget = dialogContent
+	if !opt.NoFrame {
+		frameOpts := framed.Options{
+			Frame: framed.UnicodeAltFrame,
+			Style: borderStyle,
+		}
+		d = framed.New(d, frameOpts)
 	}
 
-	var d gowid.IWidget = cellmod.Opaque(
+	d = cellmod.Opaque(
 		styled.New(
-			framed.New(dialogContent, frameOpts),
+			d,
 			backgroundStyle,
 		),
 	)
