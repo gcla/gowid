@@ -8,6 +8,7 @@ package edit
 import (
 	"fmt"
 	"io"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/gcla/gowid"
@@ -460,6 +461,20 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		case tcell.KeyHome:
 			w.SetCursorPos(0, app)
 			w.SetLinesFromTop(0, app)
+		case tcell.KeyCtrlW:
+			txt := []rune(w.Text())
+			origcp := w.CursorPos()
+			cp := origcp
+			for cp > 0 && unicode.IsSpace(txt[cp-1]) {
+				cp--
+			}
+			for cp > 0 && !unicode.IsSpace(txt[cp-1]) {
+				cp--
+			}
+			if cp != origcp {
+				w.SetText(string(txt[0:cp])+string(txt[origcp:]), app)
+				w.SetCursorPos(cp, app)
+			}
 		case tcell.KeyCtrlA:
 			// Would be nice to use a slice here, something that doesn't copy
 			// TODO: terrible O(n) behavior :-(
