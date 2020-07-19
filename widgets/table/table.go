@@ -748,6 +748,45 @@ func (t *Widget) Previous(ipos list.IWalkerPosition) list.IWalkerPosition {
 	}
 }
 
+func (t *Widget) GoToFirst(app gowid.IApp) bool {
+	if homer, ok := t.listw.Walker().(list.IWalkerHome); ok {
+		pos := homer.First()
+		if pos != nil {
+			t.listw.Walker().SetFocus(pos, app)
+			t.GoToTop(app)
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Widget) GoToLast(app gowid.IApp) bool {
+	if ender, ok := t.listw.Walker().(list.IWalkerEnd); ok {
+		pos := ender.Last()
+		if pos != nil {
+			t.listw.Walker().SetFocus(pos, app)
+			t.GoToBottom(app)
+			return true
+		}
+	}
+	return false
+}
+
+type ISetPos interface {
+	Length() int
+	SetPos(pos list.IBoundedWalkerPosition, app gowid.IApp)
+}
+
+func (t *Widget) GoToNth(app gowid.IApp, pos int) bool {
+	if walker, ok := t.listw.Walker().(ISetPos); ok {
+		pos = gwutil.LimitTo(0, pos, walker.Length()-1)
+		walker.SetPos(Position(pos), app)
+		t.GoToMiddle(app)
+		return true
+	}
+	return false
+}
+
 type IGoToTop interface {
 	GoToTop(app gowid.IApp)
 }
