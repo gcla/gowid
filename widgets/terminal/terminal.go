@@ -490,12 +490,14 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 			data := make([]byte, 4096)
 			n, err := master.Read(data)
 			if n == 0 && err == io.EOF {
+				w.Cmd.Wait()
 				app.Run(gowid.RunFunction(func(app gowid.IApp) {
 					gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
 				}))
 
 				break
 			} else if err != nil {
+				w.Cmd.Wait()
 				app.Run(gowid.RunFunction(func(app gowid.IApp) {
 					gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
 				}))
