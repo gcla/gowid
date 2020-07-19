@@ -748,6 +748,18 @@ func (t *Widget) Previous(ipos list.IWalkerPosition) list.IWalkerPosition {
 	}
 }
 
+type IGoToTop interface {
+	GoToTop(app gowid.IApp)
+}
+
+func (t *Widget) GoToTop(app gowid.IApp) bool {
+	if b, ok := t.listw.IWidget.(IGoToTop); ok {
+		b.GoToTop(app)
+		return true
+	}
+	return false
+}
+
 type IGoToBottom interface {
 	GoToBottom(app gowid.IApp)
 }
