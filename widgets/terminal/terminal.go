@@ -119,7 +119,7 @@ type Widget struct {
 	IHotKeyProvider
 	IHotKeyPersistence
 	params              Options
-	cmd                 *exec.Cmd
+	Cmd                 *exec.Cmd
 	master              *os.File
 	canvas              *Canvas
 	modes               Modes
@@ -427,8 +427,8 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 
 func (w *Widget) Signal(sig syscall.Signal) error {
 	var err error
-	if w.cmd != nil {
-		err = w.cmd.Process.Signal(sig)
+	if w.Cmd != nil {
+		err = w.Cmd.Process.Signal(sig)
 	}
 	return err
 }
@@ -438,10 +438,10 @@ func (w *Widget) RequestTerminate() error {
 }
 
 func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
-	w.cmd = exec.Command(w.params.Command[0], w.params.Command[1:]...)
+	w.Cmd = exec.Command(w.params.Command[0], w.params.Command[1:]...)
 	var err error
 	var tty *os.File
-	w.master, tty, err = PtyStart1(w.cmd)
+	w.master, tty, err = PtyStart1(w.Cmd)
 	if err != nil {
 		return err
 	}
@@ -456,7 +456,7 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 		}).Warn("Could not set terminal size")
 	}
 
-	err = w.cmd.Start()
+	err = w.Cmd.Start()
 	if err != nil {
 		w.master.Close()
 		return err
