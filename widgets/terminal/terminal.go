@@ -387,6 +387,10 @@ func (e StartCommandError) Cause() error {
 	return e.Err
 }
 
+func (e StartCommandError) Unwrap() error {
+	return e.Err
+}
+
 func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 	setTermSize := false
 
