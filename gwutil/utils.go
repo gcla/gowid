@@ -35,6 +35,18 @@ func Max(a, b int) int {
 	return b
 }
 
+// LimitTo is a one-liner that uses Min and Max to bound a value. Assumes
+// a <= b.
+func LimitTo(a, v, b int) int {
+	if v < a {
+		return a
+	}
+	if v > b {
+		return b
+	}
+	return v
+}
+
 // StringOfLength returns a string consisting of n runes.
 func StringOfLength(r rune, n int) string {
 	res := make([]rune, n)
