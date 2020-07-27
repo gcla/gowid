@@ -97,6 +97,45 @@ func posInMap(value string, m map[string]int) int {
 }
 
 //======================================================================
+
+type PrettyModMask tcell.ModMask
+
+func (p PrettyModMask) String() string {
+	mods := make([]string, 0)
+	m := int(p)
+	if m == int(tcell.ModNone) {
+		mods = append(mods, "None")
+	} else {
+		if m&int(tcell.ModShift) != 0 {
+			mods = append(mods, "Shift")
+		}
+		if m&int(tcell.ModCtrl) != 0 {
+			mods = append(mods, "Ctrl")
+		}
+		if m&int(tcell.ModAlt) != 0 {
+			mods = append(mods, "Alt")
+		}
+		if m&int(tcell.ModMeta) != 0 {
+			mods = append(mods, "Meta")
+		}
+	}
+	return strings.Join(mods, "|")
+}
+
+type PrettyTcellKey tcell.EventKey
+
+func (p *PrettyTcellKey) String() string {
+	k := (*tcell.EventKey)(p)
+	mod := PrettyModMask(k.Modifiers())
+	switch k.Key() {
+	case tcell.KeyRune:
+		return fmt.Sprintf("<Char:%c Mod:%v>", k.Rune(), mod)
+	default:
+		return fmt.Sprintf("<Key:%s Mod:%v>", tcell.KeyNames[k.Key()], mod)
+	}
+}
+
+//======================================================================
 // Local Variables:
 // mode: Go
 // fill-column: 110
