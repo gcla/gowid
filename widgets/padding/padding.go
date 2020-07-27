@@ -269,10 +269,9 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 
 		} else if rowsToUseInResult > al.Margin {
 			bottoml := al.Margin
-			topl := subWidgetRows - (rowsToUseInResult - bottoml)
-
-			subWidgetCanvas.Truncate(0, bottoml)
-			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: topl}, gowid.NotSelected, app)
+			topl := subWidgetRows - (rowsToUseInResult + bottoml)
+			subWidgetCanvas.Truncate(topl, 0)
+			fc1 := fill.Render(gowid.RenderBox{C: maxCol, R: bottoml}, gowid.NotSelected, app)
 			fc1.AppendBelow(subWidgetCanvas, true, false)
 			subWidgetCanvas = fc1
 
