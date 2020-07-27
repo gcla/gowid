@@ -458,6 +458,10 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		case tcell.KeyCtrlK:
 			r := []rune(w.Text())
 			w.SetText(string(r[0:w.CursorPos()]), app)
+		case tcell.KeyCtrlU:
+			r := []rune(w.Text())
+			w.SetText(string(r[w.CursorPos():]), app)
+			w.SetCursorPos(0, app)
 		case tcell.KeyHome:
 			w.SetCursorPos(0, app)
 			w.SetLinesFromTop(0, app)
