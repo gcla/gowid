@@ -191,19 +191,19 @@ func KeyEvent(ch rune) *tcell.EventKey {
 }
 
 func CursorDown() *tcell.EventKey {
-	return tcell.NewEventKey(tcell.KeyDown, ' ', tcell.ModNone)
+	return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
 }
 
 func CursorUp() *tcell.EventKey {
-	return tcell.NewEventKey(tcell.KeyUp, ' ', tcell.ModNone)
+	return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
 }
 
 func CursorLeft() *tcell.EventKey {
-	return tcell.NewEventKey(tcell.KeyLeft, ' ', tcell.ModNone)
+	return tcell.NewEventKey(tcell.KeyLeft, 0, tcell.ModNone)
 }
 
 func CursorRight() *tcell.EventKey {
-	return tcell.NewEventKey(tcell.KeyRight, ' ', tcell.ModNone)
+	return tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone)
 }
 
 //======================================================================

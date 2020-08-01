@@ -93,7 +93,7 @@ func TestColumns2(t *testing.T) {
 	assert.Equal(t, "0f1 2 ", c1.String())
 	assert.Equal(t, 0, w1.Focus())
 
-	evright := tcell.NewEventKey(tcell.KeyRight, ' ', tcell.ModNone)
+	evright := gwtest.CursorRight()
 	w1.UserInput(evright, sz, gowid.Focused, gwtest.D)
 	c1 = w1.Render(sz, gowid.Focused, gwtest.D)
 	assert.Equal(t, "0 1f2 ", c1.String())

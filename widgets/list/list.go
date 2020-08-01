@@ -10,6 +10,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/gcla/gowid/vim"
 	"github.com/gdamore/tcell"
 	"github.com/pkg/errors"
 )
@@ -212,6 +213,8 @@ type Widget struct {
 
 type Options struct {
 	//SelectedStyle gowid.ICellStyler // apply a style to the selected widget - orthogonal to focus styling
+	DownKeys []vim.KeyPress
+	UpKeys   []vim.KeyPress
 }
 
 type IndexedWidget struct {
@@ -229,6 +232,12 @@ func New(walker IWalker, opts ...Options) *Widget {
 	var opt Options
 	if len(opts) > 0 {
 		opt = opts[0]
+	}
+	if opt.DownKeys == nil {
+		opt.DownKeys = vim.AllDownKeys
+	}
+	if opt.UpKeys == nil {
+		opt.UpKeys = vim.AllUpKeys
 	}
 	res := &Widget{
 		walker:  walker,
@@ -717,8 +726,9 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 	// handle it
 	if evk, ok := ev.(*tcell.EventKey); !forChild && ok {
 
-		switch evk.Key() {
-		case tcell.KeyCtrlL:
+		k := evk.Key()
+		switch {
+		case k == tcell.KeyCtrlL:
 			if !w.AtBottom() {
 				if w.AtTop() {
 					w.GoToBottom(app)
@@ -733,17 +743,17 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 				w.GoToMiddle(app)
 			}
 			res = true
-		case tcell.KeyHome:
+		case k == tcell.KeyHome:
 			toHome = true
-		case tcell.KeyEnd:
+		case k == tcell.KeyEnd:
 			toEnd = true
-		case tcell.KeyDown, tcell.KeyCtrlN:
+		case vim.KeyIn(evk, w.options.DownKeys):
 			scrollDown = true
-		case tcell.KeyUp, tcell.KeyCtrlP:
+		case vim.KeyIn(evk, w.options.UpKeys):
 			scrollUp = true
-		case tcell.KeyPgDn:
+		case k == tcell.KeyPgDn:
 			pgDown = true
-		case tcell.KeyPgUp:
+		case k == tcell.KeyPgUp:
 			pgUp = true
 		default:
 		}

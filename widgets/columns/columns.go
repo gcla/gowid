@@ -11,6 +11,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/gcla/gowid/vim"
 	"github.com/gcla/gowid/widgets/fill"
 	"github.com/gdamore/tcell"
 )
@@ -27,6 +28,8 @@ type IWidget interface {
 	gowid.IIdentity
 	WidgetWidths(size gowid.IRenderSize, focus gowid.Selector, focusIdx int, app gowid.IApp) []int
 	Wrap() bool
+	KeyIsLeft(*tcell.EventKey) bool
+	KeyIsRight(*tcell.EventKey) bool
 }
 
 type Widget struct {
@@ -44,6 +47,8 @@ type Options struct {
 	StartColumn      int  // column that gets initial focus
 	Wrap             bool // whether or not to wrap from last column to first with movement operations
 	DoNotSetSelected bool // Whether or not to set the focus.Selected field for the selected child
+	LeftKeys         []vim.KeyPress
+	RightKeys        []vim.KeyPress
 }
 
 func New(widgets []gowid.IContainerWidget, opts ...Options) *Widget {
@@ -54,6 +59,12 @@ func New(widgets []gowid.IContainerWidget, opts ...Options) *Widget {
 		opt = Options{
 			StartColumn: -1,
 		}
+	}
+	if opt.LeftKeys == nil {
+		opt.LeftKeys = vim.AllLeftKeys
+	}
+	if opt.RightKeys == nil {
+		opt.RightKeys = vim.AllRightKeys
 	}
 	res := &Widget{
 		widgets: widgets,
@@ -251,6 +262,14 @@ func (w *Widget) SetPreferedPosition(cols int, app gowid.IApp) {
 	w.prefCol = pref // Save it. Pass it on if widget doesn't change col before losing focus.
 }
 
+func (w *Widget) KeyIsLeft(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.opt.LeftKeys)
+}
+
+func (w *Widget) KeyIsRight(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.opt.RightKeys)
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func SubWidgetSize(size gowid.IRenderSize, newX int, dim gowid.IWidgetDimension) gowid.IRenderSize {
@@ -351,10 +370,10 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			curw := subs[w.Focus()]
 			prefPos := gowid.PrefPosition(curw)
 
-			switch evk.Key() {
-			case tcell.KeyRight, tcell.KeyCtrlF:
+			switch {
+			case w.KeyIsRight(evk):
 				res = Scroll(w, 1, w.Wrap(), app)
-			case tcell.KeyLeft, tcell.KeyCtrlB:
+			case w.KeyIsLeft(evk):
 				res = Scroll(w, -1, w.Wrap(), app)
 			}
 

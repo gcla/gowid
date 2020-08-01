@@ -207,7 +207,7 @@ func TestTable1(t *testing.T) {
 	assert.Equal(t, 0, xy.Column)
 	assert.Equal(t, 0, xy.Row)
 
-	evr := tcell.NewEventKey(tcell.KeyRight, ' ', tcell.ModNone)
+	evr := gwtest.CursorRight()
 
 	w1.UserInput(evr, sz, gowid.Focused, gwtest.D)
 	xy, err = w1.FocusXY()
@@ -215,7 +215,7 @@ func TestTable1(t *testing.T) {
 	assert.Equal(t, 1, xy.Column)
 	assert.Equal(t, 0, xy.Row)
 
-	evd := tcell.NewEventKey(tcell.KeyDown, ' ', tcell.ModNone)
+	evd := gwtest.CursorDown()
 
 	w1.UserInput(evd, sz, gowid.Focused, gwtest.D)
 	xy, err = w1.FocusXY()
@@ -223,7 +223,7 @@ func TestTable1(t *testing.T) {
 	assert.Equal(t, 1, xy.Column)
 	assert.Equal(t, 1, xy.Row)
 
-	evu := tcell.NewEventKey(tcell.KeyUp, ' ', tcell.ModNone)
+	evu := gwtest.CursorUp()
 
 	w1.UserInput(evr, sz, gowid.Focused, gwtest.D)
 	xy, err = w1.FocusXY()

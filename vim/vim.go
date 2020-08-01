@@ -18,6 +18,24 @@ import (
 //======================================================================
 
 var (
+	DefaultEmacsDownKeys = []KeyPress{KeyCtrl('n')}
+	DefaultEmacsUpKeys   = []KeyPress{KeyCtrl('p')}
+	DefaultVimDownKeys   = []KeyPress{Key('j')}
+	DefaultVimUpKeys     = []KeyPress{Key('k')}
+	DefaultDownKeys      = []KeyPress{KeyPressDown}
+	DefaultUpKeys        = []KeyPress{KeyPressUp}
+	AllDownKeys          = append(DefaultDownKeys, append(DefaultEmacsDownKeys, DefaultVimDownKeys...)...)
+	AllUpKeys            = append(DefaultUpKeys, append(DefaultEmacsUpKeys, DefaultVimUpKeys...)...)
+
+	DefaultEmacsLeftKeys  = []KeyPress{KeyCtrl('b')}
+	DefaultEmacsRightKeys = []KeyPress{KeyCtrl('f')}
+	DefaultVimLeftKeys    = []KeyPress{Key('h')}
+	DefaultVimRightKeys   = []KeyPress{Key('l')}
+	DefaultLeftKeys       = []KeyPress{KeyPressLeft}
+	DefaultRightKeys      = []KeyPress{KeyPressRight}
+	AllLeftKeys           = append(DefaultLeftKeys, append(DefaultEmacsLeftKeys, DefaultVimLeftKeys...)...)
+	AllRightKeys          = append(DefaultRightKeys, append(DefaultEmacsRightKeys, DefaultVimRightKeys...)...)
+
 	ModMapReverse = map[string]tcell.ModMask{
 		"C": tcell.ModCtrl,
 		"c": tcell.ModCtrl,
@@ -141,6 +159,14 @@ type KeyPress struct {
 	Ch  rune
 }
 
+func KeyCtrl(r rune) KeyPress {
+	return KeyPress{
+		Mod: tcell.ModCtrl,
+		Key: tcell.KeyRune,
+		Ch:  r,
+	}
+}
+
 // KeyPressFromTcell converts a *tcell.EventKey to a KeyPress. This can then be
 // serialized to a vim-style keypress e.g. <C-s>
 func KeyPressFromTcell(k *tcell.EventKey) KeyPress {
@@ -178,6 +204,10 @@ func KeyPressFromTcell(k *tcell.EventKey) KeyPress {
 }
 
 func NewSimpleKeyPress(ch rune) KeyPress {
+	return NewKeyPress(tcell.KeyRune, ch, 0)
+}
+
+func Key(ch rune) KeyPress {
 	return NewKeyPress(tcell.KeyRune, ch, 0)
 }
 
@@ -299,6 +329,16 @@ func VimStringToKeys(input string) KeySequence {
 	}
 
 	return res
+}
+
+func KeyIn(k *tcell.EventKey, keys []KeyPress) bool {
+	kp := KeyPressFromTcell(k)
+	for i, _ := range keys {
+		if kp == keys[i] {
+			return true
+		}
+	}
+	return false
 }
 
 //======================================================================

@@ -9,7 +9,6 @@ import (
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/columns"
-	"github.com/gdamore/tcell"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +62,7 @@ func TestRadioButton1(t *testing.T) {
 	assert.Equal(t, cy, 0)
 	assert.Equal(t, c3.String(), "( )(X)( )")
 
-	ev := tcell.NewEventKey(tcell.KeyRight, ' ', tcell.ModNone)
+	ev := gwtest.CursorRight()
 
 	cols.UserInput(ev, gowid.RenderFixed{}, gowid.Focused, gwtest.D)
 	c3 = cols.Render(gowid.RenderFixed{}, gowid.Focused, gwtest.D)

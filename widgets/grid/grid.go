@@ -12,6 +12,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/gcla/gowid/vim"
 	"github.com/gcla/gowid/widgets/columns"
 	"github.com/gcla/gowid/widgets/hpadding"
 	"github.com/gcla/gowid/widgets/pile"
@@ -32,6 +33,10 @@ type IGrid interface {
 	VSep() int
 	HAlign() gowid.IHAlignment
 	Wrap() bool
+	KeyIsUp(*tcell.EventKey) bool
+	KeyIsDown(*tcell.EventKey) bool
+	KeyIsLeft(*tcell.EventKey) bool
+	KeyIsRight(*tcell.EventKey) bool
 }
 
 type IWidget interface {
@@ -53,14 +58,19 @@ type Widget struct {
 	align   gowid.IHAlignment
 	focus   int // -1 means nothing selectable
 	wrap    bool
+	options Options
 	*gowid.Callbacks
 	gowid.SubWidgetsCallbacks
 	gowid.FocusCallbacks
 }
 
 type Options struct {
-	StartPos int
-	Wrap     bool
+	StartPos  int
+	Wrap      bool
+	DownKeys  []vim.KeyPress
+	UpKeys    []vim.KeyPress
+	LeftKeys  []vim.KeyPress
+	RightKeys []vim.KeyPress
 }
 
 func New(widgets []gowid.IWidget, width int, hSep int, vSep int, align gowid.IHAlignment, opts ...Options) *Widget {
@@ -72,6 +82,18 @@ func New(widgets []gowid.IWidget, width int, hSep int, vSep int, align gowid.IHA
 			StartPos: -1,
 		}
 	}
+	if opt.DownKeys == nil {
+		opt.DownKeys = vim.AllDownKeys
+	}
+	if opt.UpKeys == nil {
+		opt.UpKeys = vim.AllUpKeys
+	}
+	if opt.LeftKeys == nil {
+		opt.LeftKeys = vim.AllLeftKeys
+	}
+	if opt.RightKeys == nil {
+		opt.RightKeys = vim.AllRightKeys
+	}
 	res := &Widget{
 		widgets: widgets,
 		width:   width,
@@ -79,7 +101,7 @@ func New(widgets []gowid.IWidget, width int, hSep int, vSep int, align gowid.IHA
 		vSep:    vSep,
 		align:   align,
 		focus:   -1,
-		wrap:    opt.Wrap,
+		options: opt,
 	}
 	res.SubWidgetsCallbacks = gowid.SubWidgetsCallbacks{CB: &res.Callbacks}
 	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
@@ -159,7 +181,7 @@ func (w *Widget) SetFocus(app gowid.IApp, i int) {
 }
 
 func (w *Widget) Wrap() bool {
-	return w.wrap
+	return w.options.Wrap
 }
 
 // Tries to set at required index, will choose first selectable from there
@@ -194,6 +216,22 @@ func (w *Widget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app go
 
 func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	return Render(w, size, focus, app)
+}
+
+func (w *Widget) KeyIsUp(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.options.UpKeys)
+}
+
+func (w *Widget) KeyIsDown(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.options.DownKeys)
+}
+
+func (w *Widget) KeyIsLeft(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.options.LeftKeys)
+}
+
+func (w *Widget) KeyIsRight(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.options.RightKeys)
 }
 
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -252,22 +290,22 @@ func UserInput(w IGrid, ev interface{}, size gowid.IRenderSize, focus gowid.Sele
 		newfocus := -1
 
 		if evk, ok := ev.(*tcell.EventKey); ok {
-			switch evk.Key() {
-			case tcell.KeyRight, tcell.KeyCtrlF:
+			switch {
+			case w.KeyIsRight(evk):
 				next, ok := w.FindNextSelectable(1, w.Wrap())
 				if ok {
 					w.SetFocus(app, next)
 					return true
 				}
-			case tcell.KeyLeft, tcell.KeyCtrlB:
+			case w.KeyIsLeft(evk):
 				next, ok := w.FindNextSelectable(-1, w.Wrap())
 				if ok {
 					w.SetFocus(app, next)
 					return true
 				}
-			case tcell.KeyDown, tcell.KeyCtrlN:
+			case w.KeyIsDown(evk):
 				scrollDown = true
-			case tcell.KeyUp, tcell.KeyCtrlP:
+			case w.KeyIsUp(evk):
 				scrollUp = true
 			}
 		} else if ev2, ok := ev.(*tcell.EventMouse); ok {

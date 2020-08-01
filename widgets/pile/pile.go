@@ -11,6 +11,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/gcla/gowid/vim"
 	"github.com/gdamore/tcell"
 )
 
@@ -26,6 +27,8 @@ type IWidget interface {
 	gowid.IIdentity
 	RenderBoxMaker(size gowid.IRenderSize, focus gowid.Selector, focusIdx int, app gowid.IApp, fn IPileBoxMaker) ([]gowid.IRenderBox, []gowid.IRenderSize)
 	Wrap() bool
+	KeyIsUp(*tcell.EventKey) bool
+	KeyIsDown(*tcell.EventKey) bool
 }
 
 type Widget struct {
@@ -43,6 +46,8 @@ type Options struct {
 	StartRow         int
 	Wrap             bool
 	DoNotSetSelected bool // Whether or not to set the focus.Selected field for the selected child
+	DownKeys         []vim.KeyPress
+	UpKeys           []vim.KeyPress
 }
 
 var _ gowid.IWidget = (*Widget)(nil)
@@ -58,6 +63,12 @@ func New(widgets []gowid.IContainerWidget, opts ...Options) *Widget {
 		opt = Options{
 			StartRow: -1,
 		}
+	}
+	if opt.DownKeys == nil {
+		opt.DownKeys = vim.AllDownKeys
+	}
+	if opt.UpKeys == nil {
+		opt.UpKeys = vim.AllUpKeys
 	}
 
 	res := &Widget{
@@ -247,6 +258,14 @@ func (w *Widget) SetPreferedPosition(rows int, app gowid.IApp) {
 	w.prefRow = pref // Save it. Pass it on if widget doesn't change col before losing focus.
 }
 
+func (w *Widget) KeyIsUp(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.opt.UpKeys)
+}
+
+func (w *Widget) KeyIsDown(evk *tcell.EventKey) bool {
+	return vim.KeyIn(evk, w.opt.DownKeys)
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
@@ -341,10 +360,10 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		scrollUp := false
 
 		if evk, ok := ev.(*tcell.EventKey); ok {
-			switch evk.Key() {
-			case tcell.KeyDown, tcell.KeyCtrlN:
+			switch {
+			case w.KeyIsDown(evk):
 				scrollDown = true
-			case tcell.KeyUp, tcell.KeyCtrlP:
+			case w.KeyIsUp(evk):
 				scrollUp = true
 			default:
 				res = false
