@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gcla/gowid"
 	"github.com/gdamore/tcell"
 )
 
@@ -154,16 +155,30 @@ func init() {
 // KeyPress represents a gowid keypress. It's a tcell.EventKey without the time
 // of the keypress.
 type KeyPress struct {
-	Mod tcell.ModMask
-	Key tcell.Key
-	Ch  rune
+	Mod  tcell.ModMask
+	TKey tcell.Key
+	Ch   rune
+}
+
+var _ gowid.IKey = KeyPress{}
+
+func (k KeyPress) Rune() rune {
+	return k.Ch
+}
+
+func (k KeyPress) Key() tcell.Key {
+	return k.TKey
+}
+
+func (k KeyPress) Modifiers() tcell.ModMask {
+	return k.Mod
 }
 
 func KeyCtrl(r rune) KeyPress {
 	return KeyPress{
-		Mod: tcell.ModCtrl,
-		Key: tcell.KeyRune,
-		Ch:  r,
+		Mod:  tcell.ModCtrl,
+		TKey: tcell.KeyRune,
+		Ch:   r,
 	}
 }
 
@@ -171,33 +186,33 @@ func KeyCtrl(r rune) KeyPress {
 // serialized to a vim-style keypress e.g. <C-s>
 func KeyPressFromTcell(k *tcell.EventKey) KeyPress {
 	res := KeyPress{
-		Mod: k.Modifiers(),
-		Key: k.Key(),
-		Ch:  k.Rune(),
+		Mod:  k.Modifiers(),
+		TKey: k.Key(),
+		Ch:   k.Rune(),
 	}
-	if res.Key >= tcell.KeyCtrlA && res.Key <= tcell.KeyCtrlZ {
-		res.Ch = rune(int(res.Key) + int('a') - 1)
-		res.Key = tcell.KeyRune
+	if res.TKey >= tcell.KeyCtrlA && res.TKey <= tcell.KeyCtrlZ {
+		res.Ch = rune(int(res.TKey) + int('a') - 1)
+		res.TKey = tcell.KeyRune
 	} else {
-		switch res.Key {
+		switch res.TKey {
 		case tcell.KeyCtrlSpace:
 			res.Ch = ' '
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		case tcell.KeyCtrlLeftSq:
 			res.Ch = '['
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		case tcell.KeyCtrlRightSq:
 			res.Ch = ']'
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		case tcell.KeyCtrlCarat:
 			res.Ch = '^'
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		case tcell.KeyCtrlUnderscore:
 			res.Ch = '_'
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		case tcell.KeyCtrlBackslash:
 			res.Ch = '\\'
-			res.Key = tcell.KeyRune
+			res.TKey = tcell.KeyRune
 		}
 	}
 	return res
@@ -226,11 +241,11 @@ func NewKeyPress(k tcell.Key, ch rune, mod tcell.ModMask) KeyPress {
 			}
 		}
 	}
-	return KeyPress{Key: k, Ch: ch, Mod: mod}
+	return KeyPress{TKey: k, Ch: ch, Mod: mod}
 }
 
 func (k KeyPress) String() string {
-	if k.Key == tcell.KeyRune {
+	if k.TKey == tcell.KeyRune {
 		if mod, ok := ModMap[k.Mod]; ok {
 			if k.Ch == ' ' {
 				return fmt.Sprintf("<%s-space>", mod)
@@ -246,7 +261,7 @@ func (k KeyPress) String() string {
 				return string(k.Ch)
 			}
 		}
-	} else if str, ok := SpecialKeyMap[k.Key]; ok {
+	} else if str, ok := SpecialKeyMap[k.TKey]; ok {
 		return str
 	} else {
 		return "<Unknown>"
