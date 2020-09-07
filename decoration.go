@@ -717,6 +717,9 @@ var _ IColor = (*UrwidColor)(nil)
 // a string argument e.g. "yellow". Note that in urwid proper (python), a color can also specify
 // a style, like "yellow, underline". UrwidColor does not support specifying styles in that manner.
 func NewUrwidColorSafe(val string) (*UrwidColor, error) {
+	if _, ok := basicColors[val]; !ok {
+		return nil, errors.WithStack(InvalidColor{Color: val})
+	}
 	return &UrwidColor{
 		Id: val,
 	}, nil
