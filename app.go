@@ -279,28 +279,31 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		if err = res.initScreen(); err != nil {
 			return nil, err
 		}
+		res.initColorMode()
 	}
 
 	screen.Clear()
 
-	cols := screen.Colors()
-	switch {
-	case cols > 256:
-		res.SetColorMode(Mode24BitColors)
-	case cols == 256:
-		res.SetColorMode(Mode256Colors)
-	case cols == 88:
-		res.SetColorMode(Mode88Colors)
-	case cols == 16:
-		res.SetColorMode(Mode16Colors)
-	case cols < 0:
-		res.SetColorMode(ModeMonochrome)
-	default:
-		res.SetColorMode(Mode8Colors)
-	}
-
 	rapp = res
 	return
+}
+
+func (a *App) initColorMode() {
+	cols := a.screen.Colors()
+	switch {
+	case cols > 256:
+		a.SetColorMode(Mode24BitColors)
+	case cols == 256:
+		a.SetColorMode(Mode256Colors)
+	case cols == 88:
+		a.SetColorMode(Mode88Colors)
+	case cols == 16:
+		a.SetColorMode(Mode16Colors)
+	case cols < 0:
+		a.SetColorMode(ModeMonochrome)
+	default:
+		a.SetColorMode(Mode8Colors)
+	}
 }
 
 func (a *App) GetScreen() tcell.Screen {
@@ -810,6 +813,8 @@ func (a *App) initScreen() error {
 	if err := a.screen.Init(); err != nil {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
+
+	a.initColorMode()
 
 	defFg := ColorDefault
 	defBg := ColorDefault
