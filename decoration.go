@@ -895,10 +895,16 @@ var (
 	_ fmt.Stringer = (*TCellColor)(nil)
 )
 
+var tcellColorRE = regexp.MustCompile(`^[Cc]olor([0-9a-fA-F]{2})$`)
+
 // MakeTCellColor returns an initialized TCellColor given a string input like "yellow". The names that can be
 // used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L821.
 func MakeTCellColor(val string) (TCellColor, error) {
-	if col, ok := tcell.ColorNames[val]; !ok {
+	match := tcellColorRE.FindStringSubmatch(val) // e.g. "Color00"
+	if len(match) == 2 {
+		n, _ := strconv.ParseUint(match[1], 16, 8)
+		return MakeTCellColorExt(tcell.Color(n)), nil
+	} else if col, ok := tcell.ColorNames[val]; !ok {
 		return TCellColor{}, errors.WithStack(InvalidColor{Color: val})
 	} else {
 		return MakeTCellColorExt(col), nil
