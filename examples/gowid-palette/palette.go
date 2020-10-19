@@ -6,6 +6,7 @@ package main
 
 import (
 	"errors"
+	"os"
 	"regexp"
 	"strings"
 
@@ -213,6 +214,12 @@ func parseChart(chart string) *text.Content {
 //======================================================================
 
 func main() {
+
+	// If this is set to truecolor when a gowid screen is setup, 24-bit truecolor
+	// support is enabled. Then the program won't output the 256-color/16-color
+	// terminal codes that this program is supposed to exhibit. So unset the variable
+	// right away.
+	os.Unsetenv("COLORTERM")
 
 	f := examples.RedirectLogger("palette.log")
 	defer f.Close()
