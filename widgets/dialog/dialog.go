@@ -385,20 +385,25 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 					w.GetNoFunction().Changed(app, w)
 					handled = true
 				}
-			case evk.Rune() == 'z':
-				if w, ok := w.(IMaximizer); ok {
-					if w.IsMaxed() {
-						w.Unmaximize(app)
-					} else {
-						w.Maximize(app)
-					}
-					handled = true
-				}
 			}
 		}
 		if !handled {
-			// discard result, we always handle it
-			gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
+			handled = gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
+		}
+		if !handled {
+			if evk, ok := ev.(*tcell.EventKey); ok {
+				switch {
+				case evk.Key() == tcell.KeyRune && evk.Rune() == 'z':
+					if w, ok := w.(IMaximizer); ok {
+						if w.IsMaxed() {
+							w.Unmaximize(app)
+						} else {
+							w.Maximize(app)
+						}
+						handled = true
+					}
+				}
+			}
 		}
 		res = true
 	} else {
