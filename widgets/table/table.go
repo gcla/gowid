@@ -750,6 +750,15 @@ func (t *Widget) Previous(ipos list.IWalkerPosition) list.IWalkerPosition {
 
 func (t *Widget) GoToFirst(app gowid.IApp) bool {
 	if homer, ok := t.listw.Walker().(list.IWalkerHome); ok {
+
+		oldpos, olderr := t.FocusXY()
+		defer func() {
+			newpos, newerr := t.FocusXY()
+			if olderr != newerr || oldpos != newpos {
+				gowid.RunWidgetCallbacks(t.Callbacks, gowid.FocusCB{}, app, t)
+			}
+		}()
+
 		pos := homer.First()
 		if pos != nil {
 			t.listw.Walker().SetFocus(pos, app)
@@ -762,6 +771,15 @@ func (t *Widget) GoToFirst(app gowid.IApp) bool {
 
 func (t *Widget) GoToLast(app gowid.IApp) bool {
 	if ender, ok := t.listw.Walker().(list.IWalkerEnd); ok {
+
+		oldpos, olderr := t.FocusXY()
+		defer func() {
+			newpos, newerr := t.FocusXY()
+			if olderr != newerr || oldpos != newpos {
+				gowid.RunWidgetCallbacks(t.Callbacks, gowid.FocusCB{}, app, t)
+			}
+		}()
+
 		pos := ender.Last()
 		if pos != nil {
 			t.listw.Walker().SetFocus(pos, app)
@@ -779,6 +797,15 @@ type ISetPos interface {
 
 func (t *Widget) GoToNth(app gowid.IApp, pos int) bool {
 	if walker, ok := t.listw.Walker().(ISetPos); ok {
+
+		oldpos, olderr := t.FocusXY()
+		defer func() {
+			newpos, newerr := t.FocusXY()
+			if olderr != newerr || oldpos != newpos {
+				gowid.RunWidgetCallbacks(t.Callbacks, gowid.FocusCB{}, app, t)
+			}
+		}()
+
 		pos = gwutil.LimitTo(0, pos, walker.Length()-1)
 		walker.SetPos(Position(pos), app)
 		t.GoToMiddle(app)
