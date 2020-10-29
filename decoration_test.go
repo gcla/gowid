@@ -12,10 +12,23 @@ import (
 )
 
 func TestColor1(t *testing.T) {
+	IgnoreBase16 = true
 	c, _ := MakeRGBColorExtSafe(0, 0, 0)
 	i2a, _ := c.ToTCellColor(Mode256Colors)
 	i2 := i2a.ToTCell()
-	if i2 != 17-1 {
+	// See https://jonasjacek.github.io/colors/ - we are skipping
+	// colors 0-21 inclusive
+	if i2 != 232 {
+		t.Errorf("Failed")
+	}
+}
+
+func TestColor1b(t *testing.T) {
+	IgnoreBase16 = false
+	c, _ := MakeRGBColorExtSafe(0, 0, 0)
+	i2a, _ := c.ToTCellColor(Mode256Colors)
+	i2 := i2a.ToTCell()
+	if i2 != 0 {
 		t.Errorf("Failed")
 	}
 }

@@ -5,6 +5,7 @@ package gowid
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 
@@ -69,6 +70,11 @@ var StyleReverseOnly = StyleAttrs{tcell.AttrReverse, StyleAllSet}
 
 // StyleUnderlineOnly specifies the text should be underlined, and no other styling should apply.
 var StyleUnderlineOnly = StyleAttrs{tcell.AttrUnderline, StyleAllSet}
+
+// IgnoreBase16 should be set to true if gowid should not consider colors 0-21 for closest-match when
+// interpolating RGB colors in 256-color space. You might use this if you use base16-shell, for example,
+// to make use of base16-themes for all terminal applications (https://github.com/chriskempson/base16-shell)
+var IgnoreBase16 = false
 
 // MergeUnder merges cell styles. E.g. if a is {underline, underline}, and upper is {!bold, bold}, that
 // means a declares that it should be rendered with underline and doesn't care about other styles; and
@@ -332,6 +338,22 @@ var (
 	}
 
 	colorful256 = []colorful.Color{
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0x00) / float64(256)}, //'000000'),
+		colorful.Color{R: float64(0x80) / float64(256), G: float64(0x00) / float64(256), B: float64(0x00) / float64(256)}, //'800000'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x80) / float64(256), B: float64(0x00) / float64(256)}, //'008000'),
+		colorful.Color{R: float64(0x80) / float64(256), G: float64(0x80) / float64(256), B: float64(0x00) / float64(256)}, //'808000'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0x80) / float64(256)}, //'000080'),
+		colorful.Color{R: float64(0x80) / float64(256), G: float64(0x00) / float64(256), B: float64(0x80) / float64(256)}, //'800080'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x80) / float64(256), B: float64(0x80) / float64(256)}, //'008080'),
+		colorful.Color{R: float64(0xc0) / float64(256), G: float64(0xc0) / float64(256), B: float64(0xc0) / float64(256)}, //'c0c0c0'),
+		colorful.Color{R: float64(0x80) / float64(256), G: float64(0x80) / float64(256), B: float64(0x80) / float64(256)}, //'808080'),
+		colorful.Color{R: float64(0xff) / float64(256), G: float64(0x00) / float64(256), B: float64(0x00) / float64(256)}, //'ff0000'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0xff) / float64(256), B: float64(0x00) / float64(256)}, //'00ff00'),
+		colorful.Color{R: float64(0xff) / float64(256), G: float64(0xff) / float64(256), B: float64(0x00) / float64(256)}, //'ffff00'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0xff) / float64(256)}, //'0000ff'),
+		colorful.Color{R: float64(0xff) / float64(256), G: float64(0x00) / float64(256), B: float64(0xff) / float64(256)}, //'ff00ff'),
+		colorful.Color{R: float64(0x00) / float64(256), G: float64(0xff) / float64(256), B: float64(0xff) / float64(256)}, //'00ffff'),
+		colorful.Color{R: float64(0xff) / float64(256), G: float64(0xff) / float64(256), B: float64(0xff) / float64(256)}, //'ffffff'),
 		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0x00) / float64(256)}, //'000000'),
 		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0x5f) / float64(256)}, //'00005f'),
 		colorful.Color{R: float64(0x00) / float64(256), G: float64(0x00) / float64(256), B: float64(0x87) / float64(256)}, //'000087'),
@@ -605,6 +627,23 @@ var (
 	}
 
 	term256 = []TCellColor{
+		MakeTCellColorExt(tcell.Color(0)),
+		MakeTCellColorExt(tcell.Color(1)),
+		MakeTCellColorExt(tcell.Color(2)),
+		MakeTCellColorExt(tcell.Color(3)),
+		MakeTCellColorExt(tcell.Color(4)),
+		MakeTCellColorExt(tcell.Color(5)),
+		MakeTCellColorExt(tcell.Color(6)),
+		MakeTCellColorExt(tcell.Color(7)),
+		MakeTCellColorExt(tcell.Color(8)),
+		MakeTCellColorExt(tcell.Color(9)),
+		MakeTCellColorExt(tcell.Color(10)),
+		MakeTCellColorExt(tcell.Color(11)),
+		MakeTCellColorExt(tcell.Color(12)),
+		MakeTCellColorExt(tcell.Color(13)),
+		MakeTCellColorExt(tcell.Color(14)),
+		MakeTCellColorExt(tcell.Color(15)),
+		//
 		MakeTCellColorExt(tcell.Color(16)),
 		MakeTCellColorExt(tcell.Color(17)),
 		MakeTCellColorExt(tcell.Color(18)),
@@ -847,10 +886,11 @@ var (
 		MakeTCellColorExt(tcell.Color(255)),
 	}
 
-	term2Cache   *lru.Cache
-	term8Cache   *lru.Cache
-	term16Cache  *lru.Cache
-	term256Cache *lru.Cache
+	term2Cache               *lru.Cache
+	term8Cache               *lru.Cache
+	term16Cache              *lru.Cache
+	term256Cache             *lru.Cache
+	term256CacheIgnoreBase16 *lru.Cache
 )
 
 //======================================================================
@@ -871,11 +911,15 @@ func init() {
 	}
 
 	var err error
-	for _, cache := range []**lru.Cache{&term2Cache, &term8Cache, &term16Cache, &term256Cache} {
+	for _, cache := range []**lru.Cache{&term2Cache, &term8Cache, &term16Cache, &term256Cache, &term256CacheIgnoreBase16} {
 		*cache, err = lru.New(100)
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if os.Getenv("GOWID_IGNORE_BASE16") == "1" {
+		IgnoreBase16 = true
 	}
 }
 
@@ -1165,7 +1209,11 @@ func (r RGBColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 		c := tcell.Color((r.Red << 16) | (r.Green << 8) | (r.Blue << 0) | int(tcell.ColorIsRGB))
 		return MakeTCellColorExt(c), true
 	case Mode256Colors:
-		return r.findClosest(colorful256, term256, term256Cache), true
+		if IgnoreBase16 {
+			return r.findClosest(colorful256[22:], term256[22:], term256CacheIgnoreBase16), true
+		} else {
+			return r.findClosest(colorful256, term256, term256Cache), true
+		}
 	case Mode88Colors:
 		rd := cubeLookup88_16[r.Red>>4]
 		g := cubeLookup88_16[r.Green>>4]
