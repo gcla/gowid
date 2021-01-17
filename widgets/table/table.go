@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/araddon/dateparse"
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gcla/gowid/widgets/columns"
@@ -109,6 +110,22 @@ func (s FloatCompare) Less(i, j string) bool {
 }
 
 var _ ICompare = FloatCompare{}
+
+// DateTimeCompare is a unit type that satisfies ICompare, and can be used
+// for numerically comparing date/time values.
+type DateTimeCompare struct{}
+
+func (s DateTimeCompare) Less(i, j string) bool {
+	x, err1 := dateparse.ParseAny(i)
+	y, err2 := dateparse.ParseAny(j)
+	if err1 == nil && err2 == nil {
+		return x.Before(y)
+	} else {
+		return false
+	}
+}
+
+var _ ICompare = DateTimeCompare{}
 
 //======================================================================
 
