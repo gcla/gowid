@@ -144,6 +144,14 @@ func (w *Widget) SetWidth(width gowid.IWidgetDimension, app gowid.IApp) {
 	w.overlay.SetWidth(width, app)
 }
 
+func (w *Widget) Height() gowid.IWidgetDimension {
+	return w.overlay.Height()
+}
+
+func (w *Widget) SetHeight(width gowid.IWidgetDimension, app gowid.IApp) {
+	w.overlay.SetHeight(width, app)
+}
+
 func (w *Widget) Name() string {
 	return w.name
 }
