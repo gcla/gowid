@@ -150,8 +150,15 @@ func (w *Widget) SubWidgetSize(size gowid.IRenderSize, focus gowid.Selector, app
 	default:
 	}
 
+	switch al := w.VAlign().(type) {
+	case gowid.VAlignTop:
+		switch s := size2.(type) {
+		case gowid.IRenderBox:
+			size2 = gowid.RenderBox{C: s.BoxColumns(), R: s.BoxRows() - al.Margin}
+		}
+	}
+
 	return gowid.ComputeSubSizeUnsafe(size2, w.Width(), w.Height())
-	//return SubWidgetSize(w, size, focus, app)
 }
 
 func (w *Widget) RenderSize(size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.IRenderBox {
