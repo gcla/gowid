@@ -1270,11 +1270,11 @@ func ComputeVerticalSubSize(size IRenderSize, d IWidgetDimension, maxCol int, ad
 		case IRenderFixed:
 			subSize = RenderFixed{}
 		case IRenderFlowWith:
-			subSize = RenderFlowWith{C: d2.FlowColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), d2.FlowColumns()))}
 		case IRenderFlow:
 			subSize = RenderFlowWith{C: sz.BoxColumns()}
 		case IRenderWithUnits:
-			subSize = RenderBox{C: sz.BoxColumns(), R: d2.Units()}
+			subSize = RenderBox{C: sz.BoxColumns(), R: gwutil.Max(0, gwutil.Min(sz.BoxRows(), d2.Units()))}
 		case IRenderRelative:
 			subSize = RenderBox{C: sz.BoxColumns(), R: int((d2.Relative() * float64(sz.BoxRows())) + 0.5)}
 		case IRenderWithWeight:
@@ -1348,15 +1348,21 @@ func ComputeHorizontalSubSize(size IRenderSize, d IWidgetDimension) (IRenderSize
 		case IRenderFixed:
 			subSize = RenderFixed{}
 		case IRenderBox:
-			subSize = RenderBox{C: w2.BoxColumns(), R: w2.BoxRows()}
+			subSize = RenderBox{
+				C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), w2.BoxColumns())),
+				R: gwutil.Max(0, gwutil.Min(sz.BoxRows(), w2.BoxRows())),
+			}
 		case IRenderFlowWith:
-			subSize = RenderFlowWith{C: w2.FlowColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), w2.FlowColumns()))}
 		case IRenderFlow:
-			subSize = RenderFlowWith{C: sz.BoxColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), sz.BoxColumns()))}
 		case IRenderRelative:
 			subSize = RenderBox{C: int((w2.Relative() * float64(sz.BoxColumns())) + 0.5), R: sz.BoxRows()}
 		case IRenderWithUnits:
-			subSize = RenderBox{C: w2.Units(), R: sz.BoxRows()}
+			subSize = RenderBox{
+				C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), w2.Units())),
+				R: sz.BoxRows(),
+			}
 		default:
 			return nil, errors.WithStack(DimensionError{Size: size, Dim: d})
 		}
@@ -1365,15 +1371,18 @@ func ComputeHorizontalSubSize(size IRenderSize, d IWidgetDimension) (IRenderSize
 		case IRenderFixed:
 			subSize = RenderFixed{}
 		case IRenderBox:
-			subSize = RenderBox{C: w2.BoxColumns(), R: w2.BoxRows()}
+			subSize = RenderBox{
+				C: gwutil.Max(0, gwutil.Min(sz.FlowColumns(), w2.BoxColumns())),
+				R: w2.BoxRows(),
+			}
 		case IRenderFlowWith:
-			subSize = RenderFlowWith{C: w2.FlowColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.FlowColumns(), w2.FlowColumns()))}
 		case IRenderFlow:
 			subSize = RenderFlowWith{C: sz.FlowColumns()}
 		case IRenderRelative:
 			subSize = RenderFlowWith{C: int((w2.Relative() * float64(sz.FlowColumns())) + 0.5)}
 		case IRenderWithUnits:
-			subSize = RenderFlowWith{C: w2.Units()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.FlowColumns(), w2.Units()))}
 		default:
 			return nil, errors.WithStack(DimensionError{Size: size, Dim: d})
 		}
@@ -1420,11 +1429,14 @@ func ComputeSubSize(size IRenderSize, w IWidgetDimension, h IWidgetDimension) (I
 		case IRenderFixed:
 			subSize = RenderFixed{}
 		case IRenderBox:
-			subSize = RenderBox{C: w2.BoxColumns(), R: w2.BoxRows()}
+			subSize = RenderBox{
+				C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), w2.BoxColumns())),
+				R: gwutil.Max(0, gwutil.Min(sz.BoxRows(), w2.BoxRows())),
+			}
 		case IRenderFlowWith:
-			subSize = RenderFlowWith{C: w2.FlowColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), w2.FlowColumns()))}
 		case IRenderFlow:
-			subSize = RenderFlowWith{C: sz.BoxColumns()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.BoxColumns(), sz.BoxColumns()))}
 		case IRenderRelative:
 			cols := int((w2.Relative() * float64(sz.BoxColumns())) + 0.5)
 			switch h2 := h.(type) {
@@ -1442,14 +1454,14 @@ func ComputeSubSize(size IRenderSize, w IWidgetDimension, h IWidgetDimension) (I
 				return nil, errors.WithStack(DimensionError{Size: size, Dim: w})
 			}
 		case IRenderWithUnits:
-			cols := w2.Units()
+			cols := gwutil.Min(sz.BoxColumns(), w2.Units())
 			switch h2 := h.(type) {
 			case IRenderRelative:
 				rows := int((h2.Relative() * float64(sz.BoxRows())) + 0.5)
 				subSize = RenderBox{C: cols, R: rows}
 			case IRenderWithUnits:
 				rows := h2.Units()
-				subSize = RenderBox{C: cols, R: rows}
+				subSize = RenderBox{C: cols, R: gwutil.Max(0, gwutil.Min(sz.BoxRows(), rows))}
 			case IRenderFlow:
 				subSize = RenderFlowWith{C: cols}
 			case IRenderFixed:
@@ -1465,7 +1477,7 @@ func ComputeSubSize(size IRenderSize, w IWidgetDimension, h IWidgetDimension) (I
 		case IRenderFixed:
 			subSize = RenderFixed{}
 		case IRenderBox:
-			subSize = RenderBox{C: w2.BoxColumns(), R: w2.BoxRows()}
+			subSize = RenderBox{C: w2.BoxColumns(), R: gwutil.Max(0, gwutil.Min(sz.FlowColumns(), w2.BoxRows()))}
 		case IRenderFlowWith:
 			subSize = RenderFlowWith{C: w2.FlowColumns()}
 		case IRenderFlow:
@@ -1473,7 +1485,7 @@ func ComputeSubSize(size IRenderSize, w IWidgetDimension, h IWidgetDimension) (I
 		case IRenderRelative:
 			subSize = RenderFlowWith{C: int((w2.Relative() * float64(sz.FlowColumns())) + 0.5)}
 		case IRenderWithUnits:
-			subSize = RenderFlowWith{C: w2.Units()}
+			subSize = RenderFlowWith{C: gwutil.Max(0, gwutil.Min(sz.FlowColumns(), w2.Units()))}
 		default:
 			return nil, errors.WithStack(DimensionError{Size: size, Dim: w})
 		}

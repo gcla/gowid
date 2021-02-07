@@ -113,13 +113,13 @@ func TestHorizontal2(t *testing.T) {
 	assert.Equal(t, c.String(), "abcde  ")
 
 	c = w5.Render(gowid.RenderFlowWith{C: 3}, gowid.Focused, gwtest.D)
-	assert.Equal(t, c.String(), "abc")
+	assert.Equal(t, c.String(), "abc\nde ")
 
 	c = w5.Render(gowid.RenderBox{C: 6, R: 1}, gowid.Focused, gwtest.D)
 	assert.Equal(t, c.String(), "abcde ")
 
 	c = w5.Render(gowid.RenderBox{C: 3, R: 3}, gowid.Focused, gwtest.D)
-	assert.Equal(t, c.String(), "abc\n   \n   ")
+	assert.Equal(t, c.String(), "abc\nde \n   ")
 
 	c = w5.Render(gowid.RenderBox{C: 7, R: 3}, gowid.Focused, gwtest.D)
 	assert.Equal(t, c.String(), "abcde  \n       \n       ")
@@ -223,7 +223,7 @@ func TestHorizontalPadding1(t *testing.T) {
 
 	w10 := New(fill.New('x'), gowid.HAlignLeft{Margin: 1}, gowid.RenderWithUnits{U: 6})
 	c10 := w10.Render(gowid.RenderBox{C: 5, R: 2}, gowid.Focused, gwtest.D)
-	assert.Equal(t, c10.String(), "xxxxx\nxxxxx")
+	assert.Equal(t, c10.String(), " xxxx\n xxxx")
 
 	w11 := New(fill.New('x'), gowid.HAlignLeft{Margin: 1}, gowid.RenderWithUnits{U: 4})
 	c11 := w11.Render(gowid.RenderBox{C: 5, R: 2}, gowid.Focused, gwtest.D)
