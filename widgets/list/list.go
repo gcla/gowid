@@ -809,11 +809,16 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 								break
 							}
 							if dirMoved > 0 {
-								_, curPosition = w.MoveToNextFocus(subRenderSize, focus, numLinesToUse, app)
+								res, curPosition = w.MoveToNextFocus(subRenderSize, focus, numLinesToUse, app)
 							} else if dirMoved < 0 {
-								_, curPosition = w.MoveToPreviousFocus(subRenderSize, focus, numLinesToUse, app)
+								res, curPosition = w.MoveToPreviousFocus(subRenderSize, focus, numLinesToUse, app)
 							} else {
 								panic(BadState)
+							}
+							if !res {
+								w.st = saveState
+								w.Walker().SetFocus(startPosition, app)
+								break
 							}
 						}
 						//res = true
