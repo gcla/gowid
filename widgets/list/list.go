@@ -213,8 +213,9 @@ type Widget struct {
 
 type Options struct {
 	//SelectedStyle gowid.ICellStyler // apply a style to the selected widget - orthogonal to focus styling
-	DownKeys []vim.KeyPress
-	UpKeys   []vim.KeyPress
+	DownKeys         []vim.KeyPress
+	UpKeys           []vim.KeyPress
+	DoNotSetSelected bool // Whether or not to set the focus.Selected field for the selected child
 }
 
 type IndexedWidget struct {
@@ -341,6 +342,10 @@ func (w *Widget) CalculateOnScreen(size gowid.IRenderSize, focus gowid.Selector,
 	return CalculateOnScreen(w, size, focus, app)
 }
 
+func (w *Widget) SelectChild(f gowid.Selector) bool {
+	return !w.options.DoNotSetSelected && f.Selected
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 type SubRenders struct {
@@ -385,11 +390,9 @@ func (w *Widget) RenderSubwidgets(size gowid.IRenderSize, focus gowid.Selector, 
 		//foobar := styled.New(curWidget, gowid.MakeStyledAs(gowid.StyleReverse))
 		var curToRender gowid.IWidget = curWidget
 		if haveCols {
-			//c = gowid.Render(curWidget, gowid.RenderFlowWith{C: cols.Columns()}, focus, app)
-			c = curToRender.Render(gowid.RenderFlowWith{C: cols.Columns()}, focus, app)
+			c = curToRender.Render(gowid.RenderFlowWith{C: cols.Columns()}, focus.SelectIf(w.SelectChild(focus)), app)
 		} else {
-			//c = gowid.Render(curWidget, gowid.RenderFixed{}, focus, app)
-			c = curToRender.Render(gowid.RenderFixed{}, focus, app)
+			c = curToRender.Render(gowid.RenderFixed{}, focus.SelectIf(w.SelectChild(focus)), app)
 		}
 		creallines := c.BoxRows()
 		middle = SubRenders{curWidget, curPos, c, creallines}
