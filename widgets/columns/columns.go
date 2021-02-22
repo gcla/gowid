@@ -311,7 +311,7 @@ func SubWidgetSize(size gowid.IRenderSize, newX int, dim gowid.IWidgetDimension)
 }
 
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
-	res := true
+	res := false
 	subfocus := w.Focus()
 
 	subSizes := w.WidgetWidths(size, focus, subfocus, app)
@@ -322,6 +322,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	forChild := false
 
 	if subfocus != -1 {
+		res = true
 		if evm, ok := ev.(*tcell.EventMouse); ok {
 			curX := 0
 			mx, _ := evm.Position()

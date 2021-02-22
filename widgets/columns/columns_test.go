@@ -171,6 +171,24 @@ func TestColumns4(t *testing.T) {
 	assert.Equal(t, "xxxxxyyyyyzz", c.String())
 }
 
+func TestColumns5(t *testing.T) {
+	// None are selectable
+	subs := []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("x"), gowid.RenderWithWeight{W: 1}},
+		&gowid.ContainerWidget{text.New("y"), gowid.RenderWithWeight{W: 1}},
+	}
+	w := New(subs)
+	sz := gowid.RenderBox{C: 2, R: 1}
+	c := w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "xy", c.String())
+
+	evright := gwtest.CursorRight()
+	acc := w.UserInput(evright, sz, gowid.Focused, gwtest.D)
+
+	// Nothing in here should accept the input, so it should bubble back up
+	assert.False(t, acc)
+}
+
 //======================================================================
 // Local Variables:
 // mode: Go
