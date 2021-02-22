@@ -6,6 +6,8 @@
 package isselected
 
 import (
+	"fmt"
+
 	"github.com/gcla/gowid"
 )
 
@@ -62,6 +64,10 @@ func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.S
 // TODO - this isn't right. Should Selectable be conditioned on focus?
 func (w *Widget) Selectable() bool {
 	return w.Not.Selectable()
+}
+
+func (w *Widget) String() string {
+	return fmt.Sprintf("issel[%v#%v#%v]", w.Not, w.Selected, w.Focused)
 }
 
 //======================================================================
