@@ -32,6 +32,11 @@ type IWidget interface {
 	Name() string
 }
 
+type IOpener interface {
+	OpenMenu(*Widget, ISite, gowid.IApp) bool
+	CloseMenu(*Widget, gowid.IApp)
+}
+
 type Options struct {
 	CloseKeysProvided  bool
 	CloseKeys          []gowid.IKey
@@ -39,6 +44,7 @@ type Options struct {
 	IgnoreKeys         []gowid.IKey
 	NoAutoClose        bool
 	Modal              bool
+	OpenCloser         IOpener
 }
 
 var (
@@ -86,6 +92,10 @@ func New(name string, menuw gowid.IWidget, width gowid.IWidgetDimension, opts ..
 		opt = opts[0]
 	}
 
+	if opt.OpenCloser == nil {
+		opt.OpenCloser = OpenerFunc(OpenSimple)
+	}
+
 	res := &Widget{
 		name:      name,
 		width:     width,
@@ -128,6 +138,10 @@ func New(name string, menuw gowid.IWidget, width gowid.IWidgetDimension, opts ..
 	return res
 }
 
+func (w *Widget) String() string {
+	return fmt.Sprintf("menu[%v]", w.Name())
+}
+
 func (w *Widget) AutoClose() bool {
 	return w.autoClose
 }
@@ -157,6 +171,10 @@ func (w *Widget) Name() string {
 }
 
 func (w *Widget) Open(site ISite, app gowid.IApp) {
+	w.opts.OpenCloser.OpenMenu(w, site, app)
+}
+
+func (w *Widget) OpenImpl(site ISite, app gowid.IApp) {
 	w.site = site
 	site.SetNamer(w, app)
 	w.overlay.SetTop(w.top, app)
@@ -166,6 +184,10 @@ func (w *Widget) Open(site ISite, app gowid.IApp) {
 }
 
 func (w *Widget) Close(app gowid.IApp) {
+	w.opts.OpenCloser.CloseMenu(w, app)
+}
+
+func (w *Widget) CloseImpl(app gowid.IApp) {
 	// protect against case where it's closed already
 	if w.site != nil {
 		w.site.SetNamer(nil, app)
@@ -177,10 +199,6 @@ func (w *Widget) Close(app gowid.IApp) {
 
 func (w *Widget) Overlay() overlay.IWidgetSettable {
 	return w.overlay
-}
-
-func (w *Widget) String() string {
-	return "menu" // TODO: should iterate over submenus
 }
 
 func (w *Widget) SetSubWidget(widget gowid.IWidget, app gowid.IApp) {
@@ -419,6 +437,29 @@ func (w *NavWrapperWidget) UserInput(ev interface{}, size gowid.IRenderSize, foc
 		}
 	}
 	return res
+}
+
+//======================================================================
+
+// Return false if it was already open
+type OpenerFunc func(bool, *Widget, ISite, gowid.IApp) bool
+
+func (m OpenerFunc) OpenMenu(mu *Widget, site ISite, app gowid.IApp) bool {
+	return m(true, mu, site, app)
+}
+
+func (m OpenerFunc) CloseMenu(mu *Widget, app gowid.IApp) {
+	m(false, mu, nil, app)
+}
+
+func OpenSimple(open bool, mu *Widget, site ISite, app gowid.IApp) bool {
+	if open {
+		mu.OpenImpl(site, app)
+		return true
+	} else {
+		mu.CloseImpl(app)
+		return true
+	}
 }
 
 //======================================================================
