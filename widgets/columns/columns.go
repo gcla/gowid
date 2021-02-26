@@ -33,10 +33,12 @@ type IWidget interface {
 }
 
 type Widget struct {
-	widgets []gowid.IContainerWidget
-	focus   int // -1 means nothing selectable
-	prefCol int // caches the last set prefered col. Passes it on if widget hasn't changed focus
-	opt     Options
+	widgets      []gowid.IContainerWidget
+	focus        int    // -1 means nothing selectable
+	prefCol      int    // caches the last set prefered col. Passes it on if widget hasn't changed focus
+	widthHelper  []bool // optimizations to save frequent array allocations during use
+	widthHelper2 []bool
+	opt          Options
 	*gowid.Callbacks
 	gowid.AddressProvidesID
 	gowid.SubWidgetsCallbacks
@@ -67,10 +69,12 @@ func New(widgets []gowid.IContainerWidget, opts ...Options) *Widget {
 		opt.RightKeys = vim.AllRightKeys
 	}
 	res := &Widget{
-		widgets: widgets,
-		focus:   -1,
-		prefCol: -1,
-		opt:     opt,
+		widgets:      widgets,
+		focus:        -1,
+		prefCol:      -1,
+		widthHelper:  make([]bool, len(widgets)),
+		widthHelper2: make([]bool, len(widgets)),
+		opt:          opt,
 	}
 	res.SubWidgetsCallbacks = gowid.SubWidgetsCallbacks{CB: &res.Callbacks}
 	res.FocusCallbacks = gowid.FocusCallbacks{CB: &res.Callbacks}
@@ -270,6 +274,16 @@ func (w *Widget) KeyIsRight(evk *tcell.EventKey) bool {
 	return vim.KeyIn(evk, w.opt.RightKeys)
 }
 
+type IWidthHelper interface {
+	WidthHelpers() ([]bool, []bool)
+}
+
+var _ IWidthHelper = (*Widget)(nil)
+
+func (w *Widget) WidthHelpers() ([]bool, []bool) {
+	return w.widthHelper, w.widthHelper2
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func SubWidgetSize(size gowid.IRenderSize, newX int, dim gowid.IWidgetDimension) gowid.IRenderSize {
@@ -419,7 +433,21 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 	lenw := len(subs)
 
 	res := make([]int, lenw)
-	helper := make([]bool, lenw)
+	var widthHelper []bool
+	var widthHelper2 []bool
+	if w, ok := w.(IWidthHelper); ok {
+		// Save some allocations
+		widthHelper, widthHelper2 = w.WidthHelpers()
+		defer func() {
+			for i := 0; i < len(widthHelper); i++ {
+				widthHelper[i] = false
+				widthHelper2[i] = false
+			}
+		}()
+	} else {
+		widthHelper = make([]bool, lenw)
+		widthHelper2 = make([]bool, lenw)
+	}
 
 	haveColsTotal := false
 	var colsTotal int
@@ -452,22 +480,26 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 			res[i] = c.BoxColumns()
 			trunc(&res[i])
 			colsUsed += res[i]
-			helper[i] = true
+			widthHelper[i] = true
+			widthHelper2[i] = true
 		case gowid.IRenderBox:
 			res[i] = w2.BoxColumns()
 			trunc(&res[i])
 			colsUsed += res[i]
-			helper[i] = true
+			widthHelper[i] = true
+			widthHelper2[i] = true
 		case gowid.IRenderFlowWith:
 			res[i] = w2.FlowColumns()
 			trunc(&res[i])
 			colsUsed += res[i]
-			helper[i] = true
+			widthHelper[i] = true
+			widthHelper2[i] = true
 		case gowid.IRenderWithUnits:
 			res[i] = w2.Units()
 			trunc(&res[i])
 			colsUsed += res[i]
-			helper[i] = true
+			widthHelper[i] = true
+			widthHelper2[i] = true
 		case gowid.IRenderRelative:
 			cols, ok := size.(gowid.IColumns)
 			if !ok {
@@ -476,11 +508,13 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 			res[i] = int((w2.Relative() * float64(cols.Columns())) + 0.5)
 			trunc(&res[i])
 			colsUsed += res[i]
-			helper[i] = true
+			widthHelper[i] = true
+			widthHelper2[i] = true
 		case gowid.IRenderWithWeight:
 			// widget must be weighted
 			totalWeight += w2.Weight()
-			helper[i] = false
+			widthHelper[i] = false
+			widthHelper2[i] = false
 		default:
 			panic(gowid.DimensionError{Size: size, Dim: w2})
 		}
@@ -495,6 +529,7 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 
 	// Now, divide up the remaining space among the weight columns
 	lasti := -1
+	maxedOut := false
 	for {
 		if colsLeft == 0 {
 			break
@@ -502,19 +537,21 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 		doneone := false
 		totalWeight = 0
 		for i := 0; i < lenw; i++ {
-			if w2, ok := dims[i].(gowid.IRenderWithWeight); ok && !helper[i] {
+			if w2, ok := dims[i].(gowid.IRenderWithWeight); ok && !widthHelper[i] {
 				totalWeight += w2.Weight()
 			}
 		}
 		colsToDivideUp = colsLeft
 		for i := 0; i < lenw; i++ {
 			// Can only be weight here if !helper[i] ; but not sufficient for it to be eligible
-			if !helper[i] {
+			if !widthHelper[i] {
 				cols := int(((float32(dims[i].(gowid.IRenderWithWeight).Weight()) / float32(totalWeight)) * float32(colsToDivideUp)) + 0.5)
-				if max, ok := dims[i].(gowid.IRenderMaxUnits); ok {
-					if cols > max.MaxUnits() {
-						cols = max.MaxUnits()
-						helper[i] = true // this one is done
+				if !maxedOut {
+					if max, ok := dims[i].(gowid.IRenderMaxUnits); ok {
+						if cols >= max.MaxUnits() {
+							cols = max.MaxUnits()
+							widthHelper[i] = true // this one is done
+						}
 					}
 				}
 				if cols > colsLeft {
@@ -526,13 +563,25 @@ func widgetWidthsExt(w gowid.ISelectChild, subs []gowid.IWidget, dims []gowid.IW
 					}
 					res[i] += cols
 					colsLeft -= cols
-					lasti = i
+					lasti = gwutil.Max(i, lasti)
 					doneone = true
 				}
 			}
 		}
 		if !doneone {
-			break
+			// We used up all our extra space, after all weighted columns were maxed out. So
+			// we're done. Any extra space (should be just 1 unit at most) goes on the last columns.
+			if maxedOut {
+				break
+			}
+			// All the weighted columns have been assigned, and all were maxed out. We still
+			// have space to assign. So now grow the weighted columns, even though they don't need
+			// any more space for a full render - what else to do with the space!
+			maxedOut = true
+			// Reset; all false indices will be indices of weighted columns again
+			for i := 0; i < len(widthHelper); i++ {
+				widthHelper[i] = widthHelper2[i]
+			}
 		}
 	}
 	if lasti != -1 && colsLeft > 0 {

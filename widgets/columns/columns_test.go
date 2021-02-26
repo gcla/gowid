@@ -9,6 +9,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
+	"github.com/gcla/gowid/widgets/button"
 	"github.com/gcla/gowid/widgets/checkbox"
 	"github.com/gcla/gowid/widgets/fill"
 	"github.com/gcla/gowid/widgets/selectable"
@@ -152,6 +153,10 @@ func weightupto(w int, max int) renderWeightUpTo {
 	return renderWeightUpTo{gowid.RenderWithWeight{W: w}, max}
 }
 
+func weight(w int) gowid.RenderWithWeight {
+	return gowid.RenderWithWeight{W: w}
+}
+
 func makep(c rune) gowid.IWidget {
 	return selectable.New(fill.New(c))
 }
@@ -187,6 +192,90 @@ func TestColumns5(t *testing.T) {
 
 	// Nothing in here should accept the input, so it should bubble back up
 	assert.False(t, acc)
+}
+
+type renderWithUnitsMax struct {
+	gowid.RenderWithUnits
+	gowid.RenderMax
+}
+
+func TestColumns6(t *testing.T) {
+	h := renderWithUnitsMax{
+		RenderWithUnits: gowid.RenderWithUnits{1},
+	}
+
+	f := fill.New(' ')
+
+	subs := []gowid.IContainerWidget{
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("1")), gowid.RenderWithWeight{W: 4}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("0.000000")), gowid.RenderWithWeight{W: 8}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("192.168.44.123")), gowid.RenderWithWeight{W: 14}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("192.168.44.213")), gowid.RenderWithWeight{W: 14}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("TFTP")), gowid.RenderWithWeight{W: 6}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("77")), gowid.RenderWithWeight{W: 7}},
+		&gowid.ContainerWidget{f, h},
+		&gowid.ContainerWidget{button.NewBare(text.New("Read Request, File: C:\\IBMTCPIP\\lccm.1, Transfer type: octet")), gowid.RenderWithWeight{W: 60}},
+		&gowid.ContainerWidget{f, h},
+	}
+	w := New(subs)
+	sz := gowid.RenderFlowWith{C: 158}
+	c := w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, " 1     0.000000    192.168.44.123      192.168.44.213      TFTP     77        Read Request, File: C:\\IBMTCPIP\\lccm.1, Transfer type: octet                    ", c.String())
+
+}
+
+func TestColumns7(t *testing.T) {
+	d2 := weightupto(1, 2) // weight 1, max 2
+	d3 := weightupto(1, 3) // weight 1, max 3
+	d4 := weightupto(1, 4) // weight 1, max 4
+
+	sz4 := gowid.RenderFlowWith{C: 4}
+	sz6 := gowid.RenderFlowWith{C: 6}
+
+	subs := []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("aa"), d2},
+		&gowid.ContainerWidget{text.New("bb"), d2},
+	}
+
+	w := New(subs)
+	c := w.Render(sz4, gowid.Focused, gwtest.D)
+	assert.Equal(t, "aabb", c.String())
+
+	subs = []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("aa"), d3},
+		&gowid.ContainerWidget{text.New("bb"), d3},
+	}
+	w = New(subs)
+
+	c = w.Render(sz4, gowid.Focused, gwtest.D)
+	assert.Equal(t, "aabb", c.String())
+
+	c = w.Render(sz6, gowid.Focused, gwtest.D)
+	assert.Equal(t, "aa bb ", c.String())
+
+	subs = []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("aaaa"), d4},
+		&gowid.ContainerWidget{text.New("bb"), d2},
+	}
+	w = New(subs)
+
+	c = w.Render(sz6, gowid.Focused, gwtest.D)
+	assert.Equal(t, "aaaabb", c.String())
+
+	subs = []gowid.IContainerWidget{
+		&gowid.ContainerWidget{text.New("aaaa"), weight(1)},
+		&gowid.ContainerWidget{text.New("bb"), weight(1)},
+	}
+	w = New(subs)
+
+	c = w.Render(sz6, gowid.Focused, gwtest.D)
+	assert.Equal(t, "aaabb \na     ", c.String())
 }
 
 //======================================================================
