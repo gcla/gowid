@@ -219,7 +219,7 @@ func (w *QuestionBox) UserInput(ev interface{}, size gowid.IRenderSize, focus go
 		case tcell.KeyEnter:
 			w.IWidget = text.New(fmt.Sprintf("Nice to meet you, %s.\n\nPress Q to exit.", w.IWidget.(*edit.Widget).Text()))
 		default:
-			res = gowid.UserInput(w.IWidget, ev, size, focus, app)
+			res = w.IWidget.UserInput(w.IWidget, ev, size, focus, app)
 		}
 	}
 	return res
