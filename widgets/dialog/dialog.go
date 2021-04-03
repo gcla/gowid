@@ -377,20 +377,19 @@ func OpenExt(w IOpenExt, container gowid.ISettableComposite, width gowid.IWidget
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	var res bool
 	if w.IsOpen() {
-		handled := false
 		if evk, ok := ev.(*tcell.EventKey); ok {
 			switch {
 			case evk.Key() == tcell.KeyCtrlC || evk.Key() == tcell.KeyEsc:
 				if w.EscapeCloses() {
 					w.GetNoFunction().Changed(app, w)
-					handled = true
+					res = true
 				}
 			}
 		}
-		if !handled {
-			handled = gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
+		if !res {
+			res = gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
 		}
-		if !handled {
+		if !res {
 			if evk, ok := ev.(*tcell.EventKey); ok {
 				switch {
 				case evk.Key() == tcell.KeyRune && evk.Rune() == 'z':
@@ -400,12 +399,11 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 						} else {
 							w.Maximize(app)
 						}
-						handled = true
+						res = true
 					}
 				}
 			}
 		}
-		res = true
 	} else {
 		res = gowid.UserInputIfSelectable(w.SubWidget(), ev, size, focus, app)
 	}
