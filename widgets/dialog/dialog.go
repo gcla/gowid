@@ -81,7 +81,7 @@ type Options struct {
 
 type Button struct {
 	Msg    string
-	Action gowid.WidgetChangedFunction
+	Action gowid.IWidgetChangedCallback
 }
 
 var Quit, Exit, CloseD, Cancel Button
@@ -90,11 +90,11 @@ var OkCancel, ExitCancel, CloseOnly, NoButtons []Button
 func init() {
 	Quit = Button{
 		Msg:    "Quit",
-		Action: gowid.QuitFn,
+		Action: gowid.MakeWidgetCallback("quit", gowid.WidgetChangedFunction(gowid.QuitFn)),
 	}
 	Exit = Button{
 		Msg:    "Exit",
-		Action: gowid.QuitFn,
+		Action: gowid.MakeWidgetCallback("exit", gowid.WidgetChangedFunction(gowid.QuitFn)),
 	}
 	CloseD = Button{
 		Msg: "Close",
@@ -105,7 +105,7 @@ func init() {
 	OkCancel = []Button{
 		Button{
 			Msg:    "Ok",
-			Action: gowid.QuitFn,
+			Action: gowid.MakeWidgetCallback("okcancel", gowid.WidgetChangedFunction(gowid.QuitFn)),
 		},
 		Cancel,
 	}
@@ -166,7 +166,7 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 						res.Close(app)
 					}})
 			} else {
-				bw.OnClick(gowid.WidgetCallback{fmt.Sprintf("cb-%d", i), b.Action})
+				bw.OnClick(b.Action)
 			}
 			colsW = append(colsW,
 				&gowid.ContainerWidget{
