@@ -311,6 +311,19 @@ func NewViewPort(c *gowid.Canvas, offset, height int) *ViewPortCanvas {
 	return res
 }
 
+func (c *ViewPortCanvas) Duplicate() gowid.ICanvas {
+	res := &ViewPortCanvas{
+		Canvas: c.Canvas.Duplicate().(*gowid.Canvas),
+		Offset: c.Offset,
+		Height: c.Height,
+	}
+	return res
+}
+
+func (c *ViewPortCanvas) MergeUnder(c2 gowid.IMergeCanvas, leftOffset, topOffset int, bottomGetsCursor bool) {
+	c.Canvas.MergeUnder(c2, leftOffset, topOffset+c.Offset, bottomGetsCursor)
+}
+
 func (v *ViewPortCanvas) BoxRows() int {
 	return v.Height
 }
@@ -415,6 +428,33 @@ func (c *Canvas) Write(p []byte) (n int, err error) {
 	}
 
 	return len(p), nil
+}
+
+func (c *Canvas) Duplicate() gowid.ICanvas {
+	res := &Canvas{}
+	*res = *c
+	res.ViewPortCanvas = c.ViewPortCanvas.Duplicate().(*ViewPortCanvas)
+	res.savedstyles = make(map[string]bool)
+	for k, v := range c.savedstyles {
+		res.savedstyles[k] = v
+	}
+	res.styles = make(map[string]bool)
+	for k, v := range c.styles {
+		res.styles[k] = v
+	}
+	res.tabstops = make([]int, len(c.tabstops))
+	for i, v := range res.tabstops {
+		res.tabstops[i] = v
+	}
+	res.escbuf = make([]byte, len(c.escbuf))
+	for i, v := range res.escbuf {
+		res.escbuf[i] = v
+	}
+	res.utf8Buffer = make([]byte, len(c.utf8Buffer))
+	for i, v := range res.utf8Buffer {
+		res.utf8Buffer[i] = v
+	}
+	return res
 }
 
 func (c *Canvas) Reset() {
