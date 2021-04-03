@@ -142,13 +142,13 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 	buttonStyle, backgroundStyle, borderStyle := opt.ButtonStyle, opt.BackgroundStyle, opt.BorderStyle
 
 	if buttonStyle == nil {
-		buttonStyle = gowid.MakePaletteEntry(DefaultButtonText, DefaultButton)
+		buttonStyle = gowid.MakeStyledPaletteEntry(DefaultButtonText, DefaultButton, gowid.StyleNone)
 	}
 	if backgroundStyle == nil {
-		backgroundStyle = gowid.MakePaletteEntry(DefaultText, DefaultBackground)
+		backgroundStyle = gowid.MakeStyledPaletteEntry(DefaultText, DefaultBackground, gowid.StyleNone)
 	}
 	if borderStyle == nil {
-		borderStyle = gowid.MakePaletteEntry(DefaultButton, DefaultBackground)
+		borderStyle = gowid.MakeStyledPaletteEntry(DefaultButton, DefaultBackground, gowid.StyleNone)
 	}
 
 	colsW := make([]gowid.IContainerWidget, 0)
