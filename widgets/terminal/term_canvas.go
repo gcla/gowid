@@ -1227,7 +1227,7 @@ func (c *Canvas) Resize(width, height int) {
 	c.Offset -= height - c.Height
 	c.Height = height
 	if c.Height > c.Canvas.BoxRows() {
-		c.Height = c.Canvas.BoxRows()
+		c.Canvas.AppendBelow(gowid.NewCanvasOfSize(width, c.Height-c.Canvas.BoxRows()), false, false)
 	} else if c.Height < 1 {
 		c.Height = 1
 	}
