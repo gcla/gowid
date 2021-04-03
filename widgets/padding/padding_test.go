@@ -16,6 +16,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type renderRatioUpTo struct {
+	gowid.RenderWithRatio
+	max int
+}
+
+func (s renderRatioUpTo) MaxUnits() int {
+	return s.max
+}
+
+func ratioupto(w float64, max int) renderRatioUpTo {
+	return renderRatioUpTo{gowid.RenderWithRatio{R: w}, max}
+}
+
 func TestPadding1(t *testing.T) {
 	var w gowid.IWidget
 	var c gowid.ICanvas
@@ -23,6 +36,18 @@ func TestPadding1(t *testing.T) {
 	w = New(fill.New('x'), gowid.VAlignMiddle{}, gowid.RenderWithUnits{U: 2}, gowid.HAlignMiddle{}, gowid.RenderWithUnits{U: 2})
 	c = w.Render(gowid.RenderBox{C: 4, R: 4}, gowid.Focused, gwtest.D)
 	assert.Equal(t, "    \n xx \n xx \n    ", c.String())
+
+	w = New(fill.New('x'), gowid.VAlignMiddle{}, gowid.RenderWithUnits{U: 2}, gowid.HAlignMiddle{}, gowid.RenderWithRatio{R: 0.5})
+	c = w.Render(gowid.RenderBox{C: 4, R: 4}, gowid.Focused, gwtest.D)
+	assert.Equal(t, "    \n xx \n xx \n    ", c.String())
+
+	w = New(fill.New('x'), gowid.VAlignMiddle{}, ratioupto(0.5, 1), gowid.HAlignMiddle{}, gowid.RenderWithUnits{U: 2})
+	c = w.Render(gowid.RenderBox{C: 4, R: 4}, gowid.Focused, gwtest.D)
+	assert.Equal(t, "    \n xx \n    \n    ", c.String())
+
+	w = New(fill.New('x'), gowid.VAlignMiddle{}, gowid.RenderWithUnits{U: 2}, gowid.HAlignMiddle{}, ratioupto(0.5, 1))
+	c = w.Render(gowid.RenderBox{C: 4, R: 4}, gowid.Focused, gwtest.D)
+	assert.Equal(t, "    \n  x \n  x \n    ", c.String())
 
 	w = New(text.New("foo"), gowid.VAlignMiddle{}, gowid.RenderFixed{}, gowid.HAlignMiddle{}, gowid.RenderFixed{})
 	c = w.Render(gowid.RenderBox{C: 5, R: 3}, gowid.Focused, gwtest.D)
