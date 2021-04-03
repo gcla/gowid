@@ -19,20 +19,26 @@ import (
 
 //======================================================================
 
-// Min returns the smaller of two integer arguments.
-func Min(a, b int) int {
-	if a < b {
-		return a
+// Min returns the smaller of >1 integer arguments.
+func Min(i int, js ...int) int {
+	res := i
+	for _, j := range js {
+		if j < i {
+			res = j
+		}
 	}
-	return b
+	return res
 }
 
-// Min returns the larger of two integer arguments.
-func Max(a, b int) int {
-	if a > b {
-		return a
+// Min returns the larger of >1 integer arguments.
+func Max(i int, js ...int) int {
+	res := i
+	for _, j := range js {
+		if j > i {
+			res = j
+		}
 	}
-	return b
+	return res
 }
 
 // LimitTo is a one-liner that uses Min and Max to bound a value. Assumes
