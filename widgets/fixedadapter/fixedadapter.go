@@ -15,7 +15,7 @@ import (
 //======================================================================
 
 // Wraps a Fixed widget and turns it into a Box widget. If rendered in a Fixed
-// context, render as normal. If rendered in a Box context, render as a Flow
+// context, render as normal. If rendered in a Box context, render as a Fixed
 // widget, then either truncate or grow the resulting canvas to meet the
 // box size requirement.
 //
