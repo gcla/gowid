@@ -508,6 +508,7 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 				for _, b := range data[0:n] {
 					canvas.ProcessByte(b)
 				}
+				app.Redraw()
 			}))
 		}
 	}()
