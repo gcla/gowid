@@ -6,7 +6,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose:** The `asciigraph` widget renders line graphs. It uses the Go package `github.com/guptarohit/asciigraph`.
 
-![desc](https://drive.google.com/uc?export=view&id=19bDRxGYjtL00c1y6StrSZG63AM86Zm7C)
+![desc](https://user-images.githubusercontent.com/45680/118377433-35141900-b59b-11eb-818d-546dca83fd9e.png)
 
 **Examples:**
 
@@ -35,7 +35,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a clickable widget. The app can register callbacks to handle click events.
 
-![desc](https://drive.google.com/uc?export=view&id=19kVB4t4c0dLwLusRaGj6oNrTWhNr02u2)
+![desc](https://user-images.githubusercontent.com/45680/118377515-b1a6f780-b59b-11eb-9003-1c37c008db39.png)
 
 **Examples:**
 
@@ -57,7 +57,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a clickable widget with two states - selected and unselected. 
 
-![desc](https://drive.google.com/uc?export=view&id=1a7OBwLMzithJDwtylG1aLct0dLsyK2kn)
+![desc](https://user-images.githubusercontent.com/45680/118377546-e61ab380-b59b-11eb-8d6c-54b88608269a.png)
 
 **Examples:**
 
@@ -75,7 +75,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: arrange child widgets into vertical columns, with configurable column widths.
  
-![desc](https://drive.google.com/uc?export=view&id=1kZI6n7wvO16PFu_-nTJ8t24WNsyasdU7)
+![desc](https://user-images.githubusercontent.com/45680/118377593-25490480-b59c-11eb-845b-51baf1936faf.png)
 
 **Examples:**
  - `github.com/gcla/gowid/examples/gowid-widgets2` 
@@ -87,7 +87,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a modal dialog box that can be opened on top of another widget and will process the user input preferentially.
 
-![desc](https://drive.google.com/uc?export=view&id=1gq_HJLXdnr0KJ2gPK4nalJ56WyPuVkJh)
+![desc](https://user-images.githubusercontent.com/45680/118377633-66411900-b59c-11eb-9c6f-74f7adb4c102.png)
 
 **Examples:**
 
@@ -97,7 +97,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a configurable horizontal line that can be used to separate widgets arranged vertically. Can render using ascii or unicode.
 
-![desc](https://drive.google.com/uc?export=view&id=1YRHeQvckXIVPwPf-8sLAWd3ZuT_qTfuL)
+![desc](https://user-images.githubusercontent.com/45680/118377670-b1f3c280-b59c-11eb-9e5a-10d5689f527f.png)
 
 **Examples:**
 
@@ -109,7 +109,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a text area that will display text typed in by the user, with an optional caption/prefix.
 
-![desc](https://drive.google.com/uc?export=view&id=1Wr_nFrRawGN_FyGv8pqBEegSrwboe3Fm)
+![desc](https://user-images.githubusercontent.com/45680/118377720-f8492180-b59c-11eb-918d-833fdd4a3586.png)
 
 **Examples:**
 
@@ -121,7 +121,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a widget that when rendered returns a canvas full of the same user-supplied `Cell`.
 
-![desc](https://drive.google.com/uc?export=view&id=1_O4P4YlikeP6j0vK8A7VPCXwxcnOh9a4)
+![desc](https://user-images.githubusercontent.com/45680/118377735-1f9fee80-b59d-11eb-8aef-2e6ea2b3fc6c.png)
 
 **Examples:**
 
@@ -141,7 +141,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: surround a child widget with a configurable "frame", using unicode or ascii characters.
 
-![desc](https://drive.google.com/uc?export=view&id=1EUU4DZxPb6B4-u0XPN9rTgDxmHB9Z0lw)
+![desc](https://user-images.githubusercontent.com/45680/118377753-43633480-b59d-11eb-8fc2-4ca276376f26.png)
 
 **Examples:**
 
@@ -154,7 +154,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a way to arrange widgets in a grid, with configurable horizontal alignment.
 
-![desc](https://drive.google.com/uc?export=view&id=1ngHp3pzFzw7qSM8uQ-UmKiijIE4b_ULq)
+![desc](https://user-images.githubusercontent.com/45680/118377795-845b4900-b59d-11eb-82e5-b59e5b3d9619.png)
 
 **Examples:**
 
@@ -184,7 +184,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a flexible widget to navigate a vertical list of widgets rendered in flow mode.
 
-![desc](https://drive.google.com/uc?export=view&id=1uJ3Muv5zEu8HHK5DlBU9NEB_v9aHyemi)
+![desc](https://user-images.githubusercontent.com/45680/118377820-ad7bd980-b59d-11eb-8368-966567e626ff.png)
 
 **Examples:**
 
@@ -197,7 +197,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a drop-down menu supporting arbitrarily many sub-menus.
 
-![desc](https://drive.google.com/uc?export=view&id=1kLrAyPAbRi37VjxoVikSfjvrfxKiDVtQ)
+![desc](https://user-images.githubusercontent.com/45680/118377834-c4bac700-b59d-11eb-9884-fea03e543be8.png)
 
 **Examples:**
 
@@ -207,7 +207,7 @@ Gowid supplies a number of widgets out-of-the-box.
 
 **Purpose**: a widget to render one widget over another, only passing user input to the occluded widget if the input coordinates are outside the boundaries of the widget on top.
 
-![desc](https://drive.google.com/uc?export=view&id=1q8LcHhl-ZTA9AEIEWmgRGeRTnwjGyX4u)
+![desc](https://user-images.githubusercontent.com/45680/118377862-e2882c00-b59d-11eb-880b-5753239b92b0.png)
 
 **Examples:**
 
@@ -242,7 +242,7 @@ Then when `w` is rendered and is the focus widget, the app's palette will be loo
 
 **Purpose**: arrange child widgets into horizontal bands, with configurable heights.
 
-![desc](https://drive.google.com/uc?export=view&id=1Bnzhu-hHsr0Ok3hFP5Q0LlaQMTOPEepD)
+![desc](https://user-images.githubusercontent.com/45680/118377912-31ce5c80-b59e-11eb-84af-888729e98b25.png)
 
 **Examples:**
 
@@ -255,7 +255,7 @@ Then when `w` is rendered and is the focus widget, the app's palette will be loo
 
 **Purpose**: a simple progress monitor.
 
-![desc](https://drive.google.com/uc?export=view&id=15GK6PIlh_CswM6OQ0WNy2O6LC-EwMvhh)
+![desc](https://user-images.githubusercontent.com/45680/118377933-54f90c00-b59e-11eb-9589-200d829f2a80.png)
 
 **Examples:**
 
@@ -293,7 +293,7 @@ The `Text()` method provides an alternative label inside the rendered progress b
 
 **Purpose**: a widget that, as part of a group, can be in a selected state (if no others in the group are selected) or is otherwise unselected. 
 
-![desc](https://drive.google.com/uc?export=view&id=1cJa4m-DaDpbGwUWChASh-m9AE0sI6tk3)
+![desc](https://user-images.githubusercontent.com/45680/118377974-8a055e80-b59e-11eb-834e-94080b1ff53b.png)
 
 **Examples:**
 
@@ -316,7 +316,7 @@ The `Text()` method provides an alternative label inside the rendered progress b
 
 **Purpose**: adds a drop-shadow effect to a widget.
 
-![desc](https://drive.google.com/uc?export=view&id=1BtI1f0nbyxDUhgsgYaHhOqV3sQJwZnoy)
+![desc](https://user-images.githubusercontent.com/45680/118377988-a1dce280-b59e-11eb-9fcd-1bfe57e7206b.png)
 
 **Examples:**
 
@@ -337,6 +337,10 @@ The `Text()` method provides an alternative label inside the rendered progress b
 ## table
 
 **Purpose**: a widget to display tabular data in columns and rows.
+
+
+
+
 
 ![desc](https://drive.google.com/uc?export=view&id=1TZXfT_VVf5g2sNYi9hia2h36krcGUBI8)
 
@@ -396,7 +400,7 @@ table := table.New(model)
 
 **Purpose**: a VT-220 capable terminal emulator widget, heavily plagiarized from urwid's `vterm.py`. 
 
-![desc](https://drive.google.com/uc?export=view&id=1PNcMPwiybGBBu48Oot7_hm-uV55TJPTw)
+![desc](https://user-images.githubusercontent.com/45680/118378264-92f72f80-b5a0-11eb-99d0-0e51b4108870.png)
 
 **Examples:**
 
@@ -442,7 +446,7 @@ The terminal widget defers most of its state tracking to a specialized implement
 
 **Purpose**: a widget to render text, optionally styled and aligned.
 
-![desc](https://drive.google.com/uc?export=view&id=1XJaSfqljC5ullPj5M9O2ld4OGtP9Nvji)
+![desc](https://user-images.githubusercontent.com/45680/118378052-fed89880-b59e-11eb-8605-1ce32217b755.png)
 
 **Examples:**
 
@@ -492,7 +496,7 @@ type Options struct {
 
 **Purpose**: a generalization of the `list` widget to render a tree structure.
 
-![desc](https://drive.google.com/uc?export=view&id=1GDirTv-CeKH8CNBjSNrHG7WtE7ccU93P)
+![desc](https://user-images.githubusercontent.com/45680/118378280-b02bfe00-b5a0-11eb-92e7-4178f718f844.png)
 
 **Examples:**
 
@@ -513,7 +517,7 @@ type Options struct {
 
 **Purpose**: a vertical scroll bar with clickable arrows on either end.
 
-![desc](https://drive.google.com/uc?export=view&id=1dUArLQ1KuzwQmthpTs-HXwxkHvTOVCuT)
+![desc](https://user-images.githubusercontent.com/45680/118378077-292a5600-b59f-11eb-8dbb-c31fdf08337d.png)
 
 **Examples:**
 
