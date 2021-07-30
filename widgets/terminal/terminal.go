@@ -17,12 +17,12 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/creack/pty"
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gdamore/tcell"
 	"github.com/gdamore/tcell/terminfo"
 	"github.com/gdamore/tcell/terminfo/dynamic"
-	"github.com/kr/pty"
 	log "github.com/sirupsen/logrus"
 )
 
