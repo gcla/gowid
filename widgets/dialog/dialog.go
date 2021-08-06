@@ -42,6 +42,15 @@ type IWidget interface {
 	SetHeight(gowid.IWidgetDimension, gowid.IApp)
 }
 
+type ISwitchFocus interface {
+	IsSwitchFocus() bool
+	SwitchFocus(gowid.IApp)
+}
+
+type IModal interface {
+	IsModal() bool
+}
+
 type IMaximizer interface {
 	IsMaxed() bool
 	Maximize(gowid.IApp)
@@ -57,6 +66,7 @@ type Widget struct {
 	Options              Options
 	savedSubWidgetWidget gowid.IWidget
 	savedContainer       gowid.ISettableComposite
+	content              *pile.Widget
 	contentWrapper       *gowid.ContainerWidget
 	open                 bool
 	maxer                Maximizer
@@ -67,6 +77,8 @@ type Widget struct {
 var _ gowid.IWidget = (*Widget)(nil)
 var _ IWidget = (*Widget)(nil)
 var _ IMaximizer = (*Widget)(nil)
+var _ ISwitchFocus = (*Widget)(nil)
+var _ IModal = (*Widget)(nil)
 
 type Options struct {
 	Buttons         []Button
@@ -77,6 +89,8 @@ type Options struct {
 	BorderStyle     gowid.ICellStyler
 	FocusOnWidget   bool
 	NoFrame         bool
+	Modal           bool
+	TabToButtons    bool
 }
 
 type Button struct {
@@ -193,9 +207,6 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 	}
 
 	dialogContent := pile.NewFlow(pileW...)
-	if !opt.FocusOnWidget {
-		dialogContent.SetFocus(nil, len(pileW)-1)
-	}
 
 	var d gowid.IWidget = dialogContent
 	if !opt.NoFrame {
@@ -220,8 +231,13 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 	res = &Widget{
 		IWidget:        d,
 		contentWrapper: wrapper,
+		content:        dialogContent,
 		Options:        opt,
 		Callbacks:      gowid.NewCallbacks(),
+	}
+
+	if !opt.FocusOnWidget {
+		res.FocusOnButtons(nil)
 	}
 
 	return res
@@ -248,6 +264,23 @@ func (w *Widget) GetNoFunction() gowid.IWidgetChangedCallback {
 
 func (w *Widget) EscapeCloses() bool {
 	return !w.Options.NoEscapeClose
+}
+
+func (w *Widget) IsModal() bool {
+	return w.Options.Modal
+}
+
+func (w *Widget) SwitchFocus(app gowid.IApp) {
+	f := w.content.Focus()
+	if f == 0 {
+		w.FocusOnButtons(app)
+	} else {
+		w.FocusOnContent(app)
+	}
+}
+
+func (w *Widget) IsSwitchFocus() bool {
+	return w.Options.TabToButtons
 }
 
 func (w *Widget) IsOpen() bool {
@@ -339,6 +372,14 @@ func (w *Widget) SetContentWidth(d gowid.IWidgetDimension, app gowid.IApp) {
 	w.contentWrapper.D = d
 }
 
+func (w *Widget) FocusOnButtons(app gowid.IApp) {
+	w.content.SetFocus(app, len(w.content.SubWidgets())-1)
+}
+
+func (w *Widget) FocusOnContent(app gowid.IApp) {
+	w.content.SetFocus(app, 0)
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func Close(w IWidget, app gowid.IApp) {
@@ -401,7 +442,18 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 						}
 						res = true
 					}
+				case evk.Key() == tcell.KeyTab:
+					if w, ok := w.(ISwitchFocus); ok {
+						w.SwitchFocus(app)
+						res = true
+					}
 				}
+
+			}
+		}
+		if w, ok := w.(IModal); ok {
+			if w.IsModal() {
+				res = true
 			}
 		}
 	} else {
