@@ -23,7 +23,7 @@ import (
 func Min(i int, js ...int) int {
 	res := i
 	for _, j := range js {
-		if j < i {
+		if j < res {
 			res = j
 		}
 	}
@@ -34,7 +34,7 @@ func Min(i int, js ...int) int {
 func Max(i int, js ...int) int {
 	res := i
 	for _, j := range js {
-		if j > i {
+		if j > res {
 			res = j
 		}
 	}

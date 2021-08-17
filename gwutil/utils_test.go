@@ -44,6 +44,18 @@ func TestOpt1(t *testing.T) {
 	assert.Equal(t, "None", fmt.Sprintf("%v", opt1))
 }
 
+func TestMin1(t *testing.T) {
+	assert.Equal(t, 1, Min(1, 2, 3))
+	assert.Equal(t, 1, Min(2, 1, 3))
+	assert.Equal(t, 1, Min(2, 3, 1))
+}
+
+func TestMax1(t *testing.T) {
+	assert.Equal(t, 3, Max(1, 2, 3))
+	assert.Equal(t, 3, Max(2, 1, 3))
+	assert.Equal(t, 3, Max(2, 3, 1))
+}
+
 //======================================================================
 // Local Variables:
 // mode: Go
