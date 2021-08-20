@@ -11,6 +11,7 @@ import (
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/checkbox"
 	"github.com/gcla/gowid/widgets/fill"
+	"github.com/gcla/gowid/widgets/pile"
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gdamore/tcell"
 	log "github.com/sirupsen/logrus"
@@ -57,6 +58,37 @@ func TestVerticalPadding1(t *testing.T) {
 	w10 := New(fill.New('x'), gowid.VAlignTop{2}, gowid.RenderWithUnits{U: 4})
 	c10 := w10.Render(gowid.RenderBox{C: 3, R: 8}, gowid.Focused, gwtest.D)
 	assert.Equal(t, c10.String(), "   \n   \nxxx\nxxx\nxxx\nxxx\n   \n   ")
+
+	w11 := New(fill.New('x'), gowid.VAlignBottom{}, gowid.RenderWithUnits{U: 3})
+	c11 := w11.Render(gowid.RenderBox{C: 3, R: 4}, gowid.Focused, gwtest.D)
+	assert.Equal(t, c11.String(), "   \nxxx\nxxx\nxxx")
+
+	p1 := pile.New([]gowid.IContainerWidget{
+		&gowid.ContainerWidget{
+			IWidget: text.New("111"),
+			D:       gowid.RenderFixed{},
+		},
+		&gowid.ContainerWidget{
+			IWidget: text.New("222"),
+			D:       gowid.RenderFixed{},
+		},
+		&gowid.ContainerWidget{
+			IWidget: text.New("333"),
+			D:       gowid.RenderFixed{},
+		},
+		&gowid.ContainerWidget{
+			IWidget: text.New("444"),
+			D:       gowid.RenderFixed{},
+		},
+	})
+
+	w12 := New(p1, gowid.VAlignBottom{}, gowid.RenderWithUnits{U: 3})
+	c12 := w12.Render(gowid.RenderBox{C: 3, R: 4}, gowid.Focused, gwtest.D)
+	assert.Equal(t, c12.String(), "   \n111\n222\n333")
+
+	w13 := New(p1, gowid.VAlignBottom{}, gowid.RenderWithUnits{U: 3})
+	c13 := w13.Render(gowid.RenderBox{C: 3, R: 2}, gowid.Focused, gwtest.D)
+	assert.Equal(t, c13.String(), "111\n222")
 
 	for _, w := range []gowid.IWidget{w1, w2, w3, w4, w5, w6, w7, w8, w9, w10} {
 		gwtest.RenderBoxManyTimes(t, w, 0, 10, 0, 10)
