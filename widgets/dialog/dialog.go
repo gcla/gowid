@@ -91,6 +91,7 @@ type Options struct {
 	NoFrame         bool
 	Modal           bool
 	TabToButtons    bool
+	StartIdx        int
 }
 
 type Button struct {
@@ -196,7 +197,9 @@ func New(content gowid.IWidget, opts ...Options) *Widget {
 	}
 
 	if len(colsW) > 0 {
-		cols := columns.New(colsW)
+		cols := columns.New(colsW, columns.Options{
+			StartColumn: opt.StartIdx * 2,
+		})
 		pileW = append(pileW,
 			styled.New(
 				divider.NewUnicodeAlt(),
