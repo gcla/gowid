@@ -18,7 +18,6 @@ import (
 // Widget can be used to display text on the screen, with words broken
 // cleanly as the output width changes.
 type Widget struct {
-	text     string
 	words    []string
 	lastcols int
 	lastrows int
@@ -30,8 +29,13 @@ var _ gowid.IWidget = (*Widget)(nil)
 
 func New(text string) *Widget {
 	return &Widget{
-		text:  text,
 		words: strings.Fields(text),
+	}
+}
+
+func NewWithWords(words ...string) *Widget {
+	return &Widget{
+		words: words,
 	}
 }
 
