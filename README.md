@@ -149,7 +149,7 @@ Gowid depends on these great open-source packages:
 - [tcell](https://github.com/gdamore/tcell) - a cell based view for text terminals, like xterm, inspired by termbox
 - [asciigraph](https://github.com/guptarohit/asciigraph) - lightweight ASCII line-graphs for Go
 - [logrus](https://github.com/sirupsen/logrus) - structured pluggable logging for Go
-- [testify](github.com/stretchr/testify) - tools for testifying that your code will behave as you intend
+- [testify](https://github.com/stretchr/testify) - tools for testifying that your code will behave as you intend
 
 ## Contact
 
