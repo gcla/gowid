@@ -20,9 +20,9 @@ import (
 	"github.com/creack/pty"
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
-	"github.com/gdamore/tcell/terminfo"
-	"github.com/gdamore/tcell/terminfo/dynamic"
+	tcell "github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2/terminfo"
+	"github.com/gdamore/tcell/v2/terminfo/dynamic"
 	log "github.com/sirupsen/logrus"
 )
 

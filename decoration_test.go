@@ -6,7 +6,7 @@ package gowid
 import (
 	"testing"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +18,7 @@ func TestColor1(t *testing.T) {
 	i2 := i2a.ToTCell()
 	// See https://jonasjacek.github.io/colors/ - we are skipping
 	// colors 0-21 inclusive
-	if i2 != 232 {
+	if i2 != tcell.Color232 {
 		t.Errorf("Failed")
 	}
 }
@@ -28,7 +28,7 @@ func TestColor1b(t *testing.T) {
 	c, _ := MakeRGBColorExtSafe(0, 0, 0)
 	i2a, _ := c.ToTCellColor(Mode256Colors)
 	i2 := i2a.ToTCell()
-	if i2 != 0 {
+	if i2 != tcell.ColorValid {
 		t.Errorf("Failed")
 	}
 }
@@ -37,7 +37,7 @@ func TestColor2(t *testing.T) {
 	c := NewUrwidColor("dark red")
 	i2a, _ := c.ToTCellColor(Mode256Colors)
 	i2 := i2a.ToTCell()
-	if i2 != 2-1 {
+	if i2 != tcell.ColorMaroon {
 		t.Errorf("Failed")
 	}
 }
@@ -61,7 +61,7 @@ func TestColor5(t *testing.T) {
 	if c.Val != 100 {
 		t.Errorf("Failed")
 	}
-	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != 232 {
+	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != tcell.Color232 {
 		t.Errorf("Failed")
 	}
 }
@@ -71,7 +71,7 @@ func TestColor6(t *testing.T) {
 	if c.Val != 3 {
 		t.Errorf("Failed")
 	}
-	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != 233 {
+	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != tcell.Color233 {
 		t.Errorf("Failed")
 	}
 }
@@ -81,7 +81,7 @@ func TestColor7(t *testing.T) {
 	if c.Val != 0 {
 		t.Errorf("Failed")
 	}
-	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != 17 {
+	if v, _ := c.ToTCellColor(Mode256Colors); v.ToTCell() != tcell.Color17 {
 		t.Errorf("Failed")
 	}
 }
@@ -134,13 +134,13 @@ func TestStringColor3(t *testing.T) {
 func TestGray881(t *testing.T) {
 	c := MakeGrayColor("g100")
 	v, _ := c.ToTCellColor(Mode88Colors)
-	assert.Equal(t, v.ToTCell(), tcell.Color(80))
+	assert.Equal(t, v.ToTCell(), tcell.Color80)
 }
 
 func TestDefault1(t *testing.T) {
 	c, _ := MakeColorSafe("default")
 	v, _ := c.ToTCellColor(Mode256Colors)
-	assert.Equal(t, v.ToTCell(), tcell.Color(-1))
+	assert.Equal(t, v.ToTCell(), tcell.ColorDefault)
 }
 
 func TestTCell1(t *testing.T) {
@@ -150,7 +150,7 @@ func TestTCell1(t *testing.T) {
 }
 
 func TestTCell2(t *testing.T) {
-	c, _ := MakeTCellColorSafe(tcell.ColorMaroon)
+	c := MakeTCellColorExt(tcell.ColorMaroon)
 	v, _ := c.ToTCellColor(Mode256Colors)
 	assert.Equal(t, v.ToTCell(), tcell.ColorMaroon)
 }

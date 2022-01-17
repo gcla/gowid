@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/gcla/gowid"
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

@@ -16,7 +16,7 @@ import (
 	"github.com/gcla/gowid/widgets/isselected"
 	"github.com/gcla/gowid/widgets/list"
 	"github.com/gcla/gowid/widgets/pile"
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	lru "github.com/hashicorp/golang-lru"
 )
 

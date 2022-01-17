@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -825,7 +825,7 @@ func (a *App) initScreen() error {
 		defBg = IColorToTCell(bgCol, defBg, a.GetColorMode())
 		defSt = defSt.MergeUnder(style)
 	}
-	defStyle := tcell.Style(defSt.OnOff).Background(defBg.ToTCell()).Foreground(defFg.ToTCell())
+	defStyle := tcell.Style{}.Attributes(defSt.OnOff).Background(defBg.ToTCell()).Foreground(defFg.ToTCell())
 	// Ask TCell to set the screen's default style according to the palette's "default"
 	// config, if one is provided. This might make every screen cell underlined, for example,
 	// in the absence of overriding styling from widgets.

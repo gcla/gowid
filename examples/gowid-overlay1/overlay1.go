@@ -11,7 +11,7 @@ import (
 	"github.com/gcla/gowid/widgets/fill"
 	"github.com/gcla/gowid/widgets/overlay"
 	"github.com/gcla/gowid/widgets/styled"
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	log "github.com/sirupsen/logrus"
 )
 

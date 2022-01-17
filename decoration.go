@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/pkg/errors"
@@ -627,263 +627,263 @@ var (
 	}
 
 	term256 = []TCellColor{
-		MakeTCellColorExt(tcell.Color(0)),
-		MakeTCellColorExt(tcell.Color(1)),
-		MakeTCellColorExt(tcell.Color(2)),
-		MakeTCellColorExt(tcell.Color(3)),
-		MakeTCellColorExt(tcell.Color(4)),
-		MakeTCellColorExt(tcell.Color(5)),
-		MakeTCellColorExt(tcell.Color(6)),
-		MakeTCellColorExt(tcell.Color(7)),
-		MakeTCellColorExt(tcell.Color(8)),
-		MakeTCellColorExt(tcell.Color(9)),
-		MakeTCellColorExt(tcell.Color(10)),
-		MakeTCellColorExt(tcell.Color(11)),
-		MakeTCellColorExt(tcell.Color(12)),
-		MakeTCellColorExt(tcell.Color(13)),
-		MakeTCellColorExt(tcell.Color(14)),
-		MakeTCellColorExt(tcell.Color(15)),
+		MakeTCellColorExt(tcell.ColorBlack),
+		MakeTCellColorExt(tcell.ColorMaroon),
+		MakeTCellColorExt(tcell.ColorGreen),
+		MakeTCellColorExt(tcell.ColorOlive),
+		MakeTCellColorExt(tcell.ColorNavy),
+		MakeTCellColorExt(tcell.ColorPurple),
+		MakeTCellColorExt(tcell.ColorTeal),
+		MakeTCellColorExt(tcell.ColorSilver),
+		MakeTCellColorExt(tcell.ColorGray),
+		MakeTCellColorExt(tcell.ColorRed),
+		MakeTCellColorExt(tcell.ColorLime),
+		MakeTCellColorExt(tcell.ColorYellow),
+		MakeTCellColorExt(tcell.ColorBlue),
+		MakeTCellColorExt(tcell.ColorFuchsia),
+		MakeTCellColorExt(tcell.ColorAqua),
+		MakeTCellColorExt(tcell.ColorWhite),
 		//
-		MakeTCellColorExt(tcell.Color(16)),
-		MakeTCellColorExt(tcell.Color(17)),
-		MakeTCellColorExt(tcell.Color(18)),
-		MakeTCellColorExt(tcell.Color(19)),
-		MakeTCellColorExt(tcell.Color(20)),
-		MakeTCellColorExt(tcell.Color(21)),
-		MakeTCellColorExt(tcell.Color(22)),
-		MakeTCellColorExt(tcell.Color(23)),
-		MakeTCellColorExt(tcell.Color(24)),
-		MakeTCellColorExt(tcell.Color(25)),
-		MakeTCellColorExt(tcell.Color(26)),
-		MakeTCellColorExt(tcell.Color(27)),
-		MakeTCellColorExt(tcell.Color(28)),
-		MakeTCellColorExt(tcell.Color(29)),
-		MakeTCellColorExt(tcell.Color(30)),
-		MakeTCellColorExt(tcell.Color(31)),
-		MakeTCellColorExt(tcell.Color(32)),
-		MakeTCellColorExt(tcell.Color(33)),
-		MakeTCellColorExt(tcell.Color(34)),
-		MakeTCellColorExt(tcell.Color(35)),
-		MakeTCellColorExt(tcell.Color(36)),
-		MakeTCellColorExt(tcell.Color(37)),
-		MakeTCellColorExt(tcell.Color(38)),
-		MakeTCellColorExt(tcell.Color(39)),
-		MakeTCellColorExt(tcell.Color(40)),
-		MakeTCellColorExt(tcell.Color(41)),
-		MakeTCellColorExt(tcell.Color(42)),
-		MakeTCellColorExt(tcell.Color(43)),
-		MakeTCellColorExt(tcell.Color(44)),
-		MakeTCellColorExt(tcell.Color(45)),
-		MakeTCellColorExt(tcell.Color(46)),
-		MakeTCellColorExt(tcell.Color(47)),
-		MakeTCellColorExt(tcell.Color(48)),
-		MakeTCellColorExt(tcell.Color(49)),
-		MakeTCellColorExt(tcell.Color(50)),
-		MakeTCellColorExt(tcell.Color(51)),
-		MakeTCellColorExt(tcell.Color(52)),
-		MakeTCellColorExt(tcell.Color(53)),
-		MakeTCellColorExt(tcell.Color(54)),
-		MakeTCellColorExt(tcell.Color(55)),
-		MakeTCellColorExt(tcell.Color(56)),
-		MakeTCellColorExt(tcell.Color(57)),
-		MakeTCellColorExt(tcell.Color(58)),
-		MakeTCellColorExt(tcell.Color(59)),
-		MakeTCellColorExt(tcell.Color(60)),
-		MakeTCellColorExt(tcell.Color(61)),
-		MakeTCellColorExt(tcell.Color(62)),
-		MakeTCellColorExt(tcell.Color(63)),
-		MakeTCellColorExt(tcell.Color(64)),
-		MakeTCellColorExt(tcell.Color(65)),
-		MakeTCellColorExt(tcell.Color(66)),
-		MakeTCellColorExt(tcell.Color(67)),
-		MakeTCellColorExt(tcell.Color(68)),
-		MakeTCellColorExt(tcell.Color(69)),
-		MakeTCellColorExt(tcell.Color(70)),
-		MakeTCellColorExt(tcell.Color(71)),
-		MakeTCellColorExt(tcell.Color(72)),
-		MakeTCellColorExt(tcell.Color(73)),
-		MakeTCellColorExt(tcell.Color(74)),
-		MakeTCellColorExt(tcell.Color(75)),
-		MakeTCellColorExt(tcell.Color(76)),
-		MakeTCellColorExt(tcell.Color(77)),
-		MakeTCellColorExt(tcell.Color(78)),
-		MakeTCellColorExt(tcell.Color(79)),
-		MakeTCellColorExt(tcell.Color(80)),
-		MakeTCellColorExt(tcell.Color(81)),
-		MakeTCellColorExt(tcell.Color(82)),
-		MakeTCellColorExt(tcell.Color(83)),
-		MakeTCellColorExt(tcell.Color(84)),
-		MakeTCellColorExt(tcell.Color(85)),
-		MakeTCellColorExt(tcell.Color(86)),
-		MakeTCellColorExt(tcell.Color(87)),
-		MakeTCellColorExt(tcell.Color(88)),
-		MakeTCellColorExt(tcell.Color(89)),
-		MakeTCellColorExt(tcell.Color(90)),
-		MakeTCellColorExt(tcell.Color(91)),
-		MakeTCellColorExt(tcell.Color(92)),
-		MakeTCellColorExt(tcell.Color(93)),
-		MakeTCellColorExt(tcell.Color(94)),
-		MakeTCellColorExt(tcell.Color(95)),
-		MakeTCellColorExt(tcell.Color(96)),
-		MakeTCellColorExt(tcell.Color(97)),
-		MakeTCellColorExt(tcell.Color(98)),
-		MakeTCellColorExt(tcell.Color(99)),
-		MakeTCellColorExt(tcell.Color(100)),
-		MakeTCellColorExt(tcell.Color(101)),
-		MakeTCellColorExt(tcell.Color(102)),
-		MakeTCellColorExt(tcell.Color(103)),
-		MakeTCellColorExt(tcell.Color(104)),
-		MakeTCellColorExt(tcell.Color(105)),
-		MakeTCellColorExt(tcell.Color(106)),
-		MakeTCellColorExt(tcell.Color(107)),
-		MakeTCellColorExt(tcell.Color(108)),
-		MakeTCellColorExt(tcell.Color(109)),
-		MakeTCellColorExt(tcell.Color(110)),
-		MakeTCellColorExt(tcell.Color(111)),
-		MakeTCellColorExt(tcell.Color(112)),
-		MakeTCellColorExt(tcell.Color(113)),
-		MakeTCellColorExt(tcell.Color(114)),
-		MakeTCellColorExt(tcell.Color(115)),
-		MakeTCellColorExt(tcell.Color(116)),
-		MakeTCellColorExt(tcell.Color(117)),
-		MakeTCellColorExt(tcell.Color(118)),
-		MakeTCellColorExt(tcell.Color(119)),
-		MakeTCellColorExt(tcell.Color(120)),
-		MakeTCellColorExt(tcell.Color(121)),
-		MakeTCellColorExt(tcell.Color(122)),
-		MakeTCellColorExt(tcell.Color(123)),
-		MakeTCellColorExt(tcell.Color(124)),
-		MakeTCellColorExt(tcell.Color(125)),
-		MakeTCellColorExt(tcell.Color(126)),
-		MakeTCellColorExt(tcell.Color(127)),
-		MakeTCellColorExt(tcell.Color(128)),
-		MakeTCellColorExt(tcell.Color(129)),
-		MakeTCellColorExt(tcell.Color(130)),
-		MakeTCellColorExt(tcell.Color(131)),
-		MakeTCellColorExt(tcell.Color(132)),
-		MakeTCellColorExt(tcell.Color(133)),
-		MakeTCellColorExt(tcell.Color(134)),
-		MakeTCellColorExt(tcell.Color(135)),
-		MakeTCellColorExt(tcell.Color(136)),
-		MakeTCellColorExt(tcell.Color(137)),
-		MakeTCellColorExt(tcell.Color(138)),
-		MakeTCellColorExt(tcell.Color(139)),
-		MakeTCellColorExt(tcell.Color(140)),
-		MakeTCellColorExt(tcell.Color(141)),
-		MakeTCellColorExt(tcell.Color(142)),
-		MakeTCellColorExt(tcell.Color(143)),
-		MakeTCellColorExt(tcell.Color(144)),
-		MakeTCellColorExt(tcell.Color(145)),
-		MakeTCellColorExt(tcell.Color(146)),
-		MakeTCellColorExt(tcell.Color(147)),
-		MakeTCellColorExt(tcell.Color(148)),
-		MakeTCellColorExt(tcell.Color(149)),
-		MakeTCellColorExt(tcell.Color(150)),
-		MakeTCellColorExt(tcell.Color(151)),
-		MakeTCellColorExt(tcell.Color(152)),
-		MakeTCellColorExt(tcell.Color(153)),
-		MakeTCellColorExt(tcell.Color(154)),
-		MakeTCellColorExt(tcell.Color(155)),
-		MakeTCellColorExt(tcell.Color(156)),
-		MakeTCellColorExt(tcell.Color(157)),
-		MakeTCellColorExt(tcell.Color(158)),
-		MakeTCellColorExt(tcell.Color(159)),
-		MakeTCellColorExt(tcell.Color(160)),
-		MakeTCellColorExt(tcell.Color(161)),
-		MakeTCellColorExt(tcell.Color(162)),
-		MakeTCellColorExt(tcell.Color(163)),
-		MakeTCellColorExt(tcell.Color(164)),
-		MakeTCellColorExt(tcell.Color(165)),
-		MakeTCellColorExt(tcell.Color(166)),
-		MakeTCellColorExt(tcell.Color(167)),
-		MakeTCellColorExt(tcell.Color(168)),
-		MakeTCellColorExt(tcell.Color(169)),
-		MakeTCellColorExt(tcell.Color(170)),
-		MakeTCellColorExt(tcell.Color(171)),
-		MakeTCellColorExt(tcell.Color(172)),
-		MakeTCellColorExt(tcell.Color(173)),
-		MakeTCellColorExt(tcell.Color(174)),
-		MakeTCellColorExt(tcell.Color(175)),
-		MakeTCellColorExt(tcell.Color(176)),
-		MakeTCellColorExt(tcell.Color(177)),
-		MakeTCellColorExt(tcell.Color(178)),
-		MakeTCellColorExt(tcell.Color(179)),
-		MakeTCellColorExt(tcell.Color(180)),
-		MakeTCellColorExt(tcell.Color(181)),
-		MakeTCellColorExt(tcell.Color(182)),
-		MakeTCellColorExt(tcell.Color(183)),
-		MakeTCellColorExt(tcell.Color(184)),
-		MakeTCellColorExt(tcell.Color(185)),
-		MakeTCellColorExt(tcell.Color(186)),
-		MakeTCellColorExt(tcell.Color(187)),
-		MakeTCellColorExt(tcell.Color(188)),
-		MakeTCellColorExt(tcell.Color(189)),
-		MakeTCellColorExt(tcell.Color(190)),
-		MakeTCellColorExt(tcell.Color(191)),
-		MakeTCellColorExt(tcell.Color(192)),
-		MakeTCellColorExt(tcell.Color(193)),
-		MakeTCellColorExt(tcell.Color(194)),
-		MakeTCellColorExt(tcell.Color(195)),
-		MakeTCellColorExt(tcell.Color(196)),
-		MakeTCellColorExt(tcell.Color(197)),
-		MakeTCellColorExt(tcell.Color(198)),
-		MakeTCellColorExt(tcell.Color(199)),
-		MakeTCellColorExt(tcell.Color(200)),
-		MakeTCellColorExt(tcell.Color(201)),
-		MakeTCellColorExt(tcell.Color(202)),
-		MakeTCellColorExt(tcell.Color(203)),
-		MakeTCellColorExt(tcell.Color(204)),
-		MakeTCellColorExt(tcell.Color(205)),
-		MakeTCellColorExt(tcell.Color(206)),
-		MakeTCellColorExt(tcell.Color(207)),
-		MakeTCellColorExt(tcell.Color(208)),
-		MakeTCellColorExt(tcell.Color(209)),
-		MakeTCellColorExt(tcell.Color(210)),
-		MakeTCellColorExt(tcell.Color(211)),
-		MakeTCellColorExt(tcell.Color(212)),
-		MakeTCellColorExt(tcell.Color(213)),
-		MakeTCellColorExt(tcell.Color(214)),
-		MakeTCellColorExt(tcell.Color(215)),
-		MakeTCellColorExt(tcell.Color(216)),
-		MakeTCellColorExt(tcell.Color(217)),
-		MakeTCellColorExt(tcell.Color(218)),
-		MakeTCellColorExt(tcell.Color(219)),
-		MakeTCellColorExt(tcell.Color(220)),
-		MakeTCellColorExt(tcell.Color(221)),
-		MakeTCellColorExt(tcell.Color(222)),
-		MakeTCellColorExt(tcell.Color(223)),
-		MakeTCellColorExt(tcell.Color(224)),
-		MakeTCellColorExt(tcell.Color(225)),
-		MakeTCellColorExt(tcell.Color(226)),
-		MakeTCellColorExt(tcell.Color(227)),
-		MakeTCellColorExt(tcell.Color(228)),
-		MakeTCellColorExt(tcell.Color(229)),
-		MakeTCellColorExt(tcell.Color(230)),
-		MakeTCellColorExt(tcell.Color(231)),
-		MakeTCellColorExt(tcell.Color(232)),
-		MakeTCellColorExt(tcell.Color(233)),
-		MakeTCellColorExt(tcell.Color(234)),
-		MakeTCellColorExt(tcell.Color(235)),
-		MakeTCellColorExt(tcell.Color(236)),
-		MakeTCellColorExt(tcell.Color(237)),
-		MakeTCellColorExt(tcell.Color(238)),
-		MakeTCellColorExt(tcell.Color(239)),
-		MakeTCellColorExt(tcell.Color(240)),
-		MakeTCellColorExt(tcell.Color(241)),
-		MakeTCellColorExt(tcell.Color(242)),
-		MakeTCellColorExt(tcell.Color(243)),
-		MakeTCellColorExt(tcell.Color(244)),
-		MakeTCellColorExt(tcell.Color(245)),
-		MakeTCellColorExt(tcell.Color(246)),
-		MakeTCellColorExt(tcell.Color(247)),
-		MakeTCellColorExt(tcell.Color(248)),
-		MakeTCellColorExt(tcell.Color(249)),
-		MakeTCellColorExt(tcell.Color(250)),
-		MakeTCellColorExt(tcell.Color(251)),
-		MakeTCellColorExt(tcell.Color(252)),
-		MakeTCellColorExt(tcell.Color(253)),
-		MakeTCellColorExt(tcell.Color(254)),
-		MakeTCellColorExt(tcell.Color(255)),
+		MakeTCellColorExt(tcell.Color16),
+		MakeTCellColorExt(tcell.Color17),
+		MakeTCellColorExt(tcell.Color18),
+		MakeTCellColorExt(tcell.Color19),
+		MakeTCellColorExt(tcell.Color20),
+		MakeTCellColorExt(tcell.Color21),
+		MakeTCellColorExt(tcell.Color22),
+		MakeTCellColorExt(tcell.Color23),
+		MakeTCellColorExt(tcell.Color24),
+		MakeTCellColorExt(tcell.Color25),
+		MakeTCellColorExt(tcell.Color26),
+		MakeTCellColorExt(tcell.Color27),
+		MakeTCellColorExt(tcell.Color28),
+		MakeTCellColorExt(tcell.Color29),
+		MakeTCellColorExt(tcell.Color30),
+		MakeTCellColorExt(tcell.Color31),
+		MakeTCellColorExt(tcell.Color32),
+		MakeTCellColorExt(tcell.Color33),
+		MakeTCellColorExt(tcell.Color34),
+		MakeTCellColorExt(tcell.Color35),
+		MakeTCellColorExt(tcell.Color36),
+		MakeTCellColorExt(tcell.Color37),
+		MakeTCellColorExt(tcell.Color38),
+		MakeTCellColorExt(tcell.Color39),
+		MakeTCellColorExt(tcell.Color40),
+		MakeTCellColorExt(tcell.Color41),
+		MakeTCellColorExt(tcell.Color42),
+		MakeTCellColorExt(tcell.Color43),
+		MakeTCellColorExt(tcell.Color44),
+		MakeTCellColorExt(tcell.Color45),
+		MakeTCellColorExt(tcell.Color46),
+		MakeTCellColorExt(tcell.Color47),
+		MakeTCellColorExt(tcell.Color48),
+		MakeTCellColorExt(tcell.Color49),
+		MakeTCellColorExt(tcell.Color50),
+		MakeTCellColorExt(tcell.Color51),
+		MakeTCellColorExt(tcell.Color52),
+		MakeTCellColorExt(tcell.Color53),
+		MakeTCellColorExt(tcell.Color54),
+		MakeTCellColorExt(tcell.Color55),
+		MakeTCellColorExt(tcell.Color56),
+		MakeTCellColorExt(tcell.Color57),
+		MakeTCellColorExt(tcell.Color58),
+		MakeTCellColorExt(tcell.Color59),
+		MakeTCellColorExt(tcell.Color60),
+		MakeTCellColorExt(tcell.Color61),
+		MakeTCellColorExt(tcell.Color62),
+		MakeTCellColorExt(tcell.Color63),
+		MakeTCellColorExt(tcell.Color64),
+		MakeTCellColorExt(tcell.Color65),
+		MakeTCellColorExt(tcell.Color66),
+		MakeTCellColorExt(tcell.Color67),
+		MakeTCellColorExt(tcell.Color68),
+		MakeTCellColorExt(tcell.Color69),
+		MakeTCellColorExt(tcell.Color70),
+		MakeTCellColorExt(tcell.Color71),
+		MakeTCellColorExt(tcell.Color72),
+		MakeTCellColorExt(tcell.Color73),
+		MakeTCellColorExt(tcell.Color74),
+		MakeTCellColorExt(tcell.Color75),
+		MakeTCellColorExt(tcell.Color76),
+		MakeTCellColorExt(tcell.Color77),
+		MakeTCellColorExt(tcell.Color78),
+		MakeTCellColorExt(tcell.Color79),
+		MakeTCellColorExt(tcell.Color80),
+		MakeTCellColorExt(tcell.Color81),
+		MakeTCellColorExt(tcell.Color82),
+		MakeTCellColorExt(tcell.Color83),
+		MakeTCellColorExt(tcell.Color84),
+		MakeTCellColorExt(tcell.Color85),
+		MakeTCellColorExt(tcell.Color86),
+		MakeTCellColorExt(tcell.Color87),
+		MakeTCellColorExt(tcell.Color88),
+		MakeTCellColorExt(tcell.Color89),
+		MakeTCellColorExt(tcell.Color90),
+		MakeTCellColorExt(tcell.Color91),
+		MakeTCellColorExt(tcell.Color92),
+		MakeTCellColorExt(tcell.Color93),
+		MakeTCellColorExt(tcell.Color94),
+		MakeTCellColorExt(tcell.Color95),
+		MakeTCellColorExt(tcell.Color96),
+		MakeTCellColorExt(tcell.Color97),
+		MakeTCellColorExt(tcell.Color98),
+		MakeTCellColorExt(tcell.Color99),
+		MakeTCellColorExt(tcell.Color100),
+		MakeTCellColorExt(tcell.Color101),
+		MakeTCellColorExt(tcell.Color102),
+		MakeTCellColorExt(tcell.Color103),
+		MakeTCellColorExt(tcell.Color104),
+		MakeTCellColorExt(tcell.Color105),
+		MakeTCellColorExt(tcell.Color106),
+		MakeTCellColorExt(tcell.Color107),
+		MakeTCellColorExt(tcell.Color108),
+		MakeTCellColorExt(tcell.Color109),
+		MakeTCellColorExt(tcell.Color110),
+		MakeTCellColorExt(tcell.Color111),
+		MakeTCellColorExt(tcell.Color112),
+		MakeTCellColorExt(tcell.Color113),
+		MakeTCellColorExt(tcell.Color114),
+		MakeTCellColorExt(tcell.Color115),
+		MakeTCellColorExt(tcell.Color116),
+		MakeTCellColorExt(tcell.Color117),
+		MakeTCellColorExt(tcell.Color118),
+		MakeTCellColorExt(tcell.Color119),
+		MakeTCellColorExt(tcell.Color120),
+		MakeTCellColorExt(tcell.Color121),
+		MakeTCellColorExt(tcell.Color122),
+		MakeTCellColorExt(tcell.Color123),
+		MakeTCellColorExt(tcell.Color124),
+		MakeTCellColorExt(tcell.Color125),
+		MakeTCellColorExt(tcell.Color126),
+		MakeTCellColorExt(tcell.Color127),
+		MakeTCellColorExt(tcell.Color128),
+		MakeTCellColorExt(tcell.Color129),
+		MakeTCellColorExt(tcell.Color130),
+		MakeTCellColorExt(tcell.Color131),
+		MakeTCellColorExt(tcell.Color132),
+		MakeTCellColorExt(tcell.Color133),
+		MakeTCellColorExt(tcell.Color134),
+		MakeTCellColorExt(tcell.Color135),
+		MakeTCellColorExt(tcell.Color136),
+		MakeTCellColorExt(tcell.Color137),
+		MakeTCellColorExt(tcell.Color138),
+		MakeTCellColorExt(tcell.Color139),
+		MakeTCellColorExt(tcell.Color140),
+		MakeTCellColorExt(tcell.Color141),
+		MakeTCellColorExt(tcell.Color142),
+		MakeTCellColorExt(tcell.Color143),
+		MakeTCellColorExt(tcell.Color144),
+		MakeTCellColorExt(tcell.Color145),
+		MakeTCellColorExt(tcell.Color146),
+		MakeTCellColorExt(tcell.Color147),
+		MakeTCellColorExt(tcell.Color148),
+		MakeTCellColorExt(tcell.Color149),
+		MakeTCellColorExt(tcell.Color150),
+		MakeTCellColorExt(tcell.Color151),
+		MakeTCellColorExt(tcell.Color152),
+		MakeTCellColorExt(tcell.Color153),
+		MakeTCellColorExt(tcell.Color154),
+		MakeTCellColorExt(tcell.Color155),
+		MakeTCellColorExt(tcell.Color156),
+		MakeTCellColorExt(tcell.Color157),
+		MakeTCellColorExt(tcell.Color158),
+		MakeTCellColorExt(tcell.Color159),
+		MakeTCellColorExt(tcell.Color160),
+		MakeTCellColorExt(tcell.Color161),
+		MakeTCellColorExt(tcell.Color162),
+		MakeTCellColorExt(tcell.Color163),
+		MakeTCellColorExt(tcell.Color164),
+		MakeTCellColorExt(tcell.Color165),
+		MakeTCellColorExt(tcell.Color166),
+		MakeTCellColorExt(tcell.Color167),
+		MakeTCellColorExt(tcell.Color168),
+		MakeTCellColorExt(tcell.Color169),
+		MakeTCellColorExt(tcell.Color170),
+		MakeTCellColorExt(tcell.Color171),
+		MakeTCellColorExt(tcell.Color172),
+		MakeTCellColorExt(tcell.Color173),
+		MakeTCellColorExt(tcell.Color174),
+		MakeTCellColorExt(tcell.Color175),
+		MakeTCellColorExt(tcell.Color176),
+		MakeTCellColorExt(tcell.Color177),
+		MakeTCellColorExt(tcell.Color178),
+		MakeTCellColorExt(tcell.Color179),
+		MakeTCellColorExt(tcell.Color180),
+		MakeTCellColorExt(tcell.Color181),
+		MakeTCellColorExt(tcell.Color182),
+		MakeTCellColorExt(tcell.Color183),
+		MakeTCellColorExt(tcell.Color184),
+		MakeTCellColorExt(tcell.Color185),
+		MakeTCellColorExt(tcell.Color186),
+		MakeTCellColorExt(tcell.Color187),
+		MakeTCellColorExt(tcell.Color188),
+		MakeTCellColorExt(tcell.Color189),
+		MakeTCellColorExt(tcell.Color190),
+		MakeTCellColorExt(tcell.Color191),
+		MakeTCellColorExt(tcell.Color192),
+		MakeTCellColorExt(tcell.Color193),
+		MakeTCellColorExt(tcell.Color194),
+		MakeTCellColorExt(tcell.Color195),
+		MakeTCellColorExt(tcell.Color196),
+		MakeTCellColorExt(tcell.Color197),
+		MakeTCellColorExt(tcell.Color198),
+		MakeTCellColorExt(tcell.Color199),
+		MakeTCellColorExt(tcell.Color200),
+		MakeTCellColorExt(tcell.Color201),
+		MakeTCellColorExt(tcell.Color202),
+		MakeTCellColorExt(tcell.Color203),
+		MakeTCellColorExt(tcell.Color204),
+		MakeTCellColorExt(tcell.Color205),
+		MakeTCellColorExt(tcell.Color206),
+		MakeTCellColorExt(tcell.Color207),
+		MakeTCellColorExt(tcell.Color208),
+		MakeTCellColorExt(tcell.Color209),
+		MakeTCellColorExt(tcell.Color210),
+		MakeTCellColorExt(tcell.Color211),
+		MakeTCellColorExt(tcell.Color212),
+		MakeTCellColorExt(tcell.Color213),
+		MakeTCellColorExt(tcell.Color214),
+		MakeTCellColorExt(tcell.Color215),
+		MakeTCellColorExt(tcell.Color216),
+		MakeTCellColorExt(tcell.Color217),
+		MakeTCellColorExt(tcell.Color218),
+		MakeTCellColorExt(tcell.Color219),
+		MakeTCellColorExt(tcell.Color220),
+		MakeTCellColorExt(tcell.Color221),
+		MakeTCellColorExt(tcell.Color222),
+		MakeTCellColorExt(tcell.Color223),
+		MakeTCellColorExt(tcell.Color224),
+		MakeTCellColorExt(tcell.Color225),
+		MakeTCellColorExt(tcell.Color226),
+		MakeTCellColorExt(tcell.Color227),
+		MakeTCellColorExt(tcell.Color228),
+		MakeTCellColorExt(tcell.Color229),
+		MakeTCellColorExt(tcell.Color230),
+		MakeTCellColorExt(tcell.Color231),
+		MakeTCellColorExt(tcell.Color232),
+		MakeTCellColorExt(tcell.Color233),
+		MakeTCellColorExt(tcell.Color234),
+		MakeTCellColorExt(tcell.Color235),
+		MakeTCellColorExt(tcell.Color236),
+		MakeTCellColorExt(tcell.Color237),
+		MakeTCellColorExt(tcell.Color238),
+		MakeTCellColorExt(tcell.Color239),
+		MakeTCellColorExt(tcell.Color240),
+		MakeTCellColorExt(tcell.Color241),
+		MakeTCellColorExt(tcell.Color242),
+		MakeTCellColorExt(tcell.Color243),
+		MakeTCellColorExt(tcell.Color244),
+		MakeTCellColorExt(tcell.Color245),
+		MakeTCellColorExt(tcell.Color246),
+		MakeTCellColorExt(tcell.Color247),
+		MakeTCellColorExt(tcell.Color248),
+		MakeTCellColorExt(tcell.Color249),
+		MakeTCellColorExt(tcell.Color250),
+		MakeTCellColorExt(tcell.Color251),
+		MakeTCellColorExt(tcell.Color252),
+		MakeTCellColorExt(tcell.Color253),
+		MakeTCellColorExt(tcell.Color254),
+		MakeTCellColorExt(tcell.Color255),
 	}
 
 	term2Cache               *lru.Cache
@@ -1013,7 +1013,7 @@ func MakeCellStyle(fg TCellColor, bg TCellColor, attr StyleAttrs) tcell.Style {
 		bgt = bg.ToTCell()
 	}
 	st := StyleNone.MergeUnder(attr)
-	return tcell.Style(st.OnOff).Foreground(fgt).Background(bgt)
+	return tcell.Style{}.Attributes(st.OnOff).Foreground(fgt).Background(bgt)
 }
 
 //======================================================================
@@ -1206,7 +1206,7 @@ func (r RGBColor) findClosest(from []colorful.Color, corresponding []TCellColor,
 func (r RGBColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 	switch mode {
 	case Mode24BitColors:
-		c := tcell.Color((r.Red << 16) | (r.Green << 8) | (r.Blue << 0) | int(tcell.ColorIsRGB))
+		c := tcell.NewRGBColor(int32(r.Red), int32(r.Green), int32(r.Blue))
 		return MakeTCellColorExt(c), true
 	case Mode256Colors:
 		if IgnoreBase16 {
@@ -1218,7 +1218,7 @@ func (r RGBColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 		rd := cubeLookup88_16[r.Red>>4]
 		g := cubeLookup88_16[r.Green>>4]
 		b := cubeLookup88_16[r.Blue>>4]
-		c := tcell.Color((CubeStart + (((rd * cubeSize88) + g) * cubeSize88) + b) + 0)
+		c := tcell.Color((CubeStart + (((rd * cubeSize88) + g) * cubeSize88) + b) + 0) + tcell.ColorValid
 		return MakeTCellColorExt(c), true
 	case Mode16Colors:
 		return r.findClosest(colorful16, term16, term16Cache), true
@@ -1300,9 +1300,12 @@ func (s *UrwidColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 		panic(errors.WithStack(InvalidColor{Color: s}))
 	}
 
-	idx = idx - 1 // offset for tcell, which stores default at -1
-
-	c := MakeTCellColorExt(tcell.Color(idx))
+	col := tcell.ColorDefault
+	if idx > 0 {
+		idx = idx - 1
+		col = tcell.ColorValid + tcell.Color(idx)
+	}
+	c := MakeTCellColorExt(col)
 
 	switch mode {
 	case Mode24BitColors, Mode256Colors, Mode88Colors, Mode16Colors:
@@ -1392,13 +1395,13 @@ func (s GrayColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 	switch mode {
 	case Mode24BitColors:
 		adj := intScale(s.Val, 101, 0x100)
-		c := tcell.Color((adj << 16) | (adj << 8) | (adj << 0) | int(tcell.ColorIsRGB))
+		c := tcell.NewRGBColor(int32(adj), int32(adj), int32(adj))
 		return MakeTCellColorExt(c), true
 	case Mode256Colors:
-		x := tcell.Color(grayAdjustment256(grayLookup256_101[s.Val]) + 1)
+		x := tcell.Color(grayAdjustment256(grayLookup256_101[s.Val]) + 1) + tcell.ColorValid
 		return MakeTCellColorExt(x), true
 	case Mode88Colors:
-		x := tcell.Color(grayAdjustment88(grayLookup88_101[s.Val]) + 1)
+		x := tcell.Color(grayAdjustment88(grayLookup88_101[s.Val]) + 1) + tcell.ColorValid
 		return MakeTCellColorExt(x), true
 	default:
 		panic(errors.WithStack(ColorModeMismatch{Color: s, Mode: mode}))
@@ -1408,17 +1411,11 @@ func (s GrayColor) ToTCellColor(mode ColorMode) (TCellColor, bool) {
 //======================================================================
 
 // TCellColor is an IColor using tcell's color primitives. If you are not porting from urwid or translating
-// from urwid, this is the simplest approach to using color. Note that the underlying tcell.Color value is
-// stored offset by 2 from the value tcell would use to actually render a colored cell. Tcell represents
-// e.g. black by 0, maroon by 1, and so on - that means the default/empty/zero value for a tcell.Color object
-// is the color black. Gowid's layering approach means that the empty value for a color should mean "no color
-// preference" - so we want the zero value to mean that. A tcell.Color of -1 means "default color". So gowid
-// coopts -2 to mean "no color preference". We store the tcell.Color offset by 2 so the empty value for a
-// TCellColor means "no color preference". When we convert to a tcell.Color, we subtract 2 (but since a value
-// of -2 is meaningless to tcell, the caller should check and not pass on a value of -2 to tcell APIs - see
-// gowid.ColorNone)
+// from urwid, this is the simplest approach to using color. Gowid's layering approach means that the empty
+// value for a color should mean "no color preference" - so we want the zero value to mean that. A tcell.Color
+// of 0 means "default color". So gowid coopts nil to mean "no color preference".
 type TCellColor struct {
-	tc tcell.Color
+	tc *tcell.Color
 }
 
 var (
@@ -1434,7 +1431,10 @@ func MakeTCellColor(val string) (TCellColor, error) {
 	match := tcellColorRE.FindStringSubmatch(val) // e.g. "Color00"
 	if len(match) == 2 {
 		n, _ := strconv.ParseUint(match[1], 16, 8)
-		return MakeTCellColorExt(tcell.Color(n)), nil
+		if n == 0 {
+			return MakeTCellColorExt(tcell.ColorDefault), nil
+		}
+		return MakeTCellColorExt(tcell.Color(n) + tcell.ColorValid), nil
 	} else if col, ok := tcell.ColorNames[val]; !ok {
 		return TCellColor{}, errors.WithStack(InvalidColor{Color: val})
 	} else {
@@ -1444,37 +1444,32 @@ func MakeTCellColor(val string) (TCellColor, error) {
 
 // MakeTCellColor returns an initialized TCellColor given a tcell.Color input. The values that can be
 // used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L41.
-func MakeTCellColorSafe(val tcell.Color) (TCellColor, error) {
-	return TCellColor{val + 2}, nil
-}
-
-// MakeTCellColor returns an initialized TCellColor given a tcell.Color input. The values that can be
-// used are provided here: https://github.com/gdamore/tcell/blob/master/color.go#L41.
 func MakeTCellColorExt(val tcell.Color) TCellColor {
-	res, _ := MakeTCellColorSafe(val)
-	return res
+	return TCellColor{&val}
 }
 
 // MakeTCellNoColor returns an initialized TCellColor that represents "no color" - meaning if another
 // color is rendered "under" this one, then the color underneath will be displayed.
 func MakeTCellNoColor() TCellColor {
-	res := MakeTCellColorExt(-2)
-	return res
+	return TCellColor{}
 }
 
 // String implements Stringer for '%v' support.
 func (r TCellColor) String() string {
-	c := r.tc - 2
-	if c == -2 {
+	if r.tc == nil {
 		return "[no-color]"
 	} else {
+		c := *r.tc
 		return fmt.Sprintf("TCellColor(%v)", tcell.Color(c))
 	}
 }
 
 // ToTCell converts a TCellColor back to a tcell.Color for passing to tcell APIs.
 func (r TCellColor) ToTCell() tcell.Color {
-	return r.tc - 2
+	if r.tc == nil {
+		return tcell.ColorDefault
+	}
+	return *r.tc
 }
 
 // ToTCellColor is a no-op, and exists so that TCellColor conforms to the IColor interface.
