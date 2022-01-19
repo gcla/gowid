@@ -164,6 +164,7 @@ func (w *Widget) SetSubWidgets(widgets []gowid.IWidget, app gowid.IApp) {
 		}
 	}
 	oldFocus := w.Focus()
+	w.focus = -1
 	w.widgets = ws
 	w.SetFocus(app, oldFocus)
 	gowid.RunWidgetCallbacks(w.Callbacks, gowid.SubWidgetsCB{}, app, w)
