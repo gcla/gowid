@@ -97,6 +97,7 @@ type App struct {
 	copyLevel         int
 	refreshCopy       bool
 	prevWasMouseMove  bool // True if we last processed simple mouse movement. We can optimize on slow
+	enableMouseMotion bool
 	// systems by discarding subsequent mouse movement events.
 
 	lastMouse    MouseState    // So I can tell if a button was previously clicked
@@ -109,10 +110,11 @@ var _ IApp = (*App)(nil)
 
 // AppArgs is a helper struct, providing arguments for the initialization of App.
 type AppArgs struct {
-	View         IWidget
-	Palette      IPalette
-	Log          log.StdLogger
-	DontActivate bool
+	View              IWidget
+	Palette           IPalette
+	Log               log.StdLogger
+	EnableMouseMotion bool
+	DontActivate      bool
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -273,6 +275,7 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		colorMode:         Mode256Colors,
 		ClickTargets:      clicks,
 		log:               args.Log,
+		enableMouseMotion: args.EnableMouseMotion,
 	}
 
 	if !args.DontActivate {
@@ -480,7 +483,7 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 		}
 		a.RedrawTerminal()
 	case *tcell.EventMouse:
-		if !a.prevWasMouseMove || ev.Modifiers() != 0 || ev.Buttons() != 0 {
+		if !a.prevWasMouseMove || a.enableMouseMotion || ev.Modifiers() != 0 || ev.Buttons() != 0 {
 			switch ev.Buttons() {
 			case tcell.Button1:
 				a.MouseLeftClicked = true
