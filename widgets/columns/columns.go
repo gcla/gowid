@@ -163,6 +163,8 @@ func (w *Widget) SetSubWidgets(widgets []gowid.IWidget, app gowid.IApp) {
 			ws[i] = &gowid.ContainerWidget{IWidget: iw, D: gowid.RenderFlow{}}
 		}
 	}
+	w.widthHelper = make([]bool, len(widgets))
+	w.widthHelper2 = make([]bool, len(widgets))
 	oldFocus := w.Focus()
 	w.widgets = ws
 	w.SetFocus(app, oldFocus)
