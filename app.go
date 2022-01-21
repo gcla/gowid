@@ -109,10 +109,10 @@ var _ IApp = (*App)(nil)
 
 // AppArgs is a helper struct, providing arguments for the initialization of App.
 type AppArgs struct {
-	View         IWidget
-	Palette      IPalette
-	Log          log.StdLogger
-	DontActivate bool
+	Screen  tcell.Screen
+	View    IWidget
+	Palette IPalette
+	Log     log.StdLogger
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -231,13 +231,17 @@ func NewApp(args AppArgs) (rapp *App, rerr error) {
 }
 
 // NewAppSafe returns an initialized App struct, or an error on failure. It will
-// initialize a tcell.Screen object behind the scenes, and enable mouse support
+// initialize a tcell.Screen object and enable mouse support if its not provided,
 // meaning that tcell will receive mouse events if the terminal supports them.
 func newApp(args AppArgs) (rapp *App, rerr error) {
-	screen, err := tcell.NewScreen()
-	if err != nil {
-		rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
-		return
+	screen := args.Screen
+	if screen == nil {
+		var err error
+		screen, err = tcell.NewScreen()
+		if err != nil {
+			rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
+			return
+		}
 	}
 
 	var palette IPalette = args.Palette
@@ -275,8 +279,8 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		log:               args.Log,
 	}
 
-	if !args.DontActivate {
-		if err = res.initScreen(); err != nil {
+	if args.Screen == nil {
+		if err := res.initScreen(); err != nil {
 			return nil, err
 		}
 		res.initColorMode()
