@@ -801,6 +801,9 @@ func (a *App) ActivateScreen() error {
 	if err != nil {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
+	if a.screen != nil {
+		a.screen.Fini()
+	}
 	a.screen = screen
 	if err := a.initScreen(); err != nil {
 		return err
