@@ -238,16 +238,8 @@ func NewApp(args AppArgs) (rapp *App, rerr error) {
 func newApp(args AppArgs) (rapp *App, rerr error) {
 	screen := args.Screen
 	if screen == nil {
-		var tty tcell.Tty
 		var err error
-
-		tty, err = tcell.NewDevTtyFromDev(bestTty())
-		if err != nil {
-			rerr = WithKVs(err, map[string]interface{}{"GOWID_TTY": os.Getenv("GOWID_TTY")})
-			return
-		}
-
-		screen, err = tcell.NewTerminfoScreenFromTty(tty)
+		screen, err = tcellScreen()
 		if err != nil {
 			rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 			return
@@ -301,14 +293,6 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 
 	rapp = res
 	return
-}
-
-func bestTty() string {
-	gwtty := os.Getenv("GOWID_TTY")
-	if gwtty != "" {
-		return gwtty
-	}
-	return "/dev/tty"
 }
 
 func (a *App) initColorMode() {
@@ -816,16 +800,7 @@ func (a *App) Quit() {
 // the app struct shouldn't cache the screen object returned via GetScreen().
 //
 func (a *App) ActivateScreen() error {
-	var screen tcell.Screen
-	var tty tcell.Tty
-	var err error
-
-	tty, err = tcell.NewDevTtyFromDev(bestTty())
-	if err != nil {
-		return WithKVs(err, map[string]interface{}{"GOWID_TTY": os.Getenv("GOWID_TTY")})
-	}
-
-	screen, err = tcell.NewTerminfoScreenFromTty(tty)
+	screen, err := tcellScreen()
 	if err != nil {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
