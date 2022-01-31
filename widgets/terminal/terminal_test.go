@@ -12,8 +12,8 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
-	"github.com/gdamore/tcell/terminfo"
+	tcell "github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v2/terminfo"
 	"github.com/stretchr/testify/assert"
 )
 

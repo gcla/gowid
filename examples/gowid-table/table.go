@@ -18,7 +18,7 @@ import (
 	_ "github.com/gcla/gowid/examples/gowid-table/statik"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/rakyll/statik/fs"
 	log "github.com/sirupsen/logrus"
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/stretchr/testify/assert"
 )
 

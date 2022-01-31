@@ -17,7 +17,7 @@ import (
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
-	"github.com/gdamore/tcell"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
@@ -1296,10 +1296,10 @@ func (c *Canvas) SetRune(r rune) {
 func (c *Canvas) MakeCellFrom(r rune) gowid.Cell {
 	var cell gowid.Cell = gowid.MakeCell(r, gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.StyleNone)
 	if !c.fg.IsNone() {
-		cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val() - 1)))
+		cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val() - 1) + tcell.ColorValid))
 	}
 	if !c.bg.IsNone() {
-		cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val() - 1)))
+		cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val() - 1) + tcell.ColorValid))
 	}
 	if len(c.styles) > 0 {
 		for k, _ := range c.styles {

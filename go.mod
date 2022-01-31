@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/araddon/dateparse v0.0.0-20210207001429-0eec95c9db7e
 	github.com/creack/pty v1.1.15
-	github.com/gdamore/tcell v1.3.1-0.20200115030318-bff4943f9a29
+	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/go-test/deep v1.0.1
 	github.com/guptarohit/asciigraph v0.4.1
 	github.com/hashicorp/golang-lru v0.5.1
