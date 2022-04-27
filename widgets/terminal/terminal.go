@@ -54,6 +54,9 @@ type IWidget interface {
 	// IHotKeyPersistence determines how long a press of the hotkey will be in effect before
 	// keyboard user input is sent back to the underlying terminal.
 	IHotKeyPersistence
+	// IPaste tracks whether the paste start sequence has been seen wthout a matching
+	// paste end sequence
+	IPaste
 	// HotKeyActive returns true if the hotkey is currently in effect.
 	HotKeyActive() bool
 	// SetHotKeyActive sets the state of HotKeyActive.
@@ -74,6 +77,10 @@ type IHotKeyPersistence interface {
 
 type IHotKeyProvider interface {
 	HotKey() tcell.Key
+}
+
+type IPaste interface {
+	PasteState(...bool) bool
 }
 
 type HotKeyDuration struct {
@@ -103,11 +110,12 @@ type leds struct{}
 type title struct{}
 
 type Options struct {
-	Command           []string
-	Env               []string
-	HotKey            IHotKeyProvider
-	HotKeyPersistence IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
-	Scrollback        int
+	Command              []string
+	Env                  []string
+	HotKey               IHotKeyProvider
+	HotKeyPersistence    IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
+	Scrollback           int
+	EnableBracketedPaste bool
 }
 
 // Widget is a widget that hosts a terminal-based application. The user provides the
@@ -131,6 +139,7 @@ type Widget struct {
 	hotKeyDownTime      time.Time
 	hotKeyTimer         *time.Timer
 	isScrolling         bool
+	paste               bool
 	Callbacks           *gowid.Callbacks
 	gowid.IsSelectable
 }
@@ -251,6 +260,13 @@ func (w *Widget) OnBell(f gowid.IWidgetChangedCallback) {
 
 func (w *Widget) RemoveOnBell(f gowid.IIdentity) {
 	gowid.RemoveWidgetCallback(w.Callbacks, Bell{}, f)
+}
+
+func (w *Widget) PasteState(b ...bool) bool {
+	if len(b) > 0 {
+		w.paste = b[0]
+	}
+	return w.paste
 }
 
 func (w *Widget) HotKeyActive() bool {
@@ -485,6 +501,14 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 		}))
 	}})
 
+	if w.params.EnableBracketedPaste {
+		app.Run(gowid.RunFunction(func(app gowid.IApp) {
+			for _, b := range enablePaste(w.terminfo) {
+				canvas.ProcessByte(b)
+			}
+		}))
+	}
+
 	go func() {
 		for {
 			data := make([]byte, 4096)
@@ -508,7 +532,6 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 				for _, b := range data[0:n] {
 					canvas.ProcessByte(b)
 				}
-				app.Redraw()
 			}))
 		}
 	}()
@@ -599,7 +622,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		}
 	}
 	if passToTerminal {
-		seq, parsed := TCellEventToBytes(ev, w.Modes(), app.GetLastMouseState(), w.Terminfo())
+		seq, parsed := TCellEventToBytes(ev, w.Modes(), app.GetLastMouseState(), w, w.Terminfo())
 
 		if parsed {
 			_, err := w.Write(seq)

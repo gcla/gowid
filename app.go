@@ -82,22 +82,23 @@ type IApp interface {
 // provides services to a running gowid application, such as access to the
 // palette, the screen and the state of the mouse.
 type App struct {
-	IPalette                                 // App holds an IPalette and provides it to each widget when rendering
-	screen            tcell.Screen           // Each app has one screen
-	TCellEvents       chan tcell.Event       // Events from tcell e.g. resize
-	AfterRenderEvents chan IAfterRenderEvent // Functions intended to run on the widget goroutine
-	closing           bool                   // If true then app is in process of closing - it may be draining AfterRenderEvents.
-	closingMtx        sync.Mutex             // Make sure an AfterRenderEvent and closing don't race.
-	viewPlusMenus     IWidget                // The base widget that is displayed - includes registered menus
-	view              IWidget                // The base widget that is displayed under registered menus
-	colorMode         ColorMode              // The current color mode of the terminal - 256, 16, mono, etc
-	inCopyMode        bool                   // True if the app has been switched into "copy mode", for the user to copy a widget value
-	copyClaimed       int                    // True if a widget has "claimed" copy mode during this Render pass
-	copyClaimedBy     IIdentity
-	copyLevel         int
-	refreshCopy       bool
-	prevWasMouseMove  bool // True if we last processed simple mouse movement. We can optimize on slow
-	enableMouseMotion bool
+	IPalette                                    // App holds an IPalette and provides it to each widget when rendering
+	screen               tcell.Screen           // Each app has one screen
+	TCellEvents          chan tcell.Event       // Events from tcell e.g. resize
+	AfterRenderEvents    chan IAfterRenderEvent // Functions intended to run on the widget goroutine
+	closing              bool                   // If true then app is in process of closing - it may be draining AfterRenderEvents.
+	closingMtx           sync.Mutex             // Make sure an AfterRenderEvent and closing don't race.
+	viewPlusMenus        IWidget                // The base widget that is displayed - includes registered menus
+	view                 IWidget                // The base widget that is displayed under registered menus
+	colorMode            ColorMode              // The current color mode of the terminal - 256, 16, mono, etc
+	inCopyMode           bool                   // True if the app has been switched into "copy mode", for the user to copy a widget value
+	copyClaimed          int                    // True if a widget has "claimed" copy mode during this Render pass
+	copyClaimedBy        IIdentity
+	copyLevel            int
+	refreshCopy          bool
+	prevWasMouseMove     bool // True if we last processed simple mouse movement. We can optimize on slow
+	enableMouseMotion    bool
+	enableBracketedPaste bool
 	// systems by discarding subsequent mouse movement events.
 
 	lastMouse    MouseState    // So I can tell if a button was previously clicked
@@ -110,11 +111,12 @@ var _ IApp = (*App)(nil)
 
 // AppArgs is a helper struct, providing arguments for the initialization of App.
 type AppArgs struct {
-	Screen            tcell.Screen
-	View              IWidget
-	Palette           IPalette
-	EnableMouseMotion bool
-	Log               log.StdLogger
+	Screen               tcell.Screen
+	View                 IWidget
+	Palette              IPalette
+	EnableMouseMotion    bool
+	EnableBracketedPaste bool
+	Log                  log.StdLogger
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -269,17 +271,18 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 	}
 
 	res := &App{
-		IPalette:          palette,
-		screen:            screen,
-		TCellEvents:       tch,
-		AfterRenderEvents: wch,
-		closing:           false,
-		view:              args.View,
-		viewPlusMenus:     args.View,
-		colorMode:         Mode256Colors,
-		ClickTargets:      clicks,
-		log:               args.Log,
-		enableMouseMotion: args.EnableMouseMotion,
+		IPalette:             palette,
+		screen:               screen,
+		TCellEvents:          tch,
+		AfterRenderEvents:    wch,
+		closing:              false,
+		view:                 args.View,
+		viewPlusMenus:        args.View,
+		colorMode:            Mode256Colors,
+		ClickTargets:         clicks,
+		log:                  args.Log,
+		enableMouseMotion:    args.EnableMouseMotion,
+		enableBracketedPaste: args.EnableBracketedPaste,
 	}
 
 	if args.Screen == nil {
@@ -287,6 +290,9 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 			return nil, err
 		}
 		res.initColorMode()
+		if res.enableBracketedPaste {
+			screen.EnablePaste()
+		}
 	}
 
 	screen.Clear()
@@ -468,7 +474,7 @@ func (a *App) Clips() []ICopyResult {
 // internal state, like the size of the underlying terminal.
 func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 	switch ev := ev.(type) {
-	case *tcell.EventKey:
+	case *tcell.EventKey, *tcell.EventPaste:
 		// This makes for a better experience on limited hardware like raspberry pi
 		debug.SetGCPercent(-1)
 		defer debug.SetGCPercent(100)
@@ -486,6 +492,10 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 			a.refreshCopy = false
 		}
 		a.RedrawTerminal()
+
+		//case *tcell.EventPaste:
+		//log.Infof("GCLA: app.go tcell paste")
+
 	case *tcell.EventMouse:
 		if !a.prevWasMouseMove || a.enableMouseMotion || ev.Modifiers() != 0 || ev.Buttons() != 0 {
 			switch ev.Buttons() {
@@ -667,7 +677,7 @@ Loop:
 // currentView's internal buffer is modified if currentView.Editable is true.
 func (a *App) handleInputEvent(ev interface{}, unhandled IUnhandledInput) {
 	switch ev.(type) {
-	case *tcell.EventKey, *tcell.EventMouse:
+	case *tcell.EventKey, *tcell.EventPaste, *tcell.EventMouse:
 		x, y := a.TerminalSize()
 		handled := UserInputIfSelectable(a.viewPlusMenus, ev, RenderBox{C: x, R: y}, Focused, a)
 		if !handled {
@@ -811,6 +821,9 @@ func (a *App) ActivateScreen() error {
 	if err := a.initScreen(); err != nil {
 		return err
 	}
+	if a.enableBracketedPaste {
+		a.screen.EnablePaste()
+	}
 	return nil
 }
 
@@ -841,7 +854,9 @@ func (a *App) initScreen() error {
 	// in the absence of overriding styling from widgets.
 	a.screen.SetStyle(defStyle)
 	a.screen.EnableMouse()
-
+	if a.enableBracketedPaste {
+		a.screen.EnablePaste()
+	}
 	return nil
 }
 

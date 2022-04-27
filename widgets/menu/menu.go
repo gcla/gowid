@@ -253,6 +253,9 @@ func (w *rejectKeyInput) UserInput(ev interface{}, size gowid.IRenderSize, focus
 	if _, ok := ev.(*tcell.EventKey); ok && w.on {
 		return false
 	}
+	if _, ok := ev.(*tcell.EventPaste); ok && w.on {
+		return false
+	}
 	return w.IWidget.UserInput(ev, size, focus, app)
 }
 

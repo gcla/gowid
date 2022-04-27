@@ -26,6 +26,38 @@ func (e EventNotSupported) Error() string {
 	return fmt.Sprintf("Terminal input event %v of type %T not supported yet", e.Event, e.Event)
 }
 
+func pasteStart(ti *terminfo.Terminfo) []byte {
+	if ti.PasteStart != "" {
+		return []byte(ti.PasteStart)
+	} else {
+		return []byte("\x1b[200~")
+	}
+}
+
+func pasteEnd(ti *terminfo.Terminfo) []byte {
+	if ti.PasteEnd != "" {
+		return []byte(ti.PasteEnd)
+	} else {
+		return []byte("\x1b[201~")
+	}
+}
+
+func enablePaste(ti *terminfo.Terminfo) []byte {
+	if ti.EnablePaste != "" {
+		return []byte(ti.EnablePaste)
+	} else {
+		return []byte("\x1b[?2004h")
+	}
+}
+
+func disablePaste(ti *terminfo.Terminfo) []byte {
+	if ti.DisablePaste != "" {
+		return []byte(ti.DisablePaste)
+	} else {
+		return []byte("\x1b[?2004l")
+	}
+}
+
 // TCellEventToBytes converts TCell's representation of a terminal event to
 // the string of bytes that would be the equivalent event according to the
 // supplied Terminfo object. It returns a tuple of the byte slice
@@ -34,11 +66,21 @@ func (e EventNotSupported) Error() string {
 // subprocess is connected to a tty controlled by gowid. Events from the
 // user are parsed by gowid via TCell - they are then translated by this
 // function before being written to the TerminalWidget subprocess's tty.
-func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseState, ti *terminfo.Terminfo) ([]byte, bool) {
+func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseState, paster IPaste, ti *terminfo.Terminfo) ([]byte, bool) {
 	res := make([]byte, 0)
 	res2 := false
 
 	switch ev := ev.(type) {
+	case *tcell.EventPaste:
+		res2 = true
+		if paster.PasteState() {
+			// Already saw start
+			res = append(res, pasteEnd(ti)...)
+			paster.PasteState(false)
+		} else {
+			res = append(res, pasteStart(ti)...)
+			paster.PasteState(true)
+		}
 	case *tcell.EventKey:
 		if ev.Key() < ' ' {
 			str := []rune{rune(ev.Key())}

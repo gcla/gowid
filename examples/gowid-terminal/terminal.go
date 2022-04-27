@@ -224,9 +224,10 @@ func main() {
 
 	for _, cmd := range tcommands {
 		app, err := terminal.NewExt(terminal.Options{
-			Command:           strings.Split(cmd, " "),
-			HotKeyPersistence: &hkDuration,
-			Scrollback:        100,
+			Command:              strings.Split(cmd, " "),
+			HotKeyPersistence:    &hkDuration,
+			Scrollback:           100,
+			EnableBracketedPaste: true,
 		})
 		if err != nil {
 			panic(err)
@@ -285,9 +286,10 @@ func main() {
 	}
 
 	app, err = gowid.NewApp(gowid.AppArgs{
-		View:    view,
-		Palette: &palette,
-		Log:     log.StandardLogger(),
+		View:                 view,
+		Palette:              &palette,
+		Log:                  log.StandardLogger(),
+		EnableBracketedPaste: true,
 	})
 	examples.ExitOnErr(err)
 

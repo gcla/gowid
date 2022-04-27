@@ -35,6 +35,12 @@ type IMask interface {
 	MaskChr() rune
 }
 
+type IPaste interface {
+	PasteState(...bool) bool
+	AddKey(*tcell.EventKey)
+	GetKeys() []*tcell.EventKey
+}
+
 type Mask struct {
 	Chr    rune
 	Enable bool
@@ -74,6 +80,8 @@ type Widget struct {
 	IMask
 	caption      string
 	text         string
+	paste        bool
+	pastedKeys   []*tcell.EventKey
 	cursorPos    int
 	linesFromTop int
 	Callbacks    *gowid.Callbacks
@@ -83,6 +91,7 @@ type Widget struct {
 var _ fmt.Stringer = (*Widget)(nil)
 var _ io.Reader = (*Widget)(nil)
 var _ gowid.IWidget = (*Widget)(nil)
+var _ IPaste = (*Widget)(nil)
 
 // Writer embeds an EditWidget and provides the io.Writer interface. An gowid.IApp needs to
 // be provided too because the widget's SetText() function requires it in order to issue
@@ -111,6 +120,7 @@ func New(args ...Options) *Widget {
 		caption:      opt.Caption,
 		text:         opt.Text,
 		cursorPos:    len(opt.Text),
+		pastedKeys:   make([]*tcell.EventKey, 0, 100),
 		linesFromTop: 0,
 		Callbacks:    gowid.NewCallbacks(),
 	}
@@ -188,6 +198,25 @@ func (w *Widget) Caption() string {
 func (w *Widget) SetCaption(text string, app gowid.IApp) {
 	w.caption = text
 	gowid.RunWidgetCallbacks(w.Callbacks, Caption{}, app, w)
+}
+
+//func (w *Widget) PasteState(b ...bool) []*tcell.EventKey {
+func (w *Widget) PasteState(b ...bool) bool {
+	if len(b) > 0 {
+		w.paste = b[0]
+		//if w.paste {
+		w.pastedKeys = w.pastedKeys[:0]
+		//}
+	}
+	return w.paste
+}
+
+func (w *Widget) AddKey(ev *tcell.EventKey) {
+	w.pastedKeys = append(w.pastedKeys, ev)
+}
+
+func (w *Widget) GetKeys() []*tcell.EventKey {
+	return w.pastedKeys
 }
 
 func (w *Widget) CursorEnabled() bool {
@@ -382,6 +411,45 @@ func UpLines(w IWidget, size gowid.IRenderSize, doPage bool, app gowid.IApp) boo
 	}
 }
 
+func keyIsPasteable(ev *tcell.EventKey) bool {
+	switch ev.Key() {
+	case tcell.KeyEnter, tcell.Key(' '), tcell.KeyRune:
+		return true
+	default:
+		return false
+	}
+}
+
+func pasteableKeyInput(w IWidget, ev *tcell.EventKey, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
+	handled := true
+	switch ev.Key() {
+	case tcell.KeyEnter:
+		r := []rune(w.Text())
+		w.SetText(string(r[0:w.CursorPos()])+string('\n')+string(r[w.CursorPos():]), app)
+		w.SetCursorPos(w.CursorPos()+1, app)
+	case tcell.Key(' '):
+		r := []rune(w.Text())
+		w.SetText(string(r[0:w.CursorPos()])+" "+string(r[w.CursorPos():]), app)
+		w.SetCursorPos(w.CursorPos()+1, app)
+	case tcell.KeyRune:
+		// TODO: this is lame. Inserting a character is O(n) where n is length
+		// of text. I should switch this to use the two stack model for edited
+		// text.
+		txt := w.Text()
+		r := []rune(txt)
+		cpos := w.CursorPos()
+		rhs := make([]rune, len(r)-cpos)
+		copy(rhs, r[cpos:])
+		w.SetText(string(append(append(r[:cpos], ev.Rune()), rhs...)), app)
+		w.SetCursorPos(w.CursorPos()+1, app)
+
+	default:
+		handled = false
+	}
+
+	return handled
+}
+
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
 	handled := true
 	doup := false
@@ -413,136 +481,143 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			handled = false
 		}
 
+	case *tcell.EventPaste:
+		if wp, ok := w.(IPaste); ok {
+			if ev.Start() {
+				wp.PasteState(true)
+			} else {
+				evs := wp.GetKeys()
+				wp.PasteState(false)
+				for _, ev := range evs {
+					pasteableKeyInput(w, ev, size, focus, app)
+				}
+			}
+		}
+
 	case *tcell.EventKey:
-		switch ev.Key() {
-		case tcell.KeyPgUp:
-			handled = w.UpLines(size, true, app)
-		case tcell.KeyUp, tcell.KeyCtrlP:
-			doup = true
-		case tcell.KeyDown, tcell.KeyCtrlN:
-			dodown = true
-		case tcell.KeyPgDn:
-			handled = w.DownLines(size, true, app)
-		case tcell.KeyLeft, tcell.KeyCtrlB:
-			if w.CursorPos() > 0 {
-				w.SetCursorPos(w.CursorPos()-1, app)
-			} else {
-				handled = false
+		handled = false
+		if wp, ok := w.(IPaste); ok {
+			if wp.PasteState() && keyIsPasteable(ev) {
+				wp.AddKey(ev)
+				handled = true
 			}
-		case tcell.KeyRight, tcell.KeyCtrlF:
-			if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
-				w.SetCursorPos(w.CursorPos()+1, app)
-			} else {
-				handled = false
-			}
-		case tcell.KeyBackspace, tcell.KeyBackspace2:
-			if w.CursorPos() > 0 {
-				pos := w.CursorPos()
-				w.SetCursorPos(w.CursorPos()-1, app)
+		}
+
+		if !handled {
+			handled = pasteableKeyInput(w, ev, size, focus, app)
+		}
+
+		if !handled {
+			switch ev.Key() {
+			case tcell.KeyPgUp:
+				handled = w.UpLines(size, true, app)
+			case tcell.KeyUp, tcell.KeyCtrlP:
+				doup = true
+			case tcell.KeyDown, tcell.KeyCtrlN:
+				dodown = true
+			case tcell.KeyPgDn:
+				handled = w.DownLines(size, true, app)
+			case tcell.KeyLeft, tcell.KeyCtrlB:
+				if w.CursorPos() > 0 {
+					w.SetCursorPos(w.CursorPos()-1, app)
+				} else {
+					handled = false
+				}
+			case tcell.KeyRight, tcell.KeyCtrlF:
+				if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
+					w.SetCursorPos(w.CursorPos()+1, app)
+				} else {
+					handled = false
+				}
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
+				if w.CursorPos() > 0 {
+					pos := w.CursorPos()
+					w.SetCursorPos(w.CursorPos()-1, app)
+					r := []rune(w.Text())
+					w.SetText(string(r[0:pos-1])+string(r[pos:]), app)
+				}
+			case tcell.KeyDelete, tcell.KeyCtrlD:
+				if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
+					r := []rune(w.Text())
+					w.SetText(string(r[0:w.CursorPos()])+string(r[w.CursorPos()+1:]), app)
+				}
+			case tcell.KeyCtrlK:
 				r := []rune(w.Text())
-				w.SetText(string(r[0:pos-1])+string(r[pos:]), app)
-			}
-		case tcell.KeyDelete, tcell.KeyCtrlD:
-			if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
+				w.SetText(string(r[0:w.CursorPos()]), app)
+			case tcell.KeyCtrlU:
 				r := []rune(w.Text())
-				w.SetText(string(r[0:w.CursorPos()])+string(r[w.CursorPos()+1:]), app)
-			}
-		case tcell.KeyEnter:
-			r := []rune(w.Text())
-			w.SetText(string(r[0:w.CursorPos()])+string('\n')+string(r[w.CursorPos():]), app)
-			w.SetCursorPos(w.CursorPos()+1, app)
-		case tcell.Key(' '):
-			r := []rune(w.Text())
-			w.SetText(string(r[0:w.CursorPos()])+" "+string(r[w.CursorPos():]), app)
-			w.SetCursorPos(w.CursorPos()+1, app)
-		case tcell.KeyCtrlK:
-			r := []rune(w.Text())
-			w.SetText(string(r[0:w.CursorPos()]), app)
-		case tcell.KeyCtrlU:
-			r := []rune(w.Text())
-			w.SetText(string(r[w.CursorPos():]), app)
-			w.SetCursorPos(0, app)
-		case tcell.KeyHome:
-			w.SetCursorPos(0, app)
-			w.SetLinesFromTop(0, app)
-		case tcell.KeyCtrlW:
-			txt := []rune(w.Text())
-			origcp := w.CursorPos()
-			cp := origcp
-			for cp > 0 && unicode.IsSpace(txt[cp-1]) {
-				cp--
-			}
-			for cp > 0 && !unicode.IsSpace(txt[cp-1]) {
-				cp--
-			}
-			if cp != origcp {
-				w.SetText(string(txt[0:cp])+string(txt[origcp:]), app)
-				w.SetCursorPos(cp, app)
-			}
-		case tcell.KeyCtrlA:
-			// Would be nice to use a slice here, something that doesn't copy
-			// TODO: terrible O(n) behavior :-(
-			txt := w.Text()
-
-			i := w.CursorPos()
-			j := 0
-			lastnl := false
-			curstart := 0
-
-			for _, ch := range txt {
-				if lastnl {
-					curstart = j
+				w.SetText(string(r[w.CursorPos():]), app)
+				w.SetCursorPos(0, app)
+			case tcell.KeyHome:
+				w.SetCursorPos(0, app)
+				w.SetLinesFromTop(0, app)
+			case tcell.KeyCtrlW:
+				txt := []rune(w.Text())
+				origcp := w.CursorPos()
+				cp := origcp
+				for cp > 0 && unicode.IsSpace(txt[cp-1]) {
+					cp--
 				}
-				lastnl = (ch == '\n')
-
-				if i == j {
-					break
+				for cp > 0 && !unicode.IsSpace(txt[cp-1]) {
+					cp--
 				}
-				j += 1
-			}
-
-			w.SetCursorPos(curstart, app)
-			recalcLinesFromTop = true
-
-		case tcell.KeyEnd:
-			w.SetCursorPos(utf8.RuneCountInString(w.Text()), app)
-			recalcLinesFromTop = true
-
-		case tcell.KeyCtrlE:
-			// TODO: terrible O(n) behavior :-(
-			txt := w.Text()
-			i := w.CursorPos()
-			j := 0
-			checknl := false
-			for _, ch := range txt {
-				if i == j {
-					checknl = true
+				if cp != origcp {
+					w.SetText(string(txt[0:cp])+string(txt[origcp:]), app)
+					w.SetCursorPos(cp, app)
 				}
-				j += 1
-				if checknl {
-					if ch == '\n' {
+			case tcell.KeyCtrlA:
+				// Would be nice to use a slice here, something that doesn't copy
+				// TODO: terrible O(n) behavior :-(
+				txt := w.Text()
+
+				i := w.CursorPos()
+				j := 0
+				lastnl := false
+				curstart := 0
+
+				for _, ch := range txt {
+					if lastnl {
+						curstart = j
+					}
+					lastnl = (ch == '\n')
+
+					if i == j {
 						break
 					}
-					i += 1
+					j += 1
 				}
+
+				w.SetCursorPos(curstart, app)
+				recalcLinesFromTop = true
+
+			case tcell.KeyEnd:
+				w.SetCursorPos(utf8.RuneCountInString(w.Text()), app)
+				recalcLinesFromTop = true
+
+			case tcell.KeyCtrlE:
+				// TODO: terrible O(n) behavior :-(
+				txt := w.Text()
+				i := w.CursorPos()
+				j := 0
+				checknl := false
+				for _, ch := range txt {
+					if i == j {
+						checknl = true
+					}
+					j += 1
+					if checknl {
+						if ch == '\n' {
+							break
+						}
+						i += 1
+					}
+				}
+				w.SetCursorPos(i, app)
+				recalcLinesFromTop = true
+
+			default:
+				handled = false
 			}
-			w.SetCursorPos(i, app)
-			recalcLinesFromTop = true
-
-		case tcell.KeyRune:
-			// TODO: this is lame. Inserting a character is O(n) where n is length
-			// of text. I should switch this to use the two stack model for edited
-			// text.
-			txt := w.Text()
-			r := []rune(txt)
-			cpos := w.CursorPos()
-			rhs := make([]rune, len(r)-cpos)
-			copy(rhs, r[cpos:])
-			w.SetText(string(append(append(r[:cpos], ev.Rune()), rhs...)), app)
-			w.SetCursorPos(w.CursorPos()+1, app)
-
-		default:
-			handled = false
 		}
 	}
 

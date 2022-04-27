@@ -253,7 +253,8 @@ func UserInput(w IOverlay, ev interface{}, size gowid.IRenderSize, focus gowid.S
 		if !res {
 			_, ok1 := ev.(*tcell.EventKey)
 			_, ok2 := ev.(*tcell.EventMouse)
-			if notOccluded && (ok1 || ok2) {
+			_, ok3 := ev.(*tcell.EventPaste)
+			if notOccluded && (ok1 || ok2 || ok3) {
 				res = gowid.UserInputIfSelectable(w.Bottom(), ev, size, focus, app)
 			}
 		}
