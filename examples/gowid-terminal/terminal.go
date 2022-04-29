@@ -223,16 +223,32 @@ func main() {
 	}
 
 	for _, cmd := range tcommands {
-		app, err := terminal.NewExt(terminal.Options{
+		tapp, err := terminal.NewExt(terminal.Options{
 			Command:              strings.Split(cmd, " "),
 			HotKeyPersistence:    &hkDuration,
 			Scrollback:           100,
+			Scrollbar:            true,
 			EnableBracketedPaste: true,
+			HotKeyFns: []terminal.HotKeyInputFn{
+				func(ev *tcell.EventKey, w terminal.IWidget, app gowid.IApp) bool {
+					if w2, ok := w.(terminal.IScrollbar); ok {
+						if ev.Key() == tcell.KeyRune && ev.Rune() == 's' {
+							if w2.ScrollbarEnabled() {
+								w2.DisableScrollbar(app)
+							} else {
+								w2.EnableScrollbar(app)
+							}
+							return true
+						}
+					}
+					return false
+				},
+			},
 		})
 		if err != nil {
 			panic(err)
 		}
-		twidgets = append(twidgets, app)
+		twidgets = append(twidgets, tapp)
 	}
 
 	tw := text.New(" Terminal Demo ")
