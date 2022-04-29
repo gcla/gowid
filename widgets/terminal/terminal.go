@@ -20,6 +20,10 @@ import (
 	"github.com/creack/pty"
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
+	"github.com/gcla/gowid/widgets/columns"
+	"github.com/gcla/gowid/widgets/holder"
+	"github.com/gcla/gowid/widgets/null"
+	"github.com/gcla/gowid/widgets/vscroll"
 	tcell "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2/terminfo"
 	"github.com/gdamore/tcell/v2/terminfo/dynamic"
@@ -71,6 +75,17 @@ type IWidget interface {
 	Scrolling() bool
 }
 
+type IHotKeyFunctions interface {
+	// Customized handling of hotkey sequences
+	HotKeyFunctions() []HotKeyInputFn
+}
+
+type IScrollbar interface {
+	ScrollbarEnabled() bool
+	EnableScrollbar(app gowid.IApp)
+	DisableScrollbar(app gowid.IApp)
+}
+
 type IHotKeyPersistence interface {
 	HotKeyDuration() time.Duration
 }
@@ -82,6 +97,8 @@ type IHotKeyProvider interface {
 type IPaste interface {
 	PasteState(...bool) bool
 }
+
+type HotKeyInputFn func(ev *tcell.EventKey, w IWidget, app gowid.IApp) bool
 
 type HotKeyDuration struct {
 	D time.Duration
@@ -115,6 +132,8 @@ type Options struct {
 	HotKey               IHotKeyProvider
 	HotKeyPersistence    IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
 	Scrollback           int
+	Scrollbar            bool            // disabled regardless of setting if there is no scrollback
+	HotKeyFns            []HotKeyInputFn // allow custom behavior after pressing the hotkey
 	EnableBracketedPaste bool
 }
 
@@ -140,6 +159,10 @@ type Widget struct {
 	hotKeyTimer         *time.Timer
 	isScrolling         bool
 	paste               bool
+	hold                *holder.Widget  // used if scrollbar is enabled
+	cols                *columns.Widget // used if scrollbar is enabled
+	sbar                *vscroll.Widget // used if scrollbar is enabled
+	scrollbarTmpOff     bool            // a simple hack to help with UserInput and Render
 	Callbacks           *gowid.Callbacks
 	gowid.IsSelectable
 }
@@ -184,17 +207,44 @@ func NewExt(opts Options) (*Widget, error) {
 		opts.HotKey = HotKey{tcell.KeyCtrlB}
 	}
 
+	if opts.Scrollback <= 0 {
+		opts.Scrollbar = false
+	}
+
+	// Always allocate so the scrollbar can be turned on later
+	sbar := vscroll.NewExt(vscroll.VerticalScrollbarUnicodeRunes)
+
+	hold := holder.New(null.New())
+
+	cols := columns.New([]gowid.IContainerWidget{
+		&gowid.ContainerWidget{hold, gowid.RenderWithWeight{W: 1}},
+		&gowid.ContainerWidget{sbar, gowid.RenderWithUnits{U: 1}},
+	})
+
 	res := &Widget{
 		params:             opts,
 		IHotKeyProvider:    opts.HotKey,
 		IHotKeyPersistence: opts.HotKeyPersistence,
 		terminfo:           ti,
+		sbar:               sbar,
+		cols:               cols,
+		hold:               hold,
 		Callbacks:          gowid.NewCallbacks(),
 	}
+
+	res.hold.SetSubWidget(res, nil)
+	res.cols.SetFocus(nil, 0)
+
+	sbar.OnClickAbove(gowid.WidgetCallback{"cb", res.clickUp})
+	sbar.OnClickBelow(gowid.WidgetCallback{"cb", res.clickDown})
+	sbar.OnClickUpArrow(gowid.WidgetCallback{"cb", res.clickUpArrow})
+	sbar.OnClickDownArrow(gowid.WidgetCallback{"cb", res.clickDownArrow})
 
 	var _ gowid.IWidget = res
 	var _ ITerminal = res
 	var _ IWidget = res
+	var _ IHotKeyFunctions = res
+	var _ IScrollbar = res
 	var _ io.Writer = res
 
 	return res, nil
@@ -214,6 +264,22 @@ func (w *Widget) Modes() *Modes {
 
 func (w *Widget) Terminfo() *terminfo.Terminfo {
 	return w.terminfo
+}
+
+func (w *Widget) ScrollbarEnabled() bool {
+	return w.params.Scrollbar
+}
+
+func (w *Widget) EnableScrollbar(app gowid.IApp) {
+	w.params.Scrollbar = true
+}
+
+func (w *Widget) DisableScrollbar(app gowid.IApp) {
+	w.params.Scrollbar = false
+}
+
+func (w *Widget) HotKeyFunctions() []HotKeyInputFn {
+	return w.params.HotKeyFns
 }
 
 func (w *Widget) Bell(app gowid.IApp) {
@@ -339,6 +405,13 @@ func (w *Widget) Write(p []byte) (n int, err error) {
 }
 
 func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
+	if !w.scrollbarTmpOff && w.params.Scrollbar {
+		w.scrollbarTmpOff = true
+		res := w.cols.UserInput(ev, size, focus, app)
+		w.scrollbarTmpOff = false
+		w.cols.SetFocus(app, 0)
+		return res
+	}
 	return UserInput(w, ev, size, focus, app)
 }
 
@@ -348,7 +421,18 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 		panic(gowid.WidgetSizeError{Widget: w, Size: size, Required: "gowid.IRenderBox"})
 	}
 
+	if !w.scrollbarTmpOff && w.params.Scrollbar {
+		w.scrollbarTmpOff = true
+		c := w.cols.Render(size, focus, app)
+		w.scrollbarTmpOff = false
+		return c
+	}
+
 	w.TouchTerminal(box.BoxColumns(), box.BoxRows(), app)
+
+	w.sbar.Top = w.canvas.Offset
+	w.sbar.Middle = w.canvas.scrollRegionEnd
+	w.sbar.Bottom = gwutil.Max(0, w.canvas.ViewPortCanvas.Canvas.BoxRows()-(box.BoxRows()+w.canvas.Offset))
 
 	return w.canvas
 }
@@ -545,6 +629,22 @@ func (w *Widget) StopCommand() {
 	}
 }
 
+func (w *Widget) clickUp(app gowid.IApp, w2 gowid.IWidget) {
+	w.Scroll(ScrollUp, true, 1)
+}
+
+func (w *Widget) clickDown(app gowid.IApp, w2 gowid.IWidget) {
+	w.Scroll(ScrollDown, true, 1)
+}
+
+func (w *Widget) clickUpArrow(app gowid.IApp, w2 gowid.IWidget) {
+	w.Scroll(ScrollUp, false, 1)
+}
+
+func (w *Widget) clickDownArrow(app gowid.IApp, w2 gowid.IWidget) {
+	w.Scroll(ScrollDown, false, 1)
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
@@ -584,23 +684,34 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			passToTerminal = false
 			res = true
 			deactivate := false
-			switch evk.Key() {
-			case w.HotKey():
-				deactivate = true
-			case tcell.KeyPgUp:
-				w.Scroll(ScrollUp, true, 0)
-				deactivate = true
-			case tcell.KeyPgDn:
-				w.Scroll(ScrollDown, true, 0)
-				deactivate = true
-			case tcell.KeyUp:
-				w.Scroll(ScrollUp, false, 1)
-				deactivate = true
-			case tcell.KeyDown:
-				w.Scroll(ScrollDown, false, 1)
-				deactivate = true
-			default:
-				res = false
+			if whk, ok := w.(IHotKeyFunctions); ok {
+				for _, fn := range whk.HotKeyFunctions() {
+					res = fn(evk, w, app)
+					if res {
+						deactivate = true
+						break
+					}
+				}
+			}
+			if !res {
+				switch evk.Key() {
+				case w.HotKey():
+					deactivate = true
+				case tcell.KeyPgUp:
+					w.Scroll(ScrollUp, true, 0)
+					deactivate = true
+				case tcell.KeyPgDn:
+					w.Scroll(ScrollDown, true, 0)
+					deactivate = true
+				case tcell.KeyUp:
+					w.Scroll(ScrollUp, false, 1)
+					deactivate = true
+				case tcell.KeyDown:
+					w.Scroll(ScrollDown, false, 1)
+					deactivate = true
+				default:
+					res = false
+				}
 			}
 			if deactivate {
 				w.SetHotKeyActive(app, false)
