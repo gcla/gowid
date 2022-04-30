@@ -29,6 +29,7 @@ var (
 	UnicodeAltFrame  = FrameRunes{'▛', '▜', '▙', '▟', '▀', '▄', '▌', '▐'}
 	UnicodeAlt2Frame = FrameRunes{'╔', '╗', '╚', '╝', '═', '═', '║', '║'}
 	SpaceFrame       = FrameRunes{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
+	nullFrame        = FrameRunes{}
 )
 
 func init() {
@@ -75,6 +76,11 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 		}
 	} else {
 		opt = opts[0]
+	}
+
+	// Likely means nil value was used for 8-field struct - so this is a heuristic
+	if opt.Frame == nullFrame {
+		opt.Frame = AsciiFrame
 	}
 
 	res := &Widget{
