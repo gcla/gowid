@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/examples"
@@ -22,6 +23,7 @@ import (
 	"github.com/gcla/gowid/widgets/text"
 	"github.com/gcla/gowid/widgets/vpadding"
 	tcell "github.com/gdamore/tcell/v2"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -101,12 +103,15 @@ func main() {
 	xt := text.New("something else")
 	xt2 := styled.New(xt, gowid.MakePaletteEntry(gowid.NewUrwidColor("dark red"), gowid.NewUrwidColor("light red")))
 
-	tw1 := text.New("click me█ █xx")
+	tw1 := text.New("click me or double-click me█ █xx")
 	tw := styled.NewWithRanges(tw1,
 
 		[]styled.AttributeRange{styled.AttributeRange{0, 2, nl("test1notfocus")}}, []styled.AttributeRange{styled.AttributeRange{0, -1, nl("test1focus")}})
 
-	bw1i := button.New(tw)
+	bw1i := button.New(tw, button.Options{
+		Decoration:       button.NormalDecoration,
+		DoubleClickDelay: 200 * time.Millisecond,
+	})
 	bw1 := holder.New(bw1i)
 
 	dv1 := divider.NewAscii()
@@ -124,6 +129,11 @@ func main() {
 		} else {
 			mt.SetSubWidget(mti, app)
 		}
+	}})
+
+	bw1i.OnDoubleClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, w gowid.IWidget) {
+		logrus.Infof("GCLA: got double click")
+		pb1.SetProgress(app, 0)
 	}})
 
 	pw := pile.New([]gowid.IContainerWidget{

@@ -8,6 +8,7 @@ package gowid
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gcla/gowid/gwutil"
 	tcell "github.com/gdamore/tcell/v2"
@@ -562,6 +563,15 @@ type IClickable interface {
 	Click(app IApp)
 }
 
+// IDoubleClickable is implemented by any type that implements a DoubleClick()
+// method, intended to be run in response to a user interaction with the
+// type such as two left mouse clicks close together in time.
+//
+type IDoubleClickable interface {
+	DoubleClick(app IApp) bool // Return true if action was taken; to suppress Click()
+	DoubleClickDelay() time.Duration
+}
+
 // IKeyPress is implemented by any type that implements a KeyPress()
 // method, intended to be run in response to a user interaction with the
 // type such as hitting the escape key.
@@ -1052,6 +1062,25 @@ func (w *SubWidgetsCallbacks) RemoveOnSetSubWidgets(f IIdentity) {
 // ClickCallbacks is a convenience struct for embedding in a widget, providing methods
 // to add and remove callbacks that are executed when the widget is "clicked".
 type ClickCallbacks struct {
+	CB **Callbacks
+}
+
+func (w *ClickCallbacks) OnDoubleClick(f IWidgetChangedCallback) {
+	if *w.CB == nil {
+		*w.CB = NewCallbacks()
+	}
+	AddWidgetCallback(*w.CB, DoubleClickCB{}, f)
+}
+
+func (w *ClickCallbacks) RemoveOnDoubleClick(f IIdentity) {
+	RemoveWidgetCallback(*w.CB, DoubleClickCB{}, f)
+}
+
+//======================================================================
+
+// ClickCallbacks is a convenience struct for embedding in a widget, providing methods
+// to add and remove callbacks that are executed when the widget is "clicked".
+type DoubleClickCallbacks struct {
 	CB **Callbacks
 }
 

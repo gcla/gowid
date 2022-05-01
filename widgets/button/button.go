@@ -7,6 +7,7 @@ package button
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
@@ -58,6 +59,8 @@ var (
 	BareDecoration   = Decoration{Left: "", Right: ""}
 	NormalDecoration = Decoration{Left: "<", Right: ">"}
 	AltDecoration    = Decoration{Left: "[", Right: "]"}
+
+	noTime time.Time
 )
 
 //======================================================================
@@ -79,6 +82,7 @@ type Options struct {
 	Decoration
 	SelectKeysProvided bool
 	SelectKeys         []gowid.IKey
+	DoubleClickDelay   time.Duration
 }
 
 type Widget struct {
@@ -87,6 +91,7 @@ type Widget struct {
 	*gowid.Callbacks
 	gowid.SubWidgetCallbacks
 	gowid.ClickCallbacks
+	gowid.DoubleClickCallbacks
 	*Decoration
 	gowid.AddressProvidesID
 	gowid.IsSelectable
@@ -101,6 +106,10 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 		opt.Decoration = NormalDecoration
 	}
 
+	if opt.DoubleClickDelay == 0 {
+		opt.DoubleClickDelay = 500 * time.Millisecond
+	}
+
 	res := &Widget{
 		inner: inner,
 		opts:  opt,
@@ -108,11 +117,13 @@ func New(inner gowid.IWidget, opts ...Options) *Widget {
 
 	res.SubWidgetCallbacks = gowid.SubWidgetCallbacks{CB: &res.Callbacks}
 	res.ClickCallbacks = gowid.ClickCallbacks{CB: &res.Callbacks}
+	res.DoubleClickCallbacks = gowid.DoubleClickCallbacks{CB: &res.Callbacks}
 
 	res.Decoration = &res.opts.Decoration
 
 	var _ gowid.IWidget = res
 	var _ gowid.ICompositeWidget = res
+	var _ gowid.IDoubleClickable = res
 	var _ IWidget = res
 	var _ ICustomKeys = res
 
@@ -146,6 +157,12 @@ func (w *Widget) Click(app gowid.IApp) {
 	if app.GetMouseState().NoButtonClicked() || app.GetMouseState().LeftIsClicked() {
 		gowid.RunWidgetCallbacks(w.Callbacks, gowid.ClickCB{}, app, w)
 	}
+}
+
+func (w *Widget) DoubleClick(app gowid.IApp) bool {
+	res := w.HaveCallbacks()
+	gowid.RunWidgetCallbacks(w.Callbacks, gowid.DoubleClickCB{}, app, w)
+	return res
 }
 
 func (w *Widget) SubWidget() gowid.IWidget {
@@ -187,6 +204,10 @@ func (w *Widget) CustomSelectKeys() bool {
 
 func (w *Widget) SelectKeys() []gowid.IKey {
 	return w.opts.SelectKeys
+}
+
+func (w *Widget) DoubleClickDelay() time.Duration {
+	return w.opts.DoubleClickDelay
 }
 
 //======================================================================
@@ -239,7 +260,17 @@ func UserInput(w IClickableIdentityWidget, ev interface{}, size gowid.IRenderSiz
 					}
 				})
 				if clickit {
-					w.Click(app)
+					skipClick := false
+					if dw, ok := w.(gowid.IDoubleClickable); ok {
+						if dw.DoubleClickDelay() != 0 {
+							if app.GetLastMouseState().MouseLastClickedTime.Add(dw.DoubleClickDelay()).After(ev.When()) {
+								skipClick = dw.DoubleClick(app)
+							}
+						}
+					}
+					if !skipClick {
+						w.Click(app)
+					}
 					res = true
 				}
 			}

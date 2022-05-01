@@ -6,10 +6,12 @@ package button
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
 	"github.com/gcla/gowid/widgets/text"
+	"github.com/gdamore/tcell/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,10 +20,14 @@ import (
 
 func TestButton1(t *testing.T) {
 	tw := text.New("click")
-	w := New(tw)
+	w := New(tw, Options{
+		Decoration:       NormalDecoration,
+		DoubleClickDelay: 1 * time.Second,
+	})
 
 	ct := &gwtest.ButtonTester{Gotit: false}
 	assert.Equal(t, ct.Gotit, false)
+	dct := &gwtest.ButtonTester{Gotit: false}
 
 	w.OnClick(ct)
 
@@ -31,7 +37,35 @@ func TestButton1(t *testing.T) {
 	w.Click(gwtest.D)
 	assert.Equal(t, ct.Gotit, true)
 
+	sz := gowid.RenderFlowWith{C: 10}
+	cled1 := tcell.NewEventMouse(1, 0, tcell.Button1, 0)
+	cleu1 := tcell.NewEventMouse(1, 0, tcell.ButtonNone, 0)
+
+	w.OnDoubleClick(dct)
+
 	ct.Gotit = false
+	dct.Gotit = false
+	assert.Equal(t, ct.Gotit, false)
+	assert.Equal(t, dct.Gotit, false)
+
+	w.UserInput(cled1, sz, gowid.Focused, gwtest.D)
+	gwtest.D.SetLastMouseState(gowid.MouseState{MouseLeftClicked: true, MouseLastClickedTime: cleu1.When().Add(-500 * time.Millisecond)})
+	w.UserInput(cleu1, sz, gowid.Focused, gwtest.D)
+
+	assert.Equal(t, ct.Gotit, false)
+	assert.Equal(t, dct.Gotit, true)
+	ct.Gotit = false
+	dct.Gotit = false
+
+	w.UserInput(cled1, sz, gowid.Focused, gwtest.D)
+	gwtest.D.SetLastMouseState(gowid.MouseState{MouseLeftClicked: true, MouseLastClickedTime: cleu1.When().Add(-2 * time.Second)})
+	w.UserInput(cleu1, sz, gowid.Focused, gwtest.D)
+
+	assert.Equal(t, ct.Gotit, true)
+	assert.Equal(t, dct.Gotit, false)
+
+	ct.Gotit = false
+	dct.Gotit = false
 	assert.Equal(t, ct.Gotit, false)
 	w.RemoveOnClick(ct)
 	w.Click(gwtest.D)

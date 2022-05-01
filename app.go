@@ -195,9 +195,10 @@ func (t ClickTargets) DeleteClickTargets(k tcell.ButtonMask) {
 //======================================================================
 
 type MouseState struct {
-	MouseLeftClicked   bool
-	MouseMiddleClicked bool
-	MouseRightClicked  bool
+	MouseLeftClicked     bool
+	MouseMiddleClicked   bool
+	MouseRightClicked    bool
+	MouseLastClickedTime time.Time
 }
 
 func (m MouseState) String() string {
@@ -515,9 +516,12 @@ func (a *App) HandleTCellEvent(ev interface{}, unhandled IUnhandledInput) {
 				a.ClickTargets.DeleteClickTargets(tcell.Button1)
 				a.ClickTargets.DeleteClickTargets(tcell.Button2)
 				a.ClickTargets.DeleteClickTargets(tcell.Button3)
+				a.MouseLastClickedTime = ev.When()
 			}
 			a.lastMouse = a.MouseState
-			a.MouseState = MouseState{}
+			a.MouseState = MouseState{
+				MouseLastClickedTime: a.MouseLastClickedTime,
+			}
 			a.RedrawTerminal()
 		}
 	case *tcell.EventResize:

@@ -8,6 +8,7 @@ package gwtest
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	tcell "github.com/gdamore/tcell/v2"
@@ -73,9 +74,10 @@ func (d testApp) GetColorMode() gowid.ColorMode {
 
 func (d testApp) GetMouseState() gowid.MouseState {
 	return gowid.MouseState{
-		MouseLeftClicked:   true,
-		MouseMiddleClicked: false,
-		MouseRightClicked:  false,
+		MouseLeftClicked:     true,
+		MouseMiddleClicked:   false,
+		MouseRightClicked:    false,
+		MouseLastClickedTime: time.Now(),
 	}
 }
 

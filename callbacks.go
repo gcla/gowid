@@ -10,6 +10,7 @@ import (
 //======================================================================
 
 type ClickCB struct{}
+type DoubleClickCB struct{}
 type KeyPressCB struct{}
 type SubWidgetCB struct{}
 type SubWidgetsCB struct{}
@@ -63,6 +64,7 @@ type ICallbacks interface {
 	RunCallbacks(name interface{}, args ...interface{})
 	AddCallback(name interface{}, cb ICallback)
 	RemoveCallback(name interface{}, cb IIdentity) bool
+	HaveCallbacks() bool
 }
 
 func NewCallbacks() *Callbacks {
@@ -72,6 +74,10 @@ func NewCallbacks() *Callbacks {
 	var _ ICallbacks = cb
 
 	return cb
+}
+
+func (f *Callbacks) HaveCallbacks() bool {
+	return len(f.callbacks) > 0
 }
 
 // CopyOfCallbacks is used when callbacks are run - they are copied
