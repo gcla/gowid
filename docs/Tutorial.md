@@ -267,11 +267,11 @@ func main() {
 	sbtn := styled.New(btn, gowid.MakeStyledAs(gowid.StyleReverse))
 	div := divider.NewBlank()
 
-	btn.OnClick(gowid.WidgetChangedCallback{"cb", func(app gowid.IApp, w gowid.IWidget) {
+	btn.OnClick(gowid.WidgetCallback{"cb", func(app gowid.IApp, w gowid.IWidget) {
 		app.Quit()
 	}})
 
-	ask.OnTextSet(gowid.WidgetChangedCallback{"cb", func(app gowid.IApp, w gowid.IWidget) {
+	ask.OnTextSet(gowid.WidgetCallback{"cb", func(app gowid.IApp, w gowid.IWidget) {
 		if ask.Text() == "" {
 			reply.SetText("", app)
 		} else {
@@ -295,8 +295,8 @@ func main() {
 }
 ```
 - The bottom-most widget in the pile is a `button.Widget`. It itself wraps an inner widget, and when rendered will add characters on the left and right of the inner widget to create a button effect.
-- `button.Widget` can call an interface method when it's clicked. `OnClick()` expects an `IWidgetChangedCallback`. You can use the `WidgetChangedCallback()` adapter to pass a simple function. 
-- The first parameter of `WidgetChangedCallback` is an `interface{}`. It's meant to uniquely identify this callback instance so that if you later need to remove the callback, you can by passing the same `interface{}`. Here I've used a simple string, "cb". The callbacks are scoped to the widget, so you can use the same callback identifier when registering callbacks for other widgets. 
+- `button.Widget` can call an interface method when it's clicked. `OnClick()` expects an `IWidgetChangedCallback`. You can use the `WidgetCallback()` adapter to pass a simple function. 
+- The first parameter of `WidgetCallback` is an `interface{}`. It's meant to uniquely identify this callback instance so that if you later need to remove the callback, you can by passing the same `interface{}`. Here I've used a simple string, "cb". The callbacks are scoped to the widget, so you can use the same callback identifier when registering callbacks for other widgets. 
 - `edit.Widget` can call an interface method when its text changes. In this example, every time the user enters a character, `ask` will update the `reply` widget so that it displays a message.
 - The callback will be called with two arguments - the application `app` and the widget issuing the callback. But if it's more convenient, you can rely on Go's scope rules to capture the widgets that you need to modify in the callback. `ask`'s callback refers to `reply` and not the callback parameter `w`. 
 - The `<exit>` button is styled using `MakeStyleAs()`, which applies a text style like underline, bold or reverse-video. No colors are given, so the button will use the terminal's default colors.
