@@ -121,10 +121,12 @@ type Bell struct{}
 type LEDs struct{}
 type Title struct{}
 type ProcessExited struct{}
+type HotKeyCB struct{}
 
 type bell struct{}
 type leds struct{}
 type title struct{}
+type hotkey struct{}
 
 type Options struct {
 	Command              []string
@@ -328,6 +330,14 @@ func (w *Widget) RemoveOnBell(f gowid.IIdentity) {
 	gowid.RemoveWidgetCallback(w.Callbacks, Bell{}, f)
 }
 
+func (w *Widget) OnHotKey(f gowid.IWidgetChangedCallback) {
+	gowid.AddWidgetCallback(w.Callbacks, HotKeyCB{}, f)
+}
+
+func (w *Widget) RemoveOnHotKey(f gowid.IIdentity) {
+	gowid.RemoveWidgetCallback(w.Callbacks, HotKeyCB{}, f)
+}
+
 func (w *Widget) PasteState(b ...bool) bool {
 	if len(b) > 0 {
 		w.paste = b[0]
@@ -346,11 +356,14 @@ func (w *Widget) SetHotKeyActive(app gowid.IApp, down bool) {
 		w.hotKeyTimer.Stop()
 	}
 
+	gowid.RunWidgetCallbacks(w.Callbacks, HotKeyCB{}, app, w)
+
 	if down {
 		w.hotKeyDownTime = time.Now()
 		w.hotKeyTimer = time.AfterFunc(w.HotKeyDuration(), func() {
 			app.Run(gowid.RunFunction(func(app gowid.IApp) {
 				w.SetHotKeyActive(app, false)
+				gowid.RunWidgetCallbacks(w.Callbacks, HotKeyCB{}, app, w)
 			}))
 		})
 	}
@@ -682,7 +695,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			// pressed) then the input will not go to the terminal - it's hotkey
 			// function processing.
 			passToTerminal = false
-			res = true
+			res = false
 			deactivate := false
 			if whk, ok := w.(IHotKeyFunctions); ok {
 				for _, fn := range whk.HotKeyFunctions() {
@@ -694,6 +707,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 				}
 			}
 			if !res {
+				res = true
 				switch evk.Key() {
 				case w.HotKey():
 					deactivate = true

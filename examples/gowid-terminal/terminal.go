@@ -204,8 +204,9 @@ func main() {
 	defer f.Close()
 
 	palette := gowid.Palette{
-		"invred": gowid.MakePaletteEntry(gowid.ColorBlack, gowid.ColorRed),
-		"line":   gowid.MakeStyledPaletteEntry(gowid.NewUrwidColor("black"), gowid.NewUrwidColor("light gray"), gowid.StyleBold),
+		"invred":  gowid.MakePaletteEntry(gowid.ColorBlack, gowid.ColorRed),
+		"invblue": gowid.MakePaletteEntry(gowid.ColorBlack, gowid.ColorCyan),
+		"line":    gowid.MakeStyledPaletteEntry(gowid.NewUrwidColor("black"), gowid.NewUrwidColor("light gray"), gowid.StyleBold),
 	}
 
 	hkDuration := terminal.HotKeyDuration{time.Second * 3}
@@ -252,7 +253,8 @@ func main() {
 	}
 
 	tw := text.New(" Terminal Demo ")
-	twi := styled.New(tw, gowid.MakePaletteRef("invred"))
+	twir := styled.New(tw, gowid.MakePaletteRef("invred"))
+	twib := styled.New(tw, gowid.MakePaletteRef("invblue"))
 	twp := holder.New(tw)
 
 	vline := styled.New(fill.New('│'), gowid.MakePaletteRef("line"))
@@ -283,7 +285,7 @@ func main() {
 		})
 		t.OnBell(gowid.WidgetCallback{"cb",
 			func(app gowid.IApp, w gowid.IWidget) {
-				twp.SetSubWidget(twi, app)
+				twp.SetSubWidget(twir, app)
 				timer := time.NewTimer(time.Millisecond * 800)
 				go func() {
 					<-timer.C
@@ -297,6 +299,16 @@ func main() {
 			func(app gowid.IApp, w gowid.IWidget) {
 				w2 := w.(*terminal.Widget)
 				tw.SetText(" "+w2.GetTitle()+" ", app)
+			},
+		})
+		t.OnHotKey(gowid.WidgetCallback{"cb",
+			func(app gowid.IApp, w gowid.IWidget) {
+				w2 := w.(*terminal.Widget)
+				if w2.HotKeyActive() {
+					twp.SetSubWidget(twib, app)
+				} else {
+					twp.SetSubWidget(tw, app)
+				}
 			},
 		})
 	}
