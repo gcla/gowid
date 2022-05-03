@@ -695,7 +695,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			// pressed) then the input will not go to the terminal - it's hotkey
 			// function processing.
 			passToTerminal = false
-			res = true
+			res = false
 			deactivate := false
 			if whk, ok := w.(IHotKeyFunctions); ok {
 				for _, fn := range whk.HotKeyFunctions() {
@@ -707,6 +707,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 				}
 			}
 			if !res {
+				res = true
 				switch evk.Key() {
 				case w.HotKey():
 					deactivate = true
