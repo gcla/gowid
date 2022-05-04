@@ -160,7 +160,7 @@ func (w *Widget) Click(app gowid.IApp) {
 }
 
 func (w *Widget) DoubleClick(app gowid.IApp) bool {
-	res := w.HaveCallbacks()
+	res := w.HaveCallbacks(gowid.DoubleClickCB{})
 	gowid.RunWidgetCallbacks(w.Callbacks, gowid.DoubleClickCB{}, app, w)
 	return res
 }

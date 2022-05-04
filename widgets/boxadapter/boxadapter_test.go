@@ -6,6 +6,7 @@ package boxadapter
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -59,9 +60,9 @@ func TestBoxadapter1(t *testing.T) {
 	}, "\n"), c1.String())
 
 	lb.UserInput(evlmx1y4, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	lb.UserInput(evnonex1y4, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false, time.Now()})
 	lb.UserInput(evx, sz, gowid.Focused, gwtest.D)
 
 	c1 = lb.Render(sz, gowid.Focused, gwtest.D)
@@ -97,9 +98,9 @@ func TestBoxadapter1(t *testing.T) {
 	}, "\n"), c2.String())
 
 	lb2.UserInput(evlmx2y2, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	lb2.UserInput(evnonex2y2, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false, time.Now()})
 	lb2.UserInput(evx, sz, gowid.Focused, gwtest.D)
 
 	c2 = lb2.Render(sz, gowid.Focused, gwtest.D)

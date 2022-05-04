@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/gcla/gowid"
@@ -89,9 +90,9 @@ func TestLong1(t *testing.T) {
 
 	clickat := func(x, y int) {
 		w.UserInput(evclick(x, y), sz, gowid.Focused, gwtest.D)
-		gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+		gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 		w.UserInput(evunclick(x, y), sz, gowid.Focused, gwtest.D)
-		gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false})
+		gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false, time.Now()})
 	}
 
 	clickat(4, 0)

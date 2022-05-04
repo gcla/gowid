@@ -7,6 +7,7 @@ package hpadding
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -152,7 +153,7 @@ func TestCheckbox2(t *testing.T) {
 	evnonex1y0 := tcell.NewEventMouse(1, 0, tcell.ButtonNone, 0)
 
 	w.UserInput(evlmx1y0, gowid.RenderFixed{}, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w.UserInput(evnonex1y0, gowid.RenderFixed{}, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)
@@ -161,7 +162,7 @@ func TestCheckbox2(t *testing.T) {
 	ct.Gotit = false
 	assert.Equal(t, ct.Gotit, false)
 	w2.UserInput(evlmx1y0, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w2.UserInput(evnonex1y0, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)
@@ -178,7 +179,7 @@ func TestCheckbox2(t *testing.T) {
 	evnonex5y0 := tcell.NewEventMouse(5, 0, tcell.ButtonNone, 0)
 
 	w3.UserInput(evlmx5y0, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w3.UserInput(evnonex5y0, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)

@@ -6,6 +6,7 @@ package columns
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -104,9 +105,9 @@ func TestColumns2(t *testing.T) {
 	evnonex0y0 := tcell.NewEventMouse(0, 0, tcell.ButtonNone, 0)
 
 	w1.UserInput(evlmx0y0, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w1.UserInput(evnonex0y0, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false, time.Now()})
 	c1 = w1.Render(sz, gowid.Focused, gwtest.D)
 	assert.Equal(t, "0f1 2 ", c1.String())
 }

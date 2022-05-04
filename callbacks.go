@@ -64,7 +64,7 @@ type ICallbacks interface {
 	RunCallbacks(name interface{}, args ...interface{})
 	AddCallback(name interface{}, cb ICallback)
 	RemoveCallback(name interface{}, cb IIdentity) bool
-	HaveCallbacks() bool
+	HaveCallbacks(interface{}) bool
 }
 
 func NewCallbacks() *Callbacks {
@@ -76,8 +76,8 @@ func NewCallbacks() *Callbacks {
 	return cb
 }
 
-func (f *Callbacks) HaveCallbacks() bool {
-	return f != nil && f.callbacks != nil && len(f.callbacks) > 0
+func (f *Callbacks) HaveCallbacks(t interface{}) bool {
+	return f != nil && f.callbacks != nil && len(f.callbacks[t]) > 0
 }
 
 // CopyOfCallbacks is used when callbacks are run - they are copied

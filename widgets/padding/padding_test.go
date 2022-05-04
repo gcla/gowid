@@ -5,6 +5,7 @@ package padding
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -83,10 +84,10 @@ func TestPadding1(t *testing.T) {
 	evnone31 := tcell.NewEventMouse(3, 1, tcell.ButtonNone, 0)
 
 	w.UserInput(ev31, gowid.RenderBox{C: 5, R: 3}, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w.UserInput(evnone31, gowid.RenderBox{C: 5, R: 3}, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
-	assert.Equal(t, ct.Gotit, true)
+	assert.Equal(t, true, ct.Gotit)
 
 	// w2 := New(fill.New('x'), gowid.VAlignMiddle{}, gowid.RenderWithRatio{0.5})
 	// c2 := w2.Render(gowid.RenderBox{C: 3, R: 4}, gowid.Focused, gwtest.D)

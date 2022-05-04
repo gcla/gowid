@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -284,9 +285,9 @@ func TestTable1(t *testing.T) {
 	evnonex14y5 := tcell.NewEventMouse(14, 5, tcell.ButtonNone, 0)
 
 	w1.UserInput(evlmx14y5, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w1.UserInput(evnonex14y5, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{false, false, false, time.Now()})
 	xy, err = w1.FocusXY()
 	assert.NoError(t, err)
 	assert.Equal(t, 2, xy.Column)

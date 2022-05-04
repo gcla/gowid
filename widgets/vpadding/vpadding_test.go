@@ -6,6 +6,7 @@ package vpadding
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwtest"
@@ -152,7 +153,7 @@ func TestCheckbox3(t *testing.T) {
 	ct.Gotit = false
 	assert.Equal(t, ct.Gotit, false)
 	w2.UserInput(evlmx1y0, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w2.UserInput(evnonex1y0, sz, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)
@@ -162,7 +163,7 @@ func TestCheckbox3(t *testing.T) {
 	assert.Equal(t, ct.Gotit, false)
 
 	w3.UserInput(evlmx1y0, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w3.UserInput(evnonex1y0, sz, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, false)
@@ -170,7 +171,7 @@ func TestCheckbox3(t *testing.T) {
 	evlmx1y2 := tcell.NewEventMouse(1, 2, tcell.ButtonNone, 0)
 
 	w3.UserInput(evlmx1y2, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w3.UserInput(evnonex1y0, gowid.RenderBox{C: 10, R: 1}, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)
@@ -180,7 +181,7 @@ func TestCheckbox3(t *testing.T) {
 	assert.Equal(t, ct.Gotit, false)
 
 	w4.UserInput(evlmx1y0, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w4.UserInput(evnonex1y0, sz, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, false)
@@ -189,7 +190,7 @@ func TestCheckbox3(t *testing.T) {
 	evnonex1y1 := tcell.NewEventMouse(1, 1, tcell.ButtonNone, 0)
 
 	w4.UserInput(evlmx1y1, sz, gowid.Focused, gwtest.D)
-	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false})
+	gwtest.D.SetLastMouseState(gowid.MouseState{true, false, false, time.Now()})
 	w4.UserInput(evnonex1y1, sz, gowid.Focused, gwtest.D)
 	gwtest.D.SetLastMouseState(gowid.MouseState{})
 	assert.Equal(t, ct.Gotit, true)
