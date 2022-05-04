@@ -77,7 +77,7 @@ func NewCallbacks() *Callbacks {
 }
 
 func (f *Callbacks) HaveCallbacks() bool {
-	return len(f.callbacks) > 0
+	return f != nil && f.callbacks != nil && len(f.callbacks) > 0
 }
 
 // CopyOfCallbacks is used when callbacks are run - they are copied
