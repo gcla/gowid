@@ -1431,9 +1431,6 @@ func MakeTCellColor(val string) (TCellColor, error) {
 	match := tcellColorRE.FindStringSubmatch(val) // e.g. "Color00"
 	if len(match) == 2 {
 		n, _ := strconv.ParseUint(match[1], 16, 8)
-		if n == 0 {
-			return MakeTCellColorExt(tcell.ColorDefault), nil
-		}
 		return MakeTCellColorExt(tcell.Color(n) + tcell.ColorValid), nil
 	} else if col, ok := tcell.ColorNames[val]; !ok {
 		return TCellColor{}, errors.WithStack(InvalidColor{Color: val})
