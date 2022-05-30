@@ -437,7 +437,6 @@ func RenderSize(w gowid.ICompositeMultipleWidget, size gowid.IRenderSize, focus 
 // What if the Pile is rendered as a RenderFlow? Then you can't specify any weighted widgets
 
 func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
-
 	subfocus := w.Focus()
 	// if !focus.Focus {
 	// 	subfocus = -1
@@ -457,7 +456,7 @@ func Render(w IWidget, size gowid.IRenderSize, focus gowid.Selector, app gowid.I
 			// a pile of width 20, and put it in a column, the next column starts at 21
 			// TODO - remember which one has focus
 			res.AppendBelow(canvases[i], i == subfocus, false)
-			if haveMaxRow && res.BoxRows() >= rows.Rows() {
+			if haveMaxRow && res.BoxRows() > rows.Rows() {
 				trim = true
 				break
 			}
