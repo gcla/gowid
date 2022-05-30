@@ -519,6 +519,45 @@ func PreviousPosition(tp IPos, tree IModel) IPos {
 
 //======================================================================
 
+type ISearchPred interface {
+	CheckNode(IModel, IPos) bool
+}
+
+type SearchPred func(IModel, IPos) bool
+
+func (s SearchPred) CheckNode(tree IModel, pos IPos) bool {
+	return s(tree, pos)
+}
+
+func DepthFirstSearch(tree IModel, fn ISearchPred) IPos {
+	pos := NewPos()
+	return depthFirstSearchImpl(tree, pos, fn)
+}
+
+func depthFirstSearchImpl(tree IModel, pos *TreePos, fn ISearchPred) IPos {
+	if tree == nil {
+		return nil
+	}
+	if fn.CheckNode(tree, pos) {
+		return pos
+	}
+	cs := tree.Children()
+	tpos := pos.Copy().(*TreePos)
+	tpos.Pos = append(tpos.Pos, 0)
+	i := 0
+	for cs.Next() {
+		tpos.Pos[len(tpos.Pos)-1] = i
+		rpos := depthFirstSearchImpl(cs.Value(), tpos, fn)
+		if rpos != nil {
+			return rpos
+		}
+		i += 1
+	}
+	return nil
+}
+
+//======================================================================
+
 type IWidgetMaker interface {
 	MakeWidget(pos IPos, tree IModel) gowid.IWidget
 }

@@ -99,7 +99,8 @@ type App struct {
 	prevWasMouseMove     bool // True if we last processed simple mouse movement. We can optimize on slow
 	enableMouseMotion    bool
 	enableBracketedPaste bool
-	// systems by discarding subsequent mouse movement events.
+	screenInited         bool
+	dontOwnScreen        bool
 
 	lastMouse    MouseState    // So I can tell if a button was previously clicked
 	MouseState                 // Track which mouse buttons are currently down
@@ -117,6 +118,7 @@ type AppArgs struct {
 	EnableMouseMotion    bool
 	EnableBracketedPaste bool
 	Log                  log.StdLogger
+	DontActivate         bool
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -284,9 +286,10 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		log:                  args.Log,
 		enableMouseMotion:    args.EnableMouseMotion,
 		enableBracketedPaste: args.EnableBracketedPaste,
+		dontOwnScreen:        args.Screen != nil,
 	}
 
-	if args.Screen == nil {
+	if !res.dontOwnScreen && !args.DontActivate {
 		if err := res.initScreen(); err != nil {
 			return nil, err
 		}
@@ -813,14 +816,13 @@ func (a *App) Quit() {
 // I can't make tcell claim and release the same screen successfully. Clients of
 // the app struct shouldn't cache the screen object returned via GetScreen().
 //
+// Assumes we own the screen...
 func (a *App) ActivateScreen() error {
 	screen, err := tcellScreen()
 	if err != nil {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
-	if a.screen != nil {
-		a.screen.Fini()
-	}
+	a.DeactivateScreen()
 	a.screen = screen
 	if err := a.initScreen(); err != nil {
 		return err
@@ -831,9 +833,13 @@ func (a *App) ActivateScreen() error {
 	return nil
 }
 
+// Assumes we own the screen
 func (a *App) DeactivateScreen() {
-	a.screen.Fini()
-	a.screen = nil
+	if a.screen != nil && a.screenInited {
+		a.screen.Fini()
+		a.screen = nil
+		a.screenInited = false
+	}
 }
 
 func (a *App) initScreen() error {
@@ -841,6 +847,7 @@ func (a *App) initScreen() error {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
 
+	a.screenInited = true
 	a.initColorMode()
 
 	defFg := ColorDefault
