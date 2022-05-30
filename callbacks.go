@@ -112,6 +112,9 @@ func (c *Callbacks) AddCallback(name interface{}, cb ICallback) {
 }
 
 func (c *Callbacks) RemoveCallback(name interface{}, cb IIdentity) bool {
+	if c == nil {
+		return false
+	}
 	c.Lock()
 	defer c.Unlock()
 	cbs, ok := c.callbacks[name]
@@ -120,7 +123,6 @@ func (c *Callbacks) RemoveCallback(name interface{}, cb IIdentity) bool {
 		ok = false
 		for i, cb2 := range cbs {
 			if cb.ID() == cb2.ID() {
-				//delete(c.callbacks, name)
 				// Append backwards for easier deletion later
 				idxs = append([]int{i}, idxs...)
 			}
