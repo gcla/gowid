@@ -69,6 +69,26 @@ func TestTree1(t *testing.T) {
 	tt := tp.GetSubStructure(parent1)
 
 	assert.Equal(t, leaf1, tt)
+
+	count := 0
+	var pos IPos
+
+	dfs := DepthFirstSearch(parent1, SearchPred(func(t IModel, p IPos) bool {
+		count += 1
+		t2 := t.(*Tree)
+		pos = p
+		return t2.theLeaf == "leaf2"
+	}))
+
+	pos2 := pos.(*TreePos)
+
+	assert.NotNil(t, dfs)
+	assert.Equal(t, 6, count)
+	assert.Equal(t, []int{2}, pos2.Indices())
+
+	st := pos2.GetSubStructure(parent1).(*Tree)
+	assert.Equal(t, "leaf2", st.theLeaf)
+
 }
 
 //======================================================================
