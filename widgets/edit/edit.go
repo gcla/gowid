@@ -508,6 +508,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		}
 
 		if !handled {
+			handled = true
 			switch ev.Key() {
 			case tcell.KeyPgUp:
 				handled = w.UpLines(size, true, app)
