@@ -1,4 +1,4 @@
-// Copyright 2019 Graham Clark. All rights reserved.  Use of this source code is governed by the MIT license
+// Copyright 2019-2022 Graham Clark. All rights reserved.  Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
 // A demonstration of gowid's overlay, fill, asciigraph and radio widgets.
