@@ -101,6 +101,7 @@ type App struct {
 	enableBracketedPaste bool
 	screenInited         bool
 	dontOwnScreen        bool
+	tty                  string
 
 	lastMouse    MouseState    // So I can tell if a button was previously clicked
 	MouseState                 // Track which mouse buttons are currently down
@@ -119,6 +120,7 @@ type AppArgs struct {
 	EnableBracketedPaste bool
 	Log                  log.StdLogger
 	DontActivate         bool
+	Tty                  string
 }
 
 // IUnhandledInput is used as a handler for application user input that is not handled by any
@@ -243,7 +245,7 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 	screen := args.Screen
 	if screen == nil {
 		var err error
-		screen, err = tcellScreen()
+		screen, err = tcellScreen(args.Tty)
 		if err != nil {
 			rerr = WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 			return
@@ -286,6 +288,7 @@ func newApp(args AppArgs) (rapp *App, rerr error) {
 		enableMouseMotion:    args.EnableMouseMotion,
 		enableBracketedPaste: args.EnableBracketedPaste,
 		dontOwnScreen:        args.Screen != nil,
+		tty:                  args.Tty,
 	}
 
 	if !res.dontOwnScreen && !args.DontActivate {
@@ -814,7 +817,7 @@ func (a *App) Quit() {
 //
 // Assumes we own the screen...
 func (a *App) ActivateScreen() error {
-	screen, err := tcellScreen()
+	screen, err := tcellScreen(a.tty)
 	if err != nil {
 		return WithKVs(err, map[string]interface{}{"TERM": os.Getenv("TERM")})
 	}
