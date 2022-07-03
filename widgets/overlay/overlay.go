@@ -70,6 +70,10 @@ type IOverlay interface {
 	BottomGetsCursor() bool
 }
 
+type IIgnoreLowerStyle interface {
+	IgnoreLowerStyle() bool
+}
+
 type IWidget interface {
 	gowid.IWidget
 	IOverlay
@@ -100,6 +104,8 @@ type Widget struct {
 	Callbacks *gowid.Callbacks
 }
 
+var _ IIgnoreLowerStyle = (*Widget)(nil)
+
 // For callback registration
 type Top struct{}
 type Bottom struct{}
@@ -108,6 +114,7 @@ type Options struct {
 	BottomGetsFocus  bool
 	TopGetsNoFocus   bool
 	BottomGetsCursor bool
+	IgnoreLowerStyle bool
 }
 
 func New(top, bottom gowid.IWidget,
@@ -235,6 +242,10 @@ func (w *Widget) SetSubWidget(inner gowid.IWidget, app gowid.IApp) {
 	}
 }
 
+func (w *Widget) IgnoreLowerStyle() bool {
+	return w.opts.IgnoreLowerStyle
+}
+
 //======================================================================
 
 func UserInput(w IOverlay, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
@@ -262,6 +273,30 @@ func UserInput(w IOverlay, ev interface{}, size gowid.IRenderSize, focus gowid.S
 	return res
 }
 
+// Merge cells as follows - use upper rune if set, use upper colors if set,
+// and use upper style only (don't let any lower run style bleed through)
+func mergeAllExceptUpperStyle(lower gowid.Cell, upper gowid.Cell) gowid.Cell {
+	res := lower
+	if upper.HasRune() {
+		res = res.WithRune(upper.Rune())
+	}
+
+	ufg, ubg, _ := upper.GetDisplayAttrs()
+	if ubg != gowid.ColorNone {
+		res = res.WithBackgroundColor(ubg)
+	}
+	if ufg != gowid.ColorNone {
+		res = res.WithForegroundColor(ufg)
+	}
+
+	res = res.WithStyle(upper.Style())
+	return res
+}
+
+type iMergeWithFuncCanvas interface {
+	MergeWithFunc(gowid.IMergeCanvas, int, int, gowid.CellMergeFunc, bool)
+}
+
 func Render(w IOverlay, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) gowid.ICanvas {
 	bfocus := focus.And(w.BottomGetsFocus())
 	tfocus := focus.And(w.TopGetsFocus())
@@ -273,7 +308,22 @@ func Render(w IOverlay, size gowid.IRenderSize, focus gowid.Selector, app gowid.
 		bottomC2 := bottomC.Duplicate()
 		p2 := padding.New(w.Top(), w.VAlign(), w.Height(), w.HAlign(), w.Width())
 		topC := p2.Render(size, tfocus, app)
-		bottomC2.MergeUnder(topC, 0, 0, w.BottomGetsCursor())
+
+		var bottomC2mc iMergeWithFuncCanvas
+		ign := false
+		if wIgn, ok := w.(IIgnoreLowerStyle); ok {
+			if gc, ok := bottomC2.(iMergeWithFuncCanvas); ok {
+				bottomC2mc = gc
+				ign = wIgn.IgnoreLowerStyle()
+			}
+		}
+
+		if ign {
+			bottomC2mc.MergeWithFunc(topC, 0, 0, mergeAllExceptUpperStyle, w.BottomGetsCursor())
+		} else {
+			bottomC2.MergeUnder(topC, 0, 0, w.BottomGetsCursor())
+		}
+
 		return bottomC2
 	}
 }
