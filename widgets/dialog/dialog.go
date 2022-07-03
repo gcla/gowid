@@ -405,7 +405,9 @@ type IOpenExt interface {
 func OpenExt(w IOpenExt, container gowid.ISettableComposite, width gowid.IWidgetDimension, height gowid.IWidgetDimension, app gowid.IApp) {
 	ov := overlay.New(w, container.SubWidget(),
 		gowid.VAlignMiddle{}, height, // Intended to mean use as much vertical space as you need
-		gowid.HAlignMiddle{}, width)
+		gowid.HAlignMiddle{}, width, overlay.Options{
+			IgnoreLowerStyle: true,
+		})
 
 	if _, ok := width.(gowid.IRenderFixed); ok {
 		w.SetContentWidth(gowid.RenderFixed{}, app) // fixed or weight:1, ratio:0.5
