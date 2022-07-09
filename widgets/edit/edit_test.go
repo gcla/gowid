@@ -30,6 +30,7 @@ func TestType1(t *testing.T) {
 	assert.Equal(t, "hi: 现在 abc   ", c1.String())
 
 	evq := tcell.NewEventKey(tcell.KeyRune, 'q', tcell.ModNone)
+	evdel := tcell.NewEventKey(tcell.KeyDelete, 'X', tcell.ModNone)
 
 	w.SetCursorPos(0, gwtest.D)
 	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
@@ -40,6 +41,25 @@ func TestType1(t *testing.T) {
 	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
 	c1 = w.Render(sz, gowid.Focused, gwtest.D)
 	assert.Equal(t, "qhi: 现q在 abc ", c1.String())
+	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
+	c1 = w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "qhi: 现qq在 abc", c1.String())
+	w.UserInput(evdel, sz, gowid.Focused, gwtest.D)
+	c1 = w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "qhi: 现qq abc  ", c1.String())
+
+	w.SetReadOnly(true, gwtest.D)
+	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
+	c1 = w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "qhi: 现qq abc  ", c1.String())
+	w.UserInput(evdel, sz, gowid.Focused, gwtest.D)
+	c1 = w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "qhi: 现qq abc  ", c1.String())
+
+	w.SetReadOnly(false, gwtest.D)
+	w.UserInput(evq, sz, gowid.Focused, gwtest.D)
+	c1 = w.Render(sz, gowid.Focused, gwtest.D)
+	assert.Equal(t, "qhi: 现qqq abc ", c1.String())
 }
 
 func TestRender1(t *testing.T) {
