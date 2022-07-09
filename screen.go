@@ -14,19 +14,22 @@ import (
 
 //======================================================================
 
-func tcellScreen() (tcell.Screen, error) {
+func tcellScreen(ttys string) (tcell.Screen, error) {
 	var tty tcell.Tty
 	var err error
 
-	tty, err = tcell.NewDevTtyFromDev(bestTty())
+	tty, err = tcell.NewDevTtyFromDev(bestTty(ttys))
 	if err != nil {
-		return nil, WithKVs(err, map[string]interface{}{"GOWID_TTY": os.Getenv("GOWID_TTY")})
+		return nil, WithKVs(err, map[string]interface{}{"tty": ttys})
 	}
 
 	return tcell.NewTerminfoScreenFromTty(tty)
 }
 
-func bestTty() string {
+func bestTty(tty string) string {
+	if tty != "" {
+		return tty
+	}
 	gwtty := os.Getenv("GOWID_TTY")
 	if gwtty != "" {
 		return gwtty

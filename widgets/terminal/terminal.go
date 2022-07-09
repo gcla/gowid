@@ -1,4 +1,4 @@
-// Copyright 2019 Graham Clark. All rights reserved.  Use of this source
+// Copyright 2019-2022 Graham Clark. All rights reserved.  Use of this source
 // code is governed by the MIT license that can be found in the LICENSE
 // file.
 
@@ -129,14 +129,16 @@ type title struct{}
 type hotkey struct{}
 
 type Options struct {
-	Command              []string
-	Env                  []string
-	HotKey               IHotKeyProvider
-	HotKeyPersistence    IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
-	Scrollback           int
-	Scrollbar            bool            // disabled regardless of setting if there is no scrollback
-	HotKeyFns            []HotKeyInputFn // allow custom behavior after pressing the hotkey
-	EnableBracketedPaste bool
+	Command                 []string
+	Env                     []string
+	HotKey                  IHotKeyProvider
+	HotKeyPersistence       IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
+	Scrollback              int
+	Scrollbar               bool            // disabled regardless of setting if there is no scrollback
+	HotKeyFns               []HotKeyInputFn // allow custom behavior after pressing the hotkey
+	EnableBracketedPaste    bool
+	KeyPressToEndScrollMode bool // set to true to enable legacy behavior - when the user has scrolled
+	// back to the prompt, still require a keypress (q or Q) to end scroll-mode.
 }
 
 // Widget is a widget that hosts a terminal-based application. The user provides the
@@ -379,9 +381,18 @@ func (w *Widget) Scroll(dir ScrollDir, page bool, lines int) {
 	} else {
 		lines = w.canvas.ScrollBuffer(dir, false, gwutil.SomeInt(lines))
 	}
-	// Scrolling is now true if it (a) was previously, or (b) wasn't, but we
-	// scrolled more than one line
-	w.isScrolling = w.isScrolling || lines != 0
+
+	wasScrolling := w.isScrolling
+	if lines != 0 {
+		w.isScrolling = true
+	} else if !w.params.KeyPressToEndScrollMode && dir == ScrollDown {
+		// Disable scroll if we are at the bottom and we tried to scroll down
+		// Thanks @Peter2121 !
+		w.isScrolling = false
+	}
+	if wasScrolling && !w.isScrolling {
+		w.ResetScroll()
+	}
 }
 
 func (w *Widget) ResetScroll() {

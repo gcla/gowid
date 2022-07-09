@@ -11,7 +11,7 @@ import (
 
 //======================================================================
 
-func tcellScreen() (tcell.Screen, error) {
+func tcellScreen(tty string) (tcell.Screen, error) {
 	return tcell.NewScreen()
 }
 
