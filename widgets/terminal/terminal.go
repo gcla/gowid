@@ -215,6 +215,15 @@ func NewExt(opts Options) (*Widget, error) {
 		opts.Scrollbar = false
 	}
 
+	var persistence IHotKeyPersistence
+	if opts.HotKeyPersistence != nil {
+		persistence = opts.HotKeyPersistence
+	} else {
+		persistence = &HotKeyDuration{
+			D: 2 * time.Second,
+		}
+	}
+
 	// Always allocate so the scrollbar can be turned on later
 	sbar := vscroll.NewExt(vscroll.VerticalScrollbarUnicodeRunes)
 
@@ -228,7 +237,7 @@ func NewExt(opts Options) (*Widget, error) {
 	res := &Widget{
 		params:             opts,
 		IHotKeyProvider:    opts.HotKey,
-		IHotKeyPersistence: opts.HotKeyPersistence,
+		IHotKeyPersistence: persistence,
 		terminfo:           ti,
 		sbar:               sbar,
 		cols:               cols,

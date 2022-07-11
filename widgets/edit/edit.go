@@ -76,11 +76,16 @@ type IWidget interface {
 	DownLines(size gowid.IRenderSize, doPage bool, app gowid.IApp) bool
 }
 
+type IReadOnly interface {
+	IsReadOnly() bool
+}
+
 type Widget struct {
 	IMask
 	caption      string
 	text         string
 	paste        bool
+	readonly     bool
 	pastedKeys   []*tcell.EventKey
 	cursorPos    int
 	linesFromTop int
@@ -92,6 +97,7 @@ var _ fmt.Stringer = (*Widget)(nil)
 var _ io.Reader = (*Widget)(nil)
 var _ gowid.IWidget = (*Widget)(nil)
 var _ IPaste = (*Widget)(nil)
+var _ IReadOnly = (*Widget)(nil)
 
 // Writer embeds an EditWidget and provides the io.Writer interface. An gowid.IApp needs to
 // be provided too because the widget's SetText() function requires it in order to issue
@@ -102,9 +108,10 @@ type Writer struct {
 }
 
 type Options struct {
-	Caption string
-	Text    string
-	Mask    IMask
+	Caption  string
+	Text     string
+	Mask     IMask
+	ReadOnly bool
 }
 
 func New(args ...Options) *Widget {
@@ -119,6 +126,7 @@ func New(args ...Options) *Widget {
 		IMask:        opt.Mask,
 		caption:      opt.Caption,
 		text:         opt.Text,
+		readonly:     opt.ReadOnly,
 		cursorPos:    len(opt.Text),
 		pastedKeys:   make([]*tcell.EventKey, 0, 100),
 		linesFromTop: 0,
@@ -129,6 +137,14 @@ func New(args ...Options) *Widget {
 
 func (w *Widget) String() string {
 	return fmt.Sprintf("edit")
+}
+
+func (w *Widget) IsReadOnly() bool {
+	return w.readonly
+}
+
+func (w *Widget) SetReadOnly(v bool, _ gowid.IApp) {
+	w.readonly = v
 }
 
 // Set content from array
@@ -420,7 +436,19 @@ func keyIsPasteable(ev *tcell.EventKey) bool {
 	}
 }
 
+func isReadOnly(w interface{}) bool {
+	readOnly := false
+	if ro, ok := w.(IReadOnly); ok {
+		readOnly = ro.IsReadOnly()
+	}
+	return readOnly
+}
+
 func pasteableKeyInput(w IWidget, ev *tcell.EventKey, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
+	if isReadOnly(w) {
+		return false
+	}
+
 	handled := true
 	switch ev.Key() {
 	case tcell.KeyEnter:
@@ -455,6 +483,8 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	doup := false
 	dodown := false
 	recalcLinesFromTop := false
+	readOnly := isReadOnly(w)
+
 	switch ev := ev.(type) {
 	case *tcell.EventMouse:
 		switch ev.Buttons() {
@@ -497,7 +527,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	case *tcell.EventKey:
 		handled = false
 		if wp, ok := w.(IPaste); ok {
-			if wp.PasteState() && keyIsPasteable(ev) {
+			if wp.PasteState() && keyIsPasteable(ev) && !readOnly {
 				wp.AddKey(ev)
 				handled = true
 			}
@@ -531,40 +561,50 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 					handled = false
 				}
 			case tcell.KeyBackspace, tcell.KeyBackspace2:
-				if w.CursorPos() > 0 {
-					pos := w.CursorPos()
-					w.SetCursorPos(w.CursorPos()-1, app)
-					r := []rune(w.Text())
-					w.SetText(string(r[0:pos-1])+string(r[pos:]), app)
+				if !readOnly {
+					if w.CursorPos() > 0 {
+						pos := w.CursorPos()
+						w.SetCursorPos(w.CursorPos()-1, app)
+						r := []rune(w.Text())
+						w.SetText(string(r[0:pos-1])+string(r[pos:]), app)
+					}
 				}
 			case tcell.KeyDelete, tcell.KeyCtrlD:
-				if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
-					r := []rune(w.Text())
-					w.SetText(string(r[0:w.CursorPos()])+string(r[w.CursorPos()+1:]), app)
+				if !readOnly {
+					if w.CursorPos() < utf8.RuneCountInString(w.Text()) {
+						r := []rune(w.Text())
+						w.SetText(string(r[0:w.CursorPos()])+string(r[w.CursorPos()+1:]), app)
+					}
 				}
 			case tcell.KeyCtrlK:
-				r := []rune(w.Text())
-				w.SetText(string(r[0:w.CursorPos()]), app)
+				if !readOnly {
+					r := []rune(w.Text())
+					w.SetText(string(r[0:w.CursorPos()]), app)
+				}
 			case tcell.KeyCtrlU:
-				r := []rune(w.Text())
-				w.SetText(string(r[w.CursorPos():]), app)
-				w.SetCursorPos(0, app)
+				if !readOnly {
+					r := []rune(w.Text())
+					w.SetText(string(r[w.CursorPos():]), app)
+					w.SetCursorPos(0, app)
+				}
 			case tcell.KeyHome:
 				w.SetCursorPos(0, app)
 				w.SetLinesFromTop(0, app)
 			case tcell.KeyCtrlW:
-				txt := []rune(w.Text())
-				origcp := w.CursorPos()
-				cp := origcp
-				for cp > 0 && unicode.IsSpace(txt[cp-1]) {
-					cp--
-				}
-				for cp > 0 && !unicode.IsSpace(txt[cp-1]) {
-					cp--
-				}
-				if cp != origcp {
-					w.SetText(string(txt[0:cp])+string(txt[origcp:]), app)
-					w.SetCursorPos(cp, app)
+				if !readOnly {
+					txt := []rune(w.Text())
+					origcp := w.CursorPos()
+					cp := origcp
+					for cp > 0 && unicode.IsSpace(txt[cp-1]) {
+						cp--
+					}
+					for cp > 0 && !unicode.IsSpace(txt[cp-1]) {
+						cp--
+					}
+					if cp != origcp {
+						w.SetText(string(txt[0:cp])+string(txt[origcp:]), app)
+						w.SetCursorPos(cp, app)
+					}
 				}
 			case tcell.KeyCtrlA:
 				// Would be nice to use a slice here, something that doesn't copy
