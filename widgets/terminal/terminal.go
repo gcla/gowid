@@ -827,6 +827,7 @@ func findTerminfo(name string) (*terminfo.Terminfo, error) {
 		return ti, nil
 	}
 	ti, e = terminfo.LookupTerminfo(name)
+	cachedTerminfoMutex.Unlock()
 	return ti, e
 }
 
