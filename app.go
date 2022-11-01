@@ -660,8 +660,15 @@ func (a *App) MainLoop(unhandled IUnhandledInput) {
 // app as an argument - then it will force the application to re-render
 // itself.
 func (a *App) RunThenRenderEvent(ev IAfterRenderEvent) {
-	ev.RunThenRenderEvent(a)
-	a.RedrawTerminal()
+	redraw := true
+	if evext, ok := ev.(IAppRun); ok {
+		redraw = evext.RunThenOptionallyRenderEvent(a)
+	} else {
+		ev.RunThenRenderEvent(a)
+	}
+	if redraw {
+		a.RedrawTerminal()
+	}
 }
 
 // handleEvents processes all gowid events. These can be either app-generated events
@@ -770,11 +777,18 @@ func (a *App) UnregisterMenu(menu IMenuCompatible) bool {
 type RunFunction func(IApp)
 
 // IAfterRenderEvent is implemented by clients that wish to run a function on the
-// gowid rendering goroutine, directly after the widget hierarchy is rendered. This
+// gowid rendering goroutine, directly before the widget hierarchy is rendered. This
 // allows the client to be sure that there is no race condition with the
 // widget rendering code.
 type IAfterRenderEvent interface {
 	RunThenRenderEvent(IApp)
+}
+
+// IAppRun is implemented by clients that wish to run a function on the gowid
+// rendering goroutine, directly before the widget hierarchy is rendered. If the
+// value returned is true, the widgets are re-rendered; otherwise, they are not.
+type IAppRun interface {
+	RunThenOptionallyRenderEvent(IApp) bool
 }
 
 // RunThenRenderEvent lets the receiver RunOnRenderFunction implement IOnRenderEvent. This
