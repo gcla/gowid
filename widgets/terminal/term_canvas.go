@@ -101,14 +101,14 @@ func (t Modes) MouseReportAny() bool {
 
 //======================================================================
 
-type CSIFunction func(canvas *Canvas, args []int, qmark bool)
+type CSIFunction func(canvas *Canvas, args []int, qmark bool) bool
 
 type ICSICommand interface {
 	MinArgs() int
 	FallbackArg() int
 	IsAlias() bool
 	Alias() byte
-	Call(canvas *Canvas, args []int, qmark bool)
+	Call(canvas *Canvas, args []int, qmark bool) bool
 }
 
 type RegularCSICommand struct {
@@ -121,8 +121,8 @@ func (c RegularCSICommand) MinArgs() int     { return c.minArgs }
 func (c RegularCSICommand) FallbackArg() int { return c.fallbackArg }
 func (c RegularCSICommand) IsAlias() bool    { return false }
 func (c RegularCSICommand) Alias() byte      { panic(errors.New("Do not call")) }
-func (c RegularCSICommand) Call(canvas *Canvas, args []int, qmark bool) {
-	c.fn(canvas, args, qmark)
+func (c RegularCSICommand) Call(canvas *Canvas, args []int, qmark bool) bool {
+	return c.fn(canvas, args, qmark)
 }
 
 type AliasCSICommand struct {
@@ -133,7 +133,7 @@ func (c AliasCSICommand) MinArgs() int     { panic(errors.New("Do not call")) }
 func (c AliasCSICommand) FallbackArg() int { panic(errors.New("Do not call")) }
 func (c AliasCSICommand) IsAlias() bool    { return true }
 func (c AliasCSICommand) Alias() byte      { return c.alias }
-func (c AliasCSICommand) Call(canvas *Canvas, args []int, qmark bool) {
+func (c AliasCSICommand) Call(canvas *Canvas, args []int, qmark bool) bool {
 	panic(errors.New("Do not call"))
 }
 
@@ -141,87 +141,113 @@ type CSIMap map[byte]ICSICommand
 
 // csiMap maps bytes to CSI mode changing functions. This closely follows urwid's structure.
 var csiMap = CSIMap{
-	'@': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'@': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.InsertChars(gwutil.NoneInt(), gwutil.NoneInt(), args[0], gwutil.NoneRune())
+		return true
 	}},
-	'A': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'A': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(0, -int(args[0]), true, false, false)
+		return true
 	}},
-	'B': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'B': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(0, int(args[0]), true, false, false)
+		return true
 	}},
-	'C': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'C': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(int(args[0]), 0, true, false, false)
+		return true
 	}},
-	'D': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'D': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(-int(args[0]), 0, true, false, false)
+		return true
 	}},
-	'E': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'E': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(0, int(args[0]), false, false, true)
+		return true
 	}},
-	'F': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'F': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(0, -int(args[0]), false, false, true)
+		return true
 	}},
-	'G': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'G': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(int(args[0])-1, 0, false, false, true)
+		return true
 	}},
-	'H': RegularCSICommand{2, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'H': RegularCSICommand{2, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(int(args[1])-1, int(args[0])-1, false, false, false)
+		return true
 	}},
-	'J': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'J': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSIEraseDisplay(args[0])
+		return true
 	}},
-	'K': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'K': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSIEraseLine(args[0])
+		return true
 	}},
-	'L': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'L': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.InsertLines(true, args[0])
+		return true
 	}},
-	'M': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'M': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.RemoveLines(true, args[0])
+		return true
 	}},
-	'P': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'P': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.RemoveChars(gwutil.NoneInt(), gwutil.NoneInt(), args[0])
+		return true
 	}},
-	'X': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'X': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		myx, myy := canvas.TermCursor()
 		canvas.Erase(myx, myy, myx+args[0]-1, myy)
+		return true
 	}},
 	'a': AliasCSICommand{alias: 'C'},
-	'c': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'c': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSIGetDeviceAttributes(qmark)
+		return false
 	}},
-	'd': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) {
+	'd': RegularCSICommand{1, 1, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.MoveCursor(0, int(args[0])-1, false, true, false)
+		return true
 	}},
 	'e': AliasCSICommand{alias: 'B'},
 	'f': AliasCSICommand{alias: 'H'},
-	'g': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'g': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSIClearTabstop(args[0])
+		return false
 	}},
-	'h': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'h': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSISetModes(args, qmark, false)
+		return false
 	}},
-	'l': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'l': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSISetModes(args, qmark, true)
+		return false
 	}},
-	'm': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'm': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSISetAttr(args)
+		return false
 	}},
-	'n': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'n': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSIStatusReport(args[0])
+		return false
 	}},
-	'q': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'q': RegularCSICommand{1, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSISetKeyboardLEDs(args[0])
+		return false
 	}},
-	'r': RegularCSICommand{2, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'r': RegularCSICommand{2, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.CSISetScroll(args[0], args[1])
+		return false
 	}},
-	's': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) {
+	's': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.SaveCursor(false)
+		return false
 	}},
-	'u': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) {
+	'u': RegularCSICommand{0, 0, func(canvas *Canvas, args []int, qmark bool) bool {
 		canvas.RestoreCursor(false)
+		return true
 	}},
 	'`': AliasCSICommand{alias: 'G'},
 }
@@ -1296,10 +1322,10 @@ func (c *Canvas) SetRune(r rune) {
 func (c *Canvas) MakeCellFrom(r rune) gowid.Cell {
 	var cell gowid.Cell = gowid.MakeCell(r, gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.StyleNone)
 	if !c.fg.IsNone() {
-		cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val() - 1) + tcell.ColorValid))
+		cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val()-1) + tcell.ColorValid))
 	}
 	if !c.bg.IsNone() {
-		cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val() - 1) + tcell.ColorValid))
+		cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val()-1) + tcell.ColorValid))
 	}
 	if len(c.styles) > 0 {
 		for k, _ := range c.styles {
@@ -1332,13 +1358,18 @@ func (c *Canvas) LeaveEscapeResetState() {
 	c.parsestate = defaultState
 }
 
-// TODO am I always guaranteed to have something in escbuf?
 func (c *Canvas) ParseEscape(r byte) {
+	c.ParseEscapeExt(r)
+}
+
+// TODO am I always guaranteed to have something in escbuf?
+func (c *Canvas) ParseEscapeExt(r byte) bool {
+	res := false
 	leaveEscape := true
 	switch {
 	case c.parsestate == csiState:
 		if _, ok := csiMap[r]; ok {
-			c.ParseCSI(r)
+			res = c.ParseCSIExt(r)
 			c.parsestate = defaultState
 		} else if ((r == '-') || (r == '0') || (r == '1') || (r == '2') || (r == '3') || (r == '4') || (r == '5') || (r == '6') || (r == '7') || (r == '8') || (r == '9') || (r == ';')) || (len(c.escbuf) == 0 && r == '?') {
 			c.escbuf = append(c.escbuf, r)
@@ -1373,7 +1404,7 @@ func (c *Canvas) ParseEscape(r byte) {
 		leaveEscape = false
 		c.leaveEscapeOnly()
 	case c.parsestate == nonCsiState:
-		c.ParseNonCSI(r, c.escbuf[0])
+		res = c.ParseNonCSIExt(r, c.escbuf[0])
 	case ((r == 'c') || (r == 'D') || (r == 'E') || (r == 'H') || (r == 'M') || (r == 'Z') || (r == '7') || (r == '8') || (r == '>') || (r == '=')):
 		c.ParseNonCSI(r, 0)
 	}
@@ -1381,6 +1412,8 @@ func (c *Canvas) ParseEscape(r byte) {
 	if leaveEscape {
 		c.LeaveEscapeResetState()
 	}
+
+	return res
 }
 
 func (c *Canvas) ParseOSC(osc []byte) {
@@ -1416,9 +1449,17 @@ func (c *Canvas) SetG01(r byte, mod byte) {
 }
 
 func (c *Canvas) ParseNonCSI(r byte, mod byte) {
+	c.ParseNonCSIExt(r, mod)
+}
+
+// ParseNonCSIExt will return true if the terminal needs to be re-rendered
+// as a result of this input.
+func (c *Canvas) ParseNonCSIExt(r byte, mod byte) bool {
+	res := false
 	switch {
 	case r == '8' && mod == '#':
 		c.DECAln()
+		res = true
 	case mod == '%':
 		if r == '@' {
 			c.terminal.Modes().Charset = CharsetDefault
@@ -1429,12 +1470,16 @@ func (c *Canvas) ParseNonCSI(r byte, mod byte) {
 		c.SetG01(r, mod)
 	case r == 'M':
 		c.LineFeed(true)
+		res = true
 	case r == 'D':
 		c.LineFeed(false)
+		res = true
 	case r == 'c':
 		c.Reset()
+		res = true
 	case r == 'E':
 		c.NewLine()
+		res = true
 	case r == 'H':
 		c.SetTabstop(gwutil.NoneInt(), false, false)
 	case r == 'Z':
@@ -1443,11 +1488,17 @@ func (c *Canvas) ParseNonCSI(r byte, mod byte) {
 		c.SaveCursor(true)
 	case r == '8':
 		c.RestoreCursor(true)
+		res = true
 	}
-
+	return res
 }
 
 func (c *Canvas) ParseCSI(r byte) {
+	c.ParseCSIExt(r)
+}
+
+func (c *Canvas) ParseCSIExt(r byte) bool {
+	res := false
 	numbuf := make([]int, 0)
 	qmark := false
 
@@ -1476,27 +1527,39 @@ func (c *Canvas) ParseCSI(r byte) {
 				numbuf[i] = cmd.FallbackArg()
 			}
 		}
-		cmd.Call(c, numbuf, qmark)
+		res = cmd.Call(c, numbuf, qmark)
 	}
+	return res
 }
 
 func (c *Canvas) ProcessByte(b byte) {
+	c.ProcessByteExt(b)
+}
+
+func (c *Canvas) ProcessByteExt(b byte) bool {
 	var r rune
 	if c.terminal.Modes().Charset == CharsetUTF8 {
 		c.utf8Buffer = append(c.utf8Buffer, b)
 		r, _ = utf8.DecodeRune(c.utf8Buffer)
 		if r == utf8.RuneError {
-			return
+			return false
 		}
 		c.utf8Buffer = c.utf8Buffer[:0]
 	} else {
 		r = rune(b)
 	}
 
-	c.ProcessByteOrCommand(r)
+	return c.ProcessByteOrCommandExt(r)
 }
 
 func (c *Canvas) ProcessByteOrCommand(r rune) {
+	c.ProcessByteOrCommandExt(r)
+}
+
+// ProcessByteOrCommandExt will return true if the terminal needs to be re-rendered
+// as a result of this input.
+func (c *Canvas) ProcessByteOrCommandExt(r rune) bool {
+	res := false
 	x, y := c.TermCursor()
 	dc := c.terminal.Modes().DisplayCtrl
 
@@ -1509,6 +1572,7 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 		// discard
 	case r == '\x0d' && !dc:
 		c.CarriageReturn()
+		res = true
 	case r == '\x0f' && !dc:
 		c.charset.Activate(0)
 	case r == '\x0e' && !dc:
@@ -1518,11 +1582,14 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 		if c.terminal.Modes().LfNl {
 			c.CarriageReturn()
 		}
+		res = true
 	case r == '\x09' && !dc:
 		c.Tab(8)
+		res = true
 	case r == '\x08' && !dc:
 		if x > 0 {
 			c.SetTermCursor(gwutil.SomeInt(x-1), gwutil.SomeInt(y))
+			res = true
 		}
 	case r == '\x07' && c.parsestate != oscState && !dc:
 		c.RunCallbacks(Bell{})
@@ -1531,14 +1598,16 @@ func (c *Canvas) ProcessByteOrCommand(r rune) {
 	case ((r == '\x00') || (r == '\x7f')) && !dc:
 		// Ignored
 	case c.withinEscape:
-		c.ParseEscape(byte(r))
+		res = c.ParseEscapeExt(byte(r))
 	case r == '\x9b' && !dc:
 		c.withinEscape = true
 		c.escbuf = make([]byte, 0)
 		c.parsestate = csiState
 	default:
 		c.PushCursor(r)
+		res = true
 	}
+	return res
 }
 
 //======================================================================

@@ -372,10 +372,13 @@ func (w *Widget) SetHotKeyActive(app gowid.IApp, down bool) {
 	if down {
 		w.hotKeyDownTime = time.Now()
 		w.hotKeyTimer = time.AfterFunc(w.HotKeyDuration(), func() {
-			app.Run(gowid.RunFunction(func(app gowid.IApp) {
-				w.SetHotKeyActive(app, false)
-				gowid.RunWidgetCallbacks(w.Callbacks, HotKeyCB{}, app, w)
-			}))
+			app.Run(&appRunExt{
+				fn: func(app gowid.IApp) bool {
+					w.SetHotKeyActive(app, false)
+					gowid.RunWidgetCallbacks(w.Callbacks, HotKeyCB{}, app, w)
+					return false
+				},
+			})
 		})
 	}
 }
@@ -600,30 +603,45 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 
 	canvas.AddCallback(Title{}, gowid.Callback{title{}, func(args ...interface{}) {
 		title := args[0].(string)
-		app.Run(gowid.RunFunction(func(app gowid.IApp) {
-			w.SetTitle(title, app)
-		}))
+		app.Run(&appRunExt{
+			fn: func(app gowid.IApp) bool {
+				w.SetTitle(title, app)
+				return false
+			},
+		})
 	}})
 
 	canvas.AddCallback(Bell{}, gowid.Callback{bell{}, func(args ...interface{}) {
-		app.Run(gowid.RunFunction(func(app gowid.IApp) {
-			w.Bell(app)
-		}))
+		app.Run(&appRunExt{
+			fn: func(app gowid.IApp) bool {
+				w.Bell(app)
+				return false
+			},
+		})
 	}})
 
 	canvas.AddCallback(LEDs{}, gowid.Callback{leds{}, func(args ...interface{}) {
 		mode := args[0].(LEDSState)
-		app.Run(gowid.RunFunction(func(app gowid.IApp) {
-			w.SetLEDs(app, mode)
-		}))
+		app.Run(&appRunExt{
+			fn: func(app gowid.IApp) bool {
+				w.SetLEDs(app, mode)
+				return false
+			},
+		})
 	}})
 
 	if w.params.EnableBracketedPaste {
-		app.Run(gowid.RunFunction(func(app gowid.IApp) {
-			for _, b := range enablePaste(w.terminfo) {
-				canvas.ProcessByte(b)
-			}
-		}))
+		app.Run(&appRunExt{
+			fn: func(app gowid.IApp) bool {
+				redraw := false
+				for _, b := range enablePaste(w.terminfo) {
+					if canvas.ProcessByteExt(b) {
+						redraw = true
+					}
+				}
+				return redraw
+			},
+		})
 	}
 
 	go func() {
@@ -632,28 +650,60 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 			n, err := master.Read(data)
 			if n == 0 && err == io.EOF {
 				w.Cmd.Wait()
-				app.Run(gowid.RunFunction(func(app gowid.IApp) {
-					gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
-				}))
+				app.Run(&appRunExt{
+					fn: func(app gowid.IApp) bool {
+						gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
+						return false
+					},
+				})
 
 				break
 			} else if err != nil {
 				w.Cmd.Wait()
-				app.Run(gowid.RunFunction(func(app gowid.IApp) {
-					gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
-				}))
+				app.Run(&appRunExt{
+					fn: func(app gowid.IApp) bool {
+						gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
+						return false
+					},
+				})
 				break
 			}
 
-			app.Run(gowid.RunFunction(func(app gowid.IApp) {
-				for _, b := range data[0:n] {
-					canvas.ProcessByte(b)
-				}
-			}))
+			app.Run(&appRunExt{
+				fn: func(app gowid.IApp) bool {
+					render := false
+					for _, b := range data[0:n] {
+						if canvas.ProcessByteExt(b) {
+							render = true
+						}
+					}
+					return render
+				},
+			})
 		}
 	}()
 
 	return nil
+}
+
+type runFunctionExt func(gowid.IApp) bool
+
+// appRunExt implements a type that can be passed to app.Run. From the fn, return bool if
+// the terminal must be redrawn.
+type appRunExt struct {
+	fn runFunctionExt
+}
+
+var _ gowid.IAppRun = (*appRunExt)(nil)
+
+// I need to implement this to pass to app.Run(). But if I also implement
+// RunThenOptionallyRenderEvent, I can better control whether a redraw is issued.
+func (t *appRunExt) RunThenRenderEvent(app gowid.IApp) {
+	t.fn(app) // old interface throws away result
+}
+
+func (t *appRunExt) RunThenOptionallyRenderEvent(app gowid.IApp) bool {
+	return t.fn(app)
 }
 
 func (w *Widget) StopCommand() {
