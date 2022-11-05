@@ -19,6 +19,7 @@ import (
 	"github.com/gcla/gowid/gwutil"
 	tcell "github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -865,12 +866,14 @@ func (c *Canvas) CSIStatusReport(mode int) {
 	switch mode {
 	case 5:
 		d2 := "\033[0n"
+		logrus.Infof("GCLA: TERM: writing stat rep1")
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
 			log.Warnf("Could not write all of %d bytes to terminal pty", len(d2))
 		}
 	case 6:
 		x, y := c.TermCursor()
+		logrus.Infof("GCLA: TERM: writing stat rep2")
 		d2 := fmt.Sprintf("\033[%d;%dR", y+1, x+1)
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
@@ -883,6 +886,8 @@ func (c *Canvas) CSIStatusReport(mode int) {
 func (c *Canvas) CSIGetDeviceAttributes(qmark bool) {
 	if !qmark {
 		d2 := "\033[?6c"
+		logrus.Infof("GCLA: TERM: writing dev attr")
+		//panic(nil)
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
 			log.Warnf("Could not write all of %d bytes to terminal pty", len(d2))
@@ -1134,6 +1139,7 @@ func (c *Canvas) Erase(startx, starty, endx, endy int) {
 }
 
 func (c *Canvas) CSIEraseLine(mode int) {
+	logrus.Infof("GCLA: erase line")
 	myx, myy := c.TermCursor()
 	switch mode {
 

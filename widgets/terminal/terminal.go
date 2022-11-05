@@ -27,6 +27,7 @@ import (
 	tcell "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2/terminfo"
 	"github.com/gdamore/tcell/v2/terminfo/dynamic"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -479,6 +480,8 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 		panic(gowid.WidgetSizeError{Widget: w, Size: size, Required: "gowid.IRenderBox"})
 	}
 
+	logrus.Infof("GCLA: TERM: rerendering widget %p size is %v %T", w, size, size)
+
 	if !w.scrollbarTmpOff && w.params.Scrollbar {
 		w.scrollbarTmpOff = true
 		c := w.cols.Render(size, focus, app)
@@ -570,6 +573,11 @@ func (e StartCommandError) Unwrap() error {
 	return e.Err
 }
 
+//	TouchTerminal2(w, width, height, app)
+//}
+//
+//func TouchTerminal2(w IWidget, width int, height int, app gowid.IApp) {
+
 func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 	setTermSize := false
 
@@ -577,6 +585,7 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 		w.SetCanvas(app, NewCanvasOfSize(width, height, w.params.Scrollback, w))
 	}
 	if !w.Connected() {
+		logrus.Infof("GCLA: widget %v %T not connected", w, w)
 		err := w.StartCommand(app, width, height) // TODO check for errors
 		if err != nil {
 			panic(StartCommandError{Command: w.params.Command, Err: err})
@@ -585,6 +594,7 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 	}
 
 	if !w.params.ManualResize && !(w.Width() == width && w.Height() == height) {
+		//logrus.Infof("GCLA: TERM: set size width is %d, w is %d, height is %d, h is %d", w.Width(), width, w.Height(), height)
 		if !setTermSize {
 			err := w.SetTerminalSize(width, height)
 			if err != nil {
@@ -636,6 +646,7 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 	}
 
 	err = w.Cmd.Start()
+	logrus.Infof("GCLA: TERM: started w.Cmd %v", w.Cmd)
 	if err != nil {
 		w.master.Close()
 		return err
@@ -688,9 +699,40 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 	}
 
 	go func() {
+		logrus.Infof("GCLA: TERM: goroutine called")
+
+		var wg sync.WaitGroup
+
+		data := make([]byte, 4096)
+
 		for {
-			data := make([]byte, 4096)
+			//data := make([]byte, 4096)
+			wg.Wait()
+
 			n, err := master.Read(data)
+			// s := string(data[0:n])
+			// clean := strings.Map(func(r rune) rune {
+			// 	if unicode.IsGraphic(r) {
+			// 		return r
+			// 	}
+			// 	return -1
+			// }, s)
+
+			// logrus.Infof("GCLA: TERM: read %d from master %p", n, master)
+			// logrus.Infof("GCLA: TERM: read %v err is %v", clean, err)
+
+			// n, err = master.Read(data)
+			// s = string(data[0:n])
+			// clean = strings.Map(func(r rune) rune {
+			// 	if unicode.IsGraphic(r) {
+			// 		return r
+			// 	}
+			// 	return -1
+			// }, s)
+
+			// logrus.Infof("GCLA: TERM: read2 %d from master %p", n, master)
+			// logrus.Infof("GCLA: TERM: read2 %v err is %v", clean, err)
+
 			if n == 0 && err == io.EOF {
 				w.Cmd.Wait()
 				app.Run(&appRunExt{
@@ -712,15 +754,18 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 				break
 			}
 
+			wg.Add(1)
 			app.Run(&appRunExt{
 				fn: func(app gowid.IApp) bool {
-					render := false
+					//render := false
 					for _, b := range data[0:n] {
 						if canvas.ProcessByteExt(b) {
-							render = true
+							//render = true
 						}
 					}
-					return render
+					defer wg.Done()
+					defer logrus.Infof("GCLA: TERM: done writing bytes, about to call done")
+					return true
 				},
 			})
 		}
@@ -913,6 +958,7 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		seq, parsed := TCellEventToBytes(ev, w.Modes(), app.GetLastMouseState(), w, w.Terminfo())
 
 		if parsed {
+			logrus.Infof("GCLA: TERM: writing parsed")
 			_, err := w.Write(seq)
 			if err != nil {
 				log.WithField("error", err).Warn("Could not send all input to terminal")
