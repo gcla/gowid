@@ -77,7 +77,7 @@ type IWidget interface {
 
 type IHotKeyFunctions interface {
 	// Customized handling of hotkey sequences
-	HotKeyFunctions() []HotKeyInputFn
+	HotKeyFunctions() []IHotKeyInputFn
 }
 
 type IScrollbar interface {
@@ -98,6 +98,7 @@ type IPaste interface {
 	PasteState(...bool) bool
 }
 
+type HotKeyInputFnExt func(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool
 type HotKeyInputFn func(ev *tcell.EventKey, w IWidget, app gowid.IApp) bool
 
 type HotKeyDuration struct {
@@ -128,15 +129,36 @@ type leds struct{}
 type title struct{}
 type hotkey struct{}
 
+type IHotKeyInputFn interface {
+	ProcessHotKey(ev *tcell.EventKey, w IWidget, app gowid.IApp) bool
+}
+
+type IHotKeyInputFnExt interface {
+	ProcessHotKeyExt(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool
+}
+
+func (f HotKeyInputFnExt) ProcessHotKeyExt(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool {
+	return f(ev, size, w, app)
+}
+
+func (f HotKeyInputFnExt) ProcessHotKey(ev *tcell.EventKey, w IWidget, app gowid.IApp) bool {
+	panic(nil)
+}
+
+func (f HotKeyInputFn) ProcessHotKey(ev *tcell.EventKey, w IWidget, app gowid.IApp) bool {
+	return f(ev, w, app)
+}
+
 type Options struct {
 	Command                 []string
 	Env                     []string
 	HotKey                  IHotKeyProvider
 	HotKeyPersistence       IHotKeyPersistence // the period of time a hotKey sticks after the first post-hotKey keypress
 	Scrollback              int
-	Scrollbar               bool            // disabled regardless of setting if there is no scrollback
-	HotKeyFns               []HotKeyInputFn // allow custom behavior after pressing the hotkey
+	Scrollbar               bool             // disabled regardless of setting if there is no scrollback
+	HotKeyFns               []IHotKeyInputFn // allow custom behavior after pressing the hotkey
 	EnableBracketedPaste    bool
+	ManualResize            bool // if true, don't resize terminal when gowid screen size changes
 	KeyPressToEndScrollMode bool // set to true to enable legacy behavior - when the user has scrolled
 	// back to the prompt, still require a keypress (q or Q) to end scroll-mode.
 }
@@ -291,7 +313,7 @@ func (w *Widget) DisableScrollbar(app gowid.IApp) {
 	w.params.Scrollbar = false
 }
 
-func (w *Widget) HotKeyFunctions() []HotKeyInputFn {
+func (w *Widget) HotKeyFunctions() []IHotKeyInputFn {
 	return w.params.HotKeyFns
 }
 
@@ -489,7 +511,7 @@ type terminalSizeSpec struct {
 	Ypixel uint16
 }
 
-func (w *Widget) SetTerminalSize(width, height int) error {
+func (w *Widget) SetUnderlyingTerminalSize(width, height int) error {
 	spec := &terminalSizeSpec{
 		Row: uint16(height),
 		Col: uint16(width),
@@ -503,6 +525,27 @@ func (w *Widget) SetTerminalSize(width, height int) error {
 	var err error
 	if errno != 0 {
 		err = errno
+	}
+
+	// logrus.Infof("GCLA: TERM: set term size to %d %d err is %v", width, height, err)
+
+	// _, _, errno = syscall.Syscall(syscall.SYS_IOCTL,
+	// 	w.master.Fd(),
+	// 	syscall.TIOCGWINSZ,
+	// 	uintptr(unsafe.Pointer(spec)),
+	// )
+
+	// logrus.Infof("GCLA: TERM: fetched term size to %d %d err is %v", spec.Col, spec.Row, errno)
+
+	return err
+}
+
+func (w *Widget) SetTerminalSize(width, height int) error {
+	err := w.SetUnderlyingTerminalSize(width, height)
+	if err == nil {
+		w.Canvas().Resize(width, height)
+		w.curWidth = width
+		w.curHeight = height
 	}
 
 	return err
@@ -541,7 +584,7 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 		setTermSize = true
 	}
 
-	if !(w.Width() == width && w.Height() == height) {
+	if !w.params.ManualResize && !(w.Width() == width && w.Height() == height) {
 		if !setTermSize {
 			err := w.SetTerminalSize(width, height)
 			if err != nil {
@@ -728,6 +771,52 @@ func (w *Widget) clickDownArrow(app gowid.IApp, w2 gowid.IWidget) {
 	w.Scroll(ScrollDown, false, 1)
 }
 
+// func (w *Widget) SetWidgetSize(app gowid.IApp, wi int, he int) {
+// 	w.Canvas().Resize(wi, he)
+// 	w.curWidth = wi
+// 	w.curHeight = he
+// }
+
+type iTerminalResize interface {
+	SetTerminalSize(w, h int) error
+	//Canvas() *Canvas
+	//SetWidgetSize(app gowid.IApp, w int, h int)
+}
+
+//func ResizeTerminalHotKeyFn(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool {
+
+var ResizeTerminalHotKeyFn HotKeyInputFnExt = func(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool {
+	logrus.Infof("GCLA: resize11")
+	//if ev.Key() == tcell.KeyRune && ev.Rune() == 'l' {
+	if ev.Key() == tcell.KeyCtrlL {
+		//switch {
+		//case k == tcell.KeyCtrlL:
+
+		logrus.Infof("GCLA: resize")
+
+		if size, ok := size.(gowid.IRenderBox); ok {
+			if w, ok := w.(iTerminalResize); ok {
+				err := w.SetTerminalSize(size.BoxColumns(), size.BoxRows())
+				if err != nil {
+					log.WithFields(log.Fields{
+						"width":  size.BoxColumns(),
+						"height": size.BoxRows(),
+						"error":  err,
+					}).Warn("Could not set terminal size")
+					// } else {
+					// 	w.SetWidgetSize(app, size.BoxColumns(), size.BoxRows())
+					//w.Canvas().Resize(size.BoxColumns(), size.BoxRows())
+
+					//w.curWidth = size.BoxColumns()
+					//w.curHeight = size.BoxRows()
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
@@ -769,7 +858,11 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 			deactivate := false
 			if whk, ok := w.(IHotKeyFunctions); ok {
 				for _, fn := range whk.HotKeyFunctions() {
-					res = fn(evk, w, app)
+					if fne, ok := fn.(IHotKeyInputFnExt); ok {
+						res = fne.ProcessHotKeyExt(evk, size, w, app)
+					} else {
+						res = fn.ProcessHotKey(evk, w, app)
+					}
 					if res {
 						deactivate = true
 						break

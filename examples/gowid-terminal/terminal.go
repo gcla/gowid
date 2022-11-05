@@ -230,8 +230,8 @@ func main() {
 			Scrollback:           100,
 			Scrollbar:            true,
 			EnableBracketedPaste: true,
-			HotKeyFns: []terminal.HotKeyInputFn{
-				func(ev *tcell.EventKey, w terminal.IWidget, app gowid.IApp) bool {
+			HotKeyFns: []terminal.IHotKeyInputFn{
+				terminal.HotKeyInputFnExt(func(ev *tcell.EventKey, size gowid.IRenderSize, w terminal.IWidget, app gowid.IApp) bool {
 					if w2, ok := w.(terminal.IScrollbar); ok {
 						if ev.Key() == tcell.KeyRune && ev.Rune() == 's' {
 							if w2.ScrollbarEnabled() {
@@ -243,7 +243,8 @@ func main() {
 						}
 					}
 					return false
-				},
+				}),
+				terminal.ResizeTerminalHotKeyFn,
 			},
 		})
 		if err != nil {
