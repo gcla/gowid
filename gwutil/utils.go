@@ -246,6 +246,10 @@ func SomeInt64(x int64) Int64Option {
 	return Int64Option{true, x}
 }
 
+func SomeInt64FromInt(x int) Int64Option {
+	return Int64Option{true, int64(x)}
+}
+
 func NoneInt64() Int64Option {
 	return Int64Option{}
 }
