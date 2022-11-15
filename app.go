@@ -239,7 +239,7 @@ func NewApp(args AppArgs) (rapp *App, rerr error) {
 	return app, nil
 }
 
-// NewAppSafe returns an initialized App struct, or an error on failure. It will
+// newApp returns an initialized App struct, or an error on failure. It will
 // initialize a tcell.Screen object and enable mouse support if its not provided,
 // meaning that tcell will receive mouse events if the terminal supports them.
 func newApp(args AppArgs) (rapp *App, rerr error) {
