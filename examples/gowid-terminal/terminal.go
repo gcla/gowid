@@ -2,12 +2,14 @@
 // that can be found in the LICENSE file.
 
 // A very poor-man's tmux written using gowid's terminal widget.
+//
+
 package main
 
 import (
 	"os"
+	"runtime"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gcla/gowid"
@@ -169,12 +171,12 @@ func (h handler) UnhandledInput(app gowid.IApp, ev interface{}) bool {
 		case tcell.KeyCtrlC, tcell.KeyEsc:
 			handled = true
 			for _, t := range twidgets {
-				t.Signal(syscall.SIGINT)
+				t.RequestTerminate()
 			}
 		case tcell.KeyCtrlBackslash:
 			handled = true
 			for _, t := range twidgets {
-				t.Signal(syscall.SIGQUIT)
+				t.RequestTerminate()
 			}
 		case tcell.KeyRune:
 			handled = true
@@ -198,8 +200,6 @@ func (h handler) UnhandledInput(app gowid.IApp, ev interface{}) bool {
 //======================================================================
 
 func main() {
-	var err error
-
 	f := examples.RedirectLogger("terminal.log")
 	defer f.Close()
 
@@ -212,15 +212,19 @@ func main() {
 	hkDuration := terminal.HotKeyDuration{time.Second * 3}
 
 	twidgets = make([]*terminal.Widget, 0)
-	//foo := os.Env()
-	os.Open("foo")
-	tcommands := []string{
-		os.Getenv("SHELL"),
-		os.Getenv("SHELL"),
-		os.Getenv("SHELL"),
-		//"less cell.go",
-		//"vttest",
-		//"emacs -nw -q ./cell.go",
+	var tcommands []string
+	if runtime.GOOS == "windows" {
+		tcommands = []string{
+			"powershell.exe",
+			"powershell.exe",
+			"powershell.exe",
+		}
+	} else {
+		tcommands = []string{
+			os.Getenv("SHELL"),
+			os.Getenv("SHELL"),
+			os.Getenv("SHELL"),
+		}
 	}
 
 	for _, cmd := range tcommands {
@@ -314,6 +318,7 @@ func main() {
 		})
 	}
 
+	var err error
 	app, err = gowid.NewApp(gowid.AppArgs{
 		View:                 view,
 		Palette:              &palette,

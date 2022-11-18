@@ -4,20 +4,17 @@
 
 // Package terminal provides a widget that functions as a unix terminal. Like urwid, it emulates
 // a vt220 (roughly). Mouse support is provided. See the terminal demo for more.
+
 package terminal
 
 import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 
-	"github.com/creack/pty"
 	"github.com/gcla/gowid"
 	"github.com/gcla/gowid/gwutil"
 	"github.com/gcla/gowid/widgets/columns"
@@ -27,7 +24,6 @@ import (
 	tcell "github.com/gdamore/tcell/v2"
 	"github.com/gdamore/tcell/v2/terminfo"
 	"github.com/gdamore/tcell/v2/terminfo/dynamic"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -172,9 +168,8 @@ type Options struct {
 type Widget struct {
 	IHotKeyProvider
 	IHotKeyPersistence
-	params              Options
-	Cmd                 *exec.Cmd
-	master              *os.File
+	params Options
+	PlatformWidget
 	canvas              *Canvas
 	modes               Modes
 	curWidth, curHeight int
@@ -223,7 +218,7 @@ func NewExt(opts Options) (*Widget, error) {
 	}
 
 	if useDefault {
-		ti, err = findTerminfo("xterm")
+		ti, err = findTerminfo("xterm-256color")
 	}
 
 	if err != nil {
@@ -267,6 +262,8 @@ func NewExt(opts Options) (*Widget, error) {
 		hold:               hold,
 		Callbacks:          gowid.NewCallbacks(),
 	}
+
+	res.Modes().Charset = CharsetUTF8
 
 	res.hold.SetSubWidget(res, nil)
 	res.cols.SetFocus(nil, 0)
@@ -443,10 +440,6 @@ func (w *Widget) Height() int {
 	return w.curHeight
 }
 
-func (w *Widget) Connected() bool {
-	return w.master != nil
-}
-
 func (w *Widget) Canvas() *Canvas {
 	return w.canvas
 }
@@ -456,11 +449,6 @@ func (w *Widget) SetCanvas(app gowid.IApp, c *Canvas) {
 	if app.GetScreen().CharacterSet() == "UTF-8" {
 		w.canvas.terminal.Modes().Charset = CharsetUTF8
 	}
-}
-
-func (w *Widget) Write(p []byte) (n int, err error) {
-	n, err = w.master.Write(p)
-	return
 }
 
 func (w *Widget) UserInput(ev interface{}, size gowid.IRenderSize, focus gowid.Selector, app gowid.IApp) bool {
@@ -479,8 +467,6 @@ func (w *Widget) Render(size gowid.IRenderSize, focus gowid.Selector, app gowid.
 	if !ok {
 		panic(gowid.WidgetSizeError{Widget: w, Size: size, Required: "gowid.IRenderBox"})
 	}
-
-	logrus.Infof("GCLA: TERM: rerendering widget %p size is %v %T", w, size, size)
 
 	if !w.scrollbarTmpOff && w.params.Scrollbar {
 		w.scrollbarTmpOff = true
@@ -512,35 +498,6 @@ type terminalSizeSpec struct {
 	Col    uint16
 	Xpixel uint16
 	Ypixel uint16
-}
-
-func (w *Widget) SetUnderlyingTerminalSize(width, height int) error {
-	spec := &terminalSizeSpec{
-		Row: uint16(height),
-		Col: uint16(width),
-	}
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL,
-		w.master.Fd(),
-		syscall.TIOCSWINSZ,
-		uintptr(unsafe.Pointer(spec)),
-	)
-
-	var err error
-	if errno != 0 {
-		err = errno
-	}
-
-	// logrus.Infof("GCLA: TERM: set term size to %d %d err is %v", width, height, err)
-
-	// _, _, errno = syscall.Syscall(syscall.SYS_IOCTL,
-	// 	w.master.Fd(),
-	// 	syscall.TIOCGWINSZ,
-	// 	uintptr(unsafe.Pointer(spec)),
-	// )
-
-	// logrus.Infof("GCLA: TERM: fetched term size to %d %d err is %v", spec.Col, spec.Row, errno)
-
-	return err
 }
 
 func (w *Widget) SetTerminalSize(width, height int) error {
@@ -585,7 +542,6 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 		w.SetCanvas(app, NewCanvasOfSize(width, height, w.params.Scrollback, w))
 	}
 	if !w.Connected() {
-		logrus.Infof("GCLA: widget %v %T not connected", w, w)
 		err := w.StartCommand(app, width, height) // TODO check for errors
 		if err != nil {
 			panic(StartCommandError{Command: w.params.Command, Err: err})
@@ -594,7 +550,6 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 	}
 
 	if !w.params.ManualResize && !(w.Width() == width && w.Height() == height) {
-		//logrus.Infof("GCLA: TERM: set size width is %d, w is %d, height is %d, h is %d", w.Width(), width, w.Height(), height)
 		if !setTermSize {
 			err := w.SetTerminalSize(width, height)
 			if err != nil {
@@ -605,54 +560,11 @@ func (w *Widget) TouchTerminal(width, height int, app gowid.IApp) {
 				}).Warn("Could not set terminal size")
 			}
 		}
-
-		w.Canvas().Resize(width, height)
-
-		w.curWidth = width
-		w.curHeight = height
 	}
 
 }
 
-func (w *Widget) Signal(sig syscall.Signal) error {
-	var err error
-	if w.Cmd != nil {
-		err = w.Cmd.Process.Signal(sig)
-	}
-	return err
-}
-
-func (w *Widget) RequestTerminate() error {
-	return w.Signal(syscall.SIGTERM)
-}
-
-func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
-	w.Cmd = exec.Command(w.params.Command[0], w.params.Command[1:]...)
-	var err error
-	var tty *os.File
-	w.master, tty, err = PtyStart1(w.Cmd)
-	if err != nil {
-		return err
-	}
-	defer tty.Close()
-
-	err = w.SetTerminalSize(width, height)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"width":  width,
-			"height": height,
-			"error":  err,
-		}).Warn("Could not set terminal size")
-	}
-
-	err = w.Cmd.Start()
-	logrus.Infof("GCLA: TERM: started w.Cmd %v", w.Cmd)
-	if err != nil {
-		w.master.Close()
-		return err
-	}
-
-	master := w.master
+func (w *Widget) SetUpCallbacks(app gowid.IApp) {
 	canvas := w.canvas
 
 	canvas.AddCallback(Title{}, gowid.Callback{title{}, func(args ...interface{}) {
@@ -697,81 +609,6 @@ func (w *Widget) StartCommand(app gowid.IApp, width, height int) error {
 			},
 		})
 	}
-
-	go func() {
-		logrus.Infof("GCLA: TERM: goroutine called")
-
-		var wg sync.WaitGroup
-
-		data := make([]byte, 4096)
-
-		for {
-			//data := make([]byte, 4096)
-			wg.Wait()
-
-			n, err := master.Read(data)
-			// s := string(data[0:n])
-			// clean := strings.Map(func(r rune) rune {
-			// 	if unicode.IsGraphic(r) {
-			// 		return r
-			// 	}
-			// 	return -1
-			// }, s)
-
-			// logrus.Infof("GCLA: TERM: read %d from master %p", n, master)
-			// logrus.Infof("GCLA: TERM: read %v err is %v", clean, err)
-
-			// n, err = master.Read(data)
-			// s = string(data[0:n])
-			// clean = strings.Map(func(r rune) rune {
-			// 	if unicode.IsGraphic(r) {
-			// 		return r
-			// 	}
-			// 	return -1
-			// }, s)
-
-			// logrus.Infof("GCLA: TERM: read2 %d from master %p", n, master)
-			// logrus.Infof("GCLA: TERM: read2 %v err is %v", clean, err)
-
-			if n == 0 && err == io.EOF {
-				w.Cmd.Wait()
-				app.Run(&appRunExt{
-					fn: func(app gowid.IApp) bool {
-						gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
-						return false
-					},
-				})
-
-				break
-			} else if err != nil {
-				w.Cmd.Wait()
-				app.Run(&appRunExt{
-					fn: func(app gowid.IApp) bool {
-						gowid.RunWidgetCallbacks(w.Callbacks, ProcessExited{}, app, w)
-						return false
-					},
-				})
-				break
-			}
-
-			wg.Add(1)
-			app.Run(&appRunExt{
-				fn: func(app gowid.IApp) bool {
-					//render := false
-					for _, b := range data[0:n] {
-						if canvas.ProcessByteExt(b) {
-							//render = true
-						}
-					}
-					defer wg.Done()
-					defer logrus.Infof("GCLA: TERM: done writing bytes, about to call done")
-					return true
-				},
-			})
-		}
-	}()
-
-	return nil
 }
 
 type runFunctionExt func(gowid.IApp) bool
@@ -794,12 +631,6 @@ func (t *appRunExt) RunThenOptionallyRenderEvent(app gowid.IApp) bool {
 	return t.fn(app)
 }
 
-func (w *Widget) StopCommand() {
-	if w.master != nil {
-		w.master.Close()
-	}
-}
-
 func (w *Widget) clickUp(app gowid.IApp, w2 gowid.IWidget) {
 	w.Scroll(ScrollUp, true, 1)
 }
@@ -816,29 +647,12 @@ func (w *Widget) clickDownArrow(app gowid.IApp, w2 gowid.IWidget) {
 	w.Scroll(ScrollDown, false, 1)
 }
 
-// func (w *Widget) SetWidgetSize(app gowid.IApp, wi int, he int) {
-// 	w.Canvas().Resize(wi, he)
-// 	w.curWidth = wi
-// 	w.curHeight = he
-// }
-
 type iTerminalResize interface {
 	SetTerminalSize(w, h int) error
-	//Canvas() *Canvas
-	//SetWidgetSize(app gowid.IApp, w int, h int)
 }
 
-//func ResizeTerminalHotKeyFn(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool {
-
 var ResizeTerminalHotKeyFn HotKeyInputFnExt = func(ev *tcell.EventKey, size gowid.IRenderSize, w IWidget, app gowid.IApp) bool {
-	logrus.Infof("GCLA: resize11")
-	//if ev.Key() == tcell.KeyRune && ev.Rune() == 'l' {
 	if ev.Key() == tcell.KeyCtrlL {
-		//switch {
-		//case k == tcell.KeyCtrlL:
-
-		logrus.Infof("GCLA: resize")
-
 		if size, ok := size.(gowid.IRenderBox); ok {
 			if w, ok := w.(iTerminalResize); ok {
 				err := w.SetTerminalSize(size.BoxColumns(), size.BoxRows())
@@ -848,12 +662,6 @@ var ResizeTerminalHotKeyFn HotKeyInputFnExt = func(ev *tcell.EventKey, size gowi
 						"height": size.BoxRows(),
 						"error":  err,
 					}).Warn("Could not set terminal size")
-					// } else {
-					// 	w.SetWidgetSize(app, size.BoxColumns(), size.BoxRows())
-					//w.Canvas().Resize(size.BoxColumns(), size.BoxRows())
-
-					//w.curWidth = size.BoxColumns()
-					//w.curHeight = size.BoxRows()
 				}
 			}
 			return true
@@ -958,7 +766,6 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 		seq, parsed := TCellEventToBytes(ev, w.Modes(), app.GetLastMouseState(), w, w.Terminfo())
 
 		if parsed {
-			logrus.Infof("GCLA: TERM: writing parsed")
 			_, err := w.Write(seq)
 			if err != nil {
 				log.WithField("error", err).Warn("Could not send all input to terminal")
@@ -968,25 +775,6 @@ func UserInput(w IWidget, ev interface{}, size gowid.IRenderSize, focus gowid.Se
 	}
 
 	return res
-}
-
-// PtyStart1 connects the supplied Cmd's stdin/stdout/stderr to a new tty
-// object. The function returns the pty and tty, and also an error which is
-// nil if the operation was successful.
-func PtyStart1(c *exec.Cmd) (pty2, tty *os.File, err error) {
-	pty2, tty, err = pty.Open()
-	if err != nil {
-		return nil, nil, err
-	}
-	c.Stdout = tty
-	c.Stdin = tty
-	c.Stderr = tty
-	if c.SysProcAttr == nil {
-		c.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	c.SysProcAttr.Setctty = true
-	c.SysProcAttr.Setsid = true
-	return pty2, tty, err
 }
 
 //======================================================================

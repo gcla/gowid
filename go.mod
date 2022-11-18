@@ -3,6 +3,7 @@ module github.com/gcla/gowid
 go 1.13
 
 require (
+	github.com/UserExistsError/conpty v0.1.1-0.20220606151253-32f3d71e795a // indirect
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/araddon/dateparse v0.0.0-20210207001429-0eec95c9db7e
@@ -13,7 +14,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/mattn/go-runewidth v0.0.13
+	github.com/mattn/go-runewidth v0.0.14
 	github.com/pkg/errors v0.8.1
 	github.com/rakyll/statik v0.1.6
 	github.com/sirupsen/logrus v1.4.2

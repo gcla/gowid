@@ -66,7 +66,8 @@ func disablePaste(ti *terminfo.Terminfo) []byte {
 // subprocess is connected to a tty controlled by gowid. Events from the
 // user are parsed by gowid via TCell - they are then translated by this
 // function before being written to the TerminalWidget subprocess's tty.
-func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseState, paster IPaste, ti *terminfo.Terminfo) ([]byte, bool) {
+func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseState, paster IPaste,
+	ti *terminfo.Terminfo) ([]byte, bool) {
 	res := make([]byte, 0)
 	res2 := false
 
@@ -228,9 +229,9 @@ func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseStat
 			case tcell.KeyDelete:
 				res = append(res, ti.KeyDelete...)
 			case tcell.KeyHome:
-				res = append(res, ti.KeyHome...)
+				res = append(res, []byte{27, '[', 'H'}...)
 			case tcell.KeyEnd:
-				res = append(res, ti.KeyEnd...)
+				res = append(res, []byte{27, '[', 'F'}...)
 			case tcell.KeyHelp:
 				res = append(res, ti.KeyHelp...)
 			case tcell.KeyPgUp:
@@ -238,13 +239,13 @@ func TCellEventToBytes(ev interface{}, mouse IMouseSupport, last gowid.MouseStat
 			case tcell.KeyPgDn:
 				res = append(res, ti.KeyPgDn...)
 			case tcell.KeyUp:
-				res = append(res, ti.KeyUp...)
+				res = append(res, []byte(ti.CursorUp1)...)
 			case tcell.KeyDown:
-				res = append(res, ti.KeyDown...)
+				res = append(res, []byte{27, '[', 'B'}...)
 			case tcell.KeyLeft:
-				res = append(res, ti.KeyLeft...)
+				res = append(res, []byte{27, '[', 'D'}...)
 			case tcell.KeyRight:
-				res = append(res, ti.KeyRight...)
+				res = append(res, []byte{27, '[', 'C'}...)
 			case tcell.KeyBacktab:
 				res = append(res, ti.KeyBacktab...)
 			case tcell.KeyExit:

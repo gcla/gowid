@@ -19,7 +19,6 @@ import (
 	"github.com/gcla/gowid/gwutil"
 	tcell "github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -69,19 +68,19 @@ type IMouseSupport interface {
 // are enabled, etc. It tracks the mouse state in particular so implements
 // IMouseSupport.
 type Modes struct {
-	DisplayCtrl        bool
-	Insert             bool
-	LfNl               bool
-	KeysAutoWrap       bool
-	ReverseVideo       bool
-	ConstrainScrolling bool
-	DontAutoWrap       bool
-	InvisibleCursor    bool
-	Charset            int
-	VT200Mouse         bool // #define SET_VT200_MOUSE             1000
-	ReportButton       bool // #define SET_BTN_EVENT_MOUSE         1002
-	ReportAny          bool // #define SET_ANY_EVENT_MOUSE         1003
-	SgrModeMouse       bool // #define SET_SGR_EXT_MODE_MOUSE      1006
+	DisplayCtrl           bool
+	Insert                bool
+	LfNl                  bool
+	ApplicationKeysDECCKM bool
+	ReverseVideo          bool
+	ConstrainScrolling    bool
+	DontAutoWrap          bool
+	InvisibleCursor       bool
+	Charset               int
+	VT200Mouse            bool // #define SET_VT200_MOUSE             1000
+	ReportButton          bool // #define SET_BTN_EVENT_MOUSE         1002
+	ReportAny             bool // #define SET_ANY_EVENT_MOUSE         1003
+	SgrModeMouse          bool // #define SET_SGR_EXT_MODE_MOUSE      1006
 }
 
 func (t Modes) MouseEnabled() bool {
@@ -417,7 +416,7 @@ type Canvas struct {
 	withinEscape                       bool
 	savedx, savedy                     gwutil.IntOption
 	savedstyles                        map[string]bool
-	savedfg, savedbg                   gwutil.IntOption
+	savedfg, savedbg                   gwutil.Int64Option
 	scrollRegionStart, scrollRegionEnd int
 	terminal                           ITerminal
 	charset                            *Charset
@@ -426,7 +425,7 @@ type Canvas struct {
 	tabstops                           []int
 	isRottenCursor                     bool
 	escbuf                             []byte
-	fg, bg                             gwutil.IntOption
+	fg, bg                             gwutil.Int64Option
 	utf8Buffer                         []byte
 	gowid.ICallbacks
 }
@@ -492,13 +491,14 @@ func (c *Canvas) Reset() {
 	c.withinEscape = false
 	c.savedx = gwutil.NoneInt()
 	c.savedy = gwutil.NoneInt()
-	c.savedfg = gwutil.NoneInt()
-	c.savedbg = gwutil.NoneInt()
+	c.savedfg = gwutil.NoneInt64()
+	c.savedbg = gwutil.NoneInt64()
 	c.savedstyles = make(map[string]bool)
-	c.fg = gwutil.NoneInt()
-	c.bg = gwutil.NoneInt()
+	c.fg = gwutil.NoneInt64()
+	c.bg = gwutil.NoneInt64()
 	c.styles = make(map[string]bool)
 	*c.terminal.Modes() = Modes{}
+	c.terminal.Modes().Charset = CharsetUTF8
 	c.ResetScroll()
 	c.InitTabstops(false)
 	c.Clear(gwutil.SomeInt(0), gwutil.SomeInt(0))
@@ -762,8 +762,8 @@ func (c *Canvas) SaveCursor(withAttrs bool) {
 			c.savedstyles[k] = v
 		}
 	} else {
-		c.savedfg = gwutil.NoneInt()
-		c.savedbg = gwutil.NoneInt()
+		c.savedfg = gwutil.NoneInt64()
+		c.savedbg = gwutil.NoneInt64()
 	}
 }
 
@@ -866,14 +866,12 @@ func (c *Canvas) CSIStatusReport(mode int) {
 	switch mode {
 	case 5:
 		d2 := "\033[0n"
-		logrus.Infof("GCLA: TERM: writing stat rep1")
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
 			log.Warnf("Could not write all of %d bytes to terminal pty", len(d2))
 		}
 	case 6:
 		x, y := c.TermCursor()
-		logrus.Infof("GCLA: TERM: writing stat rep2")
 		d2 := fmt.Sprintf("\033[%d;%dR", y+1, x+1)
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
@@ -886,7 +884,6 @@ func (c *Canvas) CSIStatusReport(mode int) {
 func (c *Canvas) CSIGetDeviceAttributes(qmark bool) {
 	if !qmark {
 		d2 := "\033[?6c"
-		logrus.Infof("GCLA: TERM: writing dev attr")
 		//panic(nil)
 		_, err := c.terminal.Write([]byte(d2))
 		if err != nil {
@@ -927,7 +924,7 @@ func (c *Canvas) SetMode(mode int, flag bool, qmark bool, reset bool) {
 	if qmark {
 		switch mode {
 		case 1:
-			c.terminal.Modes().KeysAutoWrap = true
+			c.terminal.Modes().ApplicationKeysDECCKM = !reset
 		case 3:
 			c.Clear(gwutil.NoneInt(), gwutil.NoneInt())
 		case 5:
@@ -1139,7 +1136,6 @@ func (c *Canvas) Erase(startx, starty, endx, endy int) {
 }
 
 func (c *Canvas) CSIEraseLine(mode int) {
-	logrus.Infof("GCLA: erase line")
 	myx, myy := c.TermCursor()
 	switch mode {
 
@@ -1168,49 +1164,54 @@ func (c *Canvas) CSIEraseDisplay(mode int) {
 
 func (c *Canvas) CSISetAttr(args []int) {
 	if args[len(args)-1] == 0 {
-		c.fg = gwutil.NoneInt()
-		c.bg = gwutil.NoneInt()
+		c.fg = gwutil.NoneInt64()
+		c.bg = gwutil.NoneInt64()
 		c.styles = make(map[string]bool)
 	}
 
 	c.fg, c.bg, c.styles = c.SGIToAttribs(args, c.fg, c.bg, c.styles)
 }
 
-func (c *Canvas) SGIToAttribs(args []int, fg, bg gwutil.IntOption, styles map[string]bool) (gwutil.IntOption, gwutil.IntOption, map[string]bool) {
+func (c *Canvas) SGIToAttribs(args []int, fg, bg gwutil.Int64Option, styles map[string]bool) (gwutil.Int64Option, gwutil.Int64Option, map[string]bool) {
 	for i := 0; i < len(args); i++ {
 		attr := args[i]
 		switch {
 		case 30 <= attr && attr <= 37:
-			fg = gwutil.SomeInt(attr + 1 - 30)
+			fg = gwutil.SomeInt64FromInt(attr + 1 - 30)
 		case 90 <= attr && attr <= 97:
-			fg = gwutil.SomeInt(attr - 90 + 9) // 8 basic colors; 90 => black, 91 => red
+			fg = gwutil.SomeInt64FromInt(attr - 90 + 9) // 8 basic colors; 90 => black, 91 => red
 		case 40 <= attr && attr <= 47:
-			bg = gwutil.SomeInt(attr + 1 - 40)
+			bg = gwutil.SomeInt64FromInt(attr + 1 - 40)
 		case 100 <= attr && attr <= 107:
-			bg = gwutil.SomeInt(attr - 100 + 9) // 8 basic colors -> right index into tcell array
+			bg = gwutil.SomeInt64FromInt(attr - 100 + 9) // 8 basic colors -> right index into tcell array
 		case attr == 23:
 			// TODO vim sends this
 		case attr == 38:
+			// set foreground color
 			if i+2 < len(args) && args[i+1] == 5 && args[i+2] >= 0 && args[i+2] <= 255 {
-				fg = gwutil.SomeInt(args[i+2] + 1)
+				// 256 color palette
+				fg = gwutil.SomeInt64FromInt(args[i+2] + 1)
 				i += 2
 			} else if i+4 < len(args) && args[i+1] == 2 && args[i+2] >= 0 && args[i+2] <= 255 && args[i+3] >= 0 && args[i+3] <= 255 && args[i+4] >= 0 && args[i+4] <= 255 {
-				fg = gwutil.SomeInt(gowid.CubeStart + (((args[i+2] * gowid.CubeSize256) + args[i+3]) * gowid.CubeSize256) + args[i+4] + 1)
+				// truecolor palette
+				fg = gwutil.SomeInt64(int64(args[i+2]<<16) + (int64(args[i+3]) << 8) + (int64(args[i+4]) << 0) + int64(tcell.ColorValid) + int64(tcell.ColorIsRGB))
 				i += 4
 			}
 		case attr == 39:
 			delete(styles, "underline")
-			fg = gwutil.NoneInt()
+			fg = gwutil.NoneInt64()
 		case attr == 48:
+			// set background color
 			if i+2 < len(args) && args[i+1] == 5 && args[i+2] >= 0 && args[i+2] <= 255 {
-				bg = gwutil.SomeInt(args[i+2] + 1)
+				bg = gwutil.SomeInt64FromInt(args[i+2] + 1)
 				i += 2
 			} else if i+4 < len(args) && args[i+1] == 2 && args[i+2] >= 0 && args[i+2] <= 255 && args[i+3] >= 0 && args[i+3] <= 255 && args[i+4] >= 0 && args[i+4] <= 255 {
-				bg = gwutil.SomeInt(gowid.CubeStart + (((args[i+2] * gowid.CubeSize256) + args[i+3]) * gowid.CubeSize256) + args[i+4] + 1)
+				bg = gwutil.SomeInt64(int64(args[i+2])<<16 + (int64(args[i+3]) << 8) + (int64(args[i+4]) << 0) + int64(tcell.ColorValid) + int64(tcell.ColorIsRGB))
+
 				i += 4
 			}
 		case attr == 49:
-			bg = gwutil.NoneInt()
+			bg = gwutil.NoneInt64()
 		case attr == 10:
 			c.charset.ResetSgrIbmpc()
 			c.terminal.Modes().DisplayCtrl = false
@@ -1234,8 +1235,8 @@ func (c *Canvas) SGIToAttribs(args []int, fg, bg gwutil.IntOption, styles map[st
 		case attr == 27:
 			delete(styles, "reverse")
 		case attr == 0:
-			fg = gwutil.NoneInt()
-			bg = gwutil.NoneInt()
+			fg = gwutil.NoneInt64()
+			bg = gwutil.NoneInt64()
 			styles = make(map[string]bool)
 		case attr == 3:
 		case attr == 6:
@@ -1328,10 +1329,18 @@ func (c *Canvas) SetRune(r rune) {
 func (c *Canvas) MakeCellFrom(r rune) gowid.Cell {
 	var cell gowid.Cell = gowid.MakeCell(r, gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.MakeTCellColorExt(tcell.ColorDefault), gowid.StyleNone)
 	if !c.fg.IsNone() {
-		cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val()-1) + tcell.ColorValid))
+		if tcell.Color(c.fg.Val()).IsRGB() {
+			cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val() - int64(0+0))))
+		} else {
+			cell = cell.WithForegroundColor(gowid.MakeTCellColorExt(tcell.Color(c.fg.Val()-1) + tcell.ColorValid))
+		}
 	}
 	if !c.bg.IsNone() {
-		cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val()-1) + tcell.ColorValid))
+		if tcell.Color(c.bg.Val()).IsRGB() {
+			cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val() - (int64(0 + 0)))))
+		} else {
+			cell = cell.WithBackgroundColor(gowid.MakeTCellColorExt(tcell.Color(c.bg.Val()-1) + tcell.ColorValid))
+		}
 	}
 	if len(c.styles) > 0 {
 		for k, _ := range c.styles {
