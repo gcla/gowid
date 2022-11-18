@@ -811,8 +811,16 @@ func Draw(canvas IDrawCanvas, mode IColorMode, screen tcell.Screen) {
 			c := vline[x]
 			f, b, s := c.ForegroundColor(), c.BackgroundColor(), c.Style()
 			st := MakeCellStyle(f, b, s)
-			screen.SetContent(x, y, c.Rune(), nil, st)
-			x += runewidth.RuneWidth(c.Rune())
+
+			rn := c.Rune()
+			rw := runewidth.RuneWidth(rn)
+			if rw == 0 {
+				rn = 'X'
+				rw = runewidth.RuneWidth(rn)
+			}
+
+			screen.SetContent(x, y, rn, nil, st)
+			x += rw
 
 			if x == cpos.X && y == cpos.Y {
 				screen.ShowCursor(x, y)
