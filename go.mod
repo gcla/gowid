@@ -18,6 +18,6 @@ require (
 	github.com/rakyll/statik v0.1.6
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.3.8
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
